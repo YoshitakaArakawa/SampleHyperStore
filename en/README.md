@@ -111,7 +111,7 @@ Open this repository in an AI agent that has Tableau MCP connected (for example 
 
 > Read `en/setup/SETUP_FOR_AI.md` and set up SampleHyperStore on my Tableau Cloud site.
 
-The agent asks you before every write to Tableau. It cannot do everything alone: part of the setup is done by hand in the Tableau web editor. See [`SETUP_FOR_AI.md`](setup/SETUP_FOR_AI.md) for the prerequisites.
+The agent asks you before every write to Tableau. It cannot do everything alone: part of the setup is done by hand in the Tableau web editor. You sign in through your browser (OAuth). The `.env` file holds only the server and site name; no token or password goes into a file. See [`SETUP_FOR_AI.md`](setup/SETUP_FOR_AI.md) for the prerequisites.
 
 ### Set it up by hand
 
