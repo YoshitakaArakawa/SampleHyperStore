@@ -171,10 +171,11 @@ N = r"(\d+|six|twelve)"
 # (file, pattern with one number group, count key). Every match must equal the actual count, and each
 # pattern must match at least once: when a sentence is rewritten, update its pattern here.
 COUNT_PATTERNS = [
-    ("README.md", rf"the {N} tables allow", "in_use"),
-    ("README.md", rf"{N} 枚の表をつなぐ", "in_use"),
+    ("README.md", rf"how the {N} tables connect", "in_use"),
+    ("README.md", rf"{N} 枚の表のつながり", "in_use"),
     ("en/README.md", rf"The {N} tables the Tableau setup uses", "in_use"),
     ("en/README.md", rf"{N} more tables, not used", "planned"),
+    ("en/README.md", rf"tour of how the {N} tables connect", "in_use"),
     ("en/README.md", rf"The {N} tables in `csv/in_use/`", "in_use"),
     ("en/README.md", rf'"{N} data sources<br/>SampleHyperStore', "in_use"),
     ("en/README.md", rf'"{N} data sources<br/>rpt_', "rpt"),
@@ -184,6 +185,7 @@ COUNT_PATTERNS = [
     ("ja/README.md", rf"セットアップで使う {N} テーブル", "in_use"),
     ("ja/README.md", rf"使っていない {N} テーブル", "planned"),
     ("ja/README.md", rf"`csv/in_use/` の {N} テーブル", "in_use"),
+    ("ja/README.md", rf"{N} 枚の表のつながり", "in_use"),
     ("ja/README.md", rf'"{N} データソース<br/>SampleHyperStore', "in_use"),
     ("ja/README.md", rf'"{N} データソース<br/>rpt_', "rpt"),
     ("ja/README.md", rf"{N} データソースの<br/>", "datasources"),
