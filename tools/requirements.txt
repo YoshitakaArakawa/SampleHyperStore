@@ -1,4 +1,4 @@
-# For maintainers only (tools/generator and tools/build_ja).
+# For maintainers only (tools/generator, tools/build_ja and tools/showcase).
 # Byte-identical output to en/SHA256SUMS was confirmed with Python 3.14.2 and exactly these versions.
 numpy==2.4.1
 pandas==2.3.3

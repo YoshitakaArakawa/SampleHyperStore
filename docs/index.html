@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="SampleHyperStore: ask AI business questions that span 12 tables. / 12 枚の表をまたいで、AI と業務の問いを解く。">
+<style>body{margin:0}</style>
+<title>SampleHyperStore の分析体験</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap">
+<style>
+/* Single light theme (white background in every viewer theme). One page, two languages: every text comes from L.ja / L.en and the page re-renders on switch.
+   Layout: hero → join diagrams (3 tables vs 12 tables) → business settings → one section per question: vertical table stack on the left, charts on the right */
+:root {
+  --bg: #ffffff; --surface: #f4f6f5; --ink: #141b19; --muted: #56635f; --line: #d9e0dd; --grid: #e8ecea;
+  --accent: #1f7a5c; --accent-soft: #e4f2ec; --hot: #c8501f; --hot-soft: #fbeae1; --dim: #b3bcb9; --edge: #9aa6a2;
+  --d-prod: #2e8a63; --d-web: #2f6fc0; --d-order: #7552c2; --d-ship: #d27a1c; --d-bill: #c23d4b; --d-ret: #a98515;
+  --f-display: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --f-body: "IBM Plex Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --f-num: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 17px; line-height: 1.75; }
+.in { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--f-display); margin: 0; line-height: 1.45; text-wrap: balance; }
+:lang(ja) h1, :lang(ja) h2, :lang(ja) h3 { word-break: auto-phrase; line-break: strict; }
+p { margin: 0; }
+.ln { display: block; }
+
+/* language switch */
+.langbar { display: flex; justify-content: flex-end; padding-top: 16px; }
+.lang { display: inline-flex; border: 1.5px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.lang button { font: inherit; font-size: 14px; font-weight: 700; border: 0; border-radius: 999px; padding: 4px 14px; background: transparent; color: var(--muted); cursor: pointer; }
+.lang button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.lang button:focus-visible { outline: 3px solid var(--accent-soft); }
+
+/* hero */
+.hero .in { padding-block: 24px 24px; display: grid; gap: 20px; }
+.hero h1 { font-size: clamp(32px, 6vw, 56px); font-weight: 900; line-height: 1.3; }
+:lang(en) .hero h1 { font-size: clamp(30px, 5.4vw, 52px); line-height: 1.2; }
+.hero .sub { font-size: 19px; color: var(--muted); max-width: 44em; text-wrap: pretty; }
+:lang(ja) .hero .sub { word-break: auto-phrase; line-break: strict; }
+:lang(en) .hero .sub { max-width: 40em; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn { display: inline-block; font-weight: 700; font-size: 16px; padding: 10px 20px; border-radius: 10px; background: var(--accent); color: var(--bg); text-decoration: none; border: 2px solid var(--accent); }
+.btn:hover, .btn:focus-visible { outline: 3px solid var(--hot-soft); }
+
+/* diagrams */
+.maps .in { padding-block: 24px 64px; display: grid; gap: 40px; }
+.map.small .frame { max-width: 720px; }
+.map.small .frame svg { min-width: 520px; }
+.map { display: grid; gap: 10px; min-width: 0; }
+.map .head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.map .count { font-family: var(--f-num); font-weight: 800; font-size: 64px; line-height: 1; }
+.map .name { font-size: 18px; font-weight: 700; }
+.map .unit { font-size: 22px; font-weight: 700; font-family: var(--f-display); margin-left: -6px; }
+.map .stat { font-size: 15px; color: var(--muted); }
+.map .stat b { color: var(--ink); font-family: var(--f-num); font-size: 18px; }
+.map .frame { background: var(--surface); border-radius: 14px; padding: 16px; overflow-x: auto; }
+.map.big .frame svg { min-width: 720px; }
+.map svg text { font-family: var(--f-body); }
+.node-jp { font-size: 15px; font-weight: 700; fill: var(--ink); }
+.node-en { font-family: var(--f-num) !important; font-size: 12px; fill: var(--muted); }
+.edge-lb { font-size: 12.5px; fill: var(--ink); }
+:lang(en) .edge-lb { font-family: var(--f-num) !important; font-size: 12px; }
+.domains { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; color: var(--muted); }
+.domains i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--c); margin-right: 6px; vertical-align: -1px; }
+.pgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.pcard { border: 1.5px dashed var(--ink); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.pcard h3 { font-size: 16px; font-family: var(--f-body); display: flex; justify-content: space-between; gap: 8px; }
+.pcard h3 span { font-family: var(--f-num); color: var(--muted); }
+.pcard ul { margin: 0; padding-left: 1.1em; font-size: 14px; line-height: 1.6; color: var(--muted); display: grid; gap: 2px; }
+@media (max-width: 900px) { .pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .pgrid { grid-template-columns: minmax(0, 1fr); } }
+
+/* case */
+.case { border-top: 1px solid var(--line); scroll-margin-top: 8px; }
+.case > .in { padding-block: 64px; display: grid; gap: 20px; }
+.qa { display: grid; gap: 16px; }
+.q, .a { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 16px; align-items: start; }
+.mark { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-family: var(--f-num); font-weight: 800; font-size: 26px; line-height: 1; }
+.q { padding-inline: 20px 24px; }
+.q .mark { background: var(--ink); color: var(--bg); }
+.q h2 { font-size: clamp(24px, 3.4vw, 32px); font-weight: 900; padding-top: 2px; max-width: 30em; }
+:lang(en) .q h2 { line-height: 1.3; padding-top: 6px; }
+.a { background: var(--accent-soft); border-radius: 16px; padding: 20px 24px 22px 20px; }
+.a .mark { background: var(--accent); color: var(--bg); }
+.atext { font-size: 20px; font-weight: 700; line-height: 1.65; }
+.blbl { font-size: 13px; font-weight: 700; letter-spacing: .04em; color: var(--muted); margin-bottom: 8px; }
+.a .blbl { color: var(--accent); margin-bottom: 2px; }
+.cbody { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start; }
+.block { border-radius: 16px; padding: 22px 24px; min-width: 0; }
+.block.tables { background: var(--surface); align-self: start; }
+@media (min-width: 901px) { .block.tables { position: sticky; top: 16px; } }
+.block.evidence { background: var(--bg); border: 1.5px solid var(--line); display: grid; gap: 22px; }
+.block.evidence > .blbl { margin-bottom: -8px; }
+.block.trap { background: var(--hot-soft); padding-block: 16px 18px; }
+.block.trap .blbl { color: var(--hot); margin-bottom: 2px; }
+.block.trap p:last-child { font-size: 16px; }
+
+/* vertical table stack */
+.stack { display: grid; gap: 0; }
+.trow { background: var(--bg); border-left: 5px solid var(--c); border-radius: 8px; padding: 10px 14px; display: grid; gap: 2px; }
+.trow b { font-size: 16px; }
+.trow .csv { font-family: var(--f-num); font-size: 13px; color: var(--c); }
+.trow .cols { font-size: 13px; color: var(--muted); line-height: 1.55; }
+.trow.know { background: transparent; border: 1.5px dashed var(--ink); margin-top: 8px; }
+.trow.know b { font-size: 15px; }
+.plbl { font-size: 13px; font-weight: 700; color: var(--muted); margin-top: 18px; }
+.link { display: flex; align-items: center; gap: 8px; padding: 3px 0 3px 22px; font-size: 12px; color: var(--muted); }
+:lang(en) .link { font-family: var(--f-num); }
+.link::before { content: ""; width: 2px; height: 22px; background: var(--line); }
+
+.charts { display: grid; gap: 22px; min-width: 0; }
+.panel { display: grid; gap: 6px; min-width: 0; }
+.panel h3 { font-family: var(--f-body); font-size: 15px; font-weight: 700; }
+:lang(ja) .panel h3 { word-break: auto-phrase; }
+.panel .src { display: block; font-family: var(--f-num); font-size: 12px; color: var(--muted); font-weight: 400; }
+.multi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+svg { width: 100%; height: auto; display: block; overflow: visible; }
+.charts svg text { fill: var(--muted); font-family: var(--f-num); font-size: 12px; }
+.charts svg text.hot { fill: var(--hot); font-weight: 600; }
+.charts svg text.ink { fill: var(--ink); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
+.kpi { border-top: 3px solid var(--ink); padding-top: 8px; display: grid; gap: 2px; }
+.kpi .v { font-family: var(--f-num); font-weight: 800; font-size: 28px; line-height: 1.2; }
+.kpi .t { font-size: 14px; color: var(--muted); line-height: 1.55; }
+
+@media (max-width: 900px) {
+  .cbody { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .multi, .duo { grid-template-columns: minmax(0, 1fr); }
+  .q, .a { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .mark { width: 36px; height: 36px; font-size: 20px; border-radius: 10px; }
+  .block { padding: 18px 16px; }
+  .a { padding: 16px; }
+  .q { padding-inline: 16px; }
+}
+</style>
+
+<div class="in langbar"><div class="lang" role="group" aria-label="Language">
+  <button type="button" data-lang="ja" lang="ja">日本語</button><button type="button" data-lang="en" lang="en">English</button>
+</div></div>
+
+<header class="hero">
+  <div class="in">
+    <h1 id="h1"></h1>
+    <p class="sub" id="sub"></p>
+    <div class="cta"><a class="btn" id="cta" href="https://github.com/YoshitakaArakawa/SampleHyperStore" target="_blank" rel="noopener"></a></div>
+  </div>
+</header>
+
+<section class="maps" id="maps">
+  <div class="in">
+    <div class="map small">
+      <p class="name" id="ss-name"></p>
+      <div class="head"><span class="count">3</span><span class="unit" id="ss-unit"></span><span class="stat" id="ss-stat"></span></div>
+      <div class="frame" id="map-ss"></div>
+    </div>
+    <div class="map big">
+      <p class="name" id="hs-name"></p>
+      <div class="head"><span class="count">12</span><span class="unit" id="hs-unit"></span><span class="stat" id="hs-stat"></span></div>
+      <p class="stat" id="hs-note"></p>
+      <div class="frame" id="map-hs"></div>
+      <div class="domains" id="domains"></div>
+    </div>
+    <div class="map prefs">
+      <p class="name" id="pf-name"></p>
+      <div class="head"><span class="count">16</span><span class="unit" id="pf-unit"></span></div>
+      <p class="stat" id="pf-note"></p>
+      <div class="pgrid" id="pgrid"></div>
+    </div>
+  </div>
+</section>
+
+<main id="cases"></main>
+
+<script>
+const D = {"late_by_wh_month":{"months":["2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12","2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"],"WH-C":[0.0843,0.0889,0.108,0.0711,0.06,0.0748,0.0427,0.0696,0.0696,0.0437,0.1595,0.1076,0.0524,0.0829,0.0802,0.1,0.0924,0.095,0.0654,0.0955,0.0677,0.0595,0.0864,0.1848,0.1189,0.1004,0.1094,0.0872,0.3442,0.4289,0.3499,0.3571,0.382,0.4315,0.4416,0.5182],"WH-E":[0.1048,0.0824,0.0996,0.0913,0.0546,0.0567,0.0552,0.075,0.0894,0.081,0.1435,0.1224,0.0844,0.0667,0.0782,0.0982,0.0753,0.0751,0.0654,0.0819,0.0671,0.0452,0.0646,0.1793,0.0985,0.0828,0.0976,0.1,0.0701,0.1158,0.0564,0.0569,0.0788,0.0592,0.0703,0.163],"WH-W":[0.1575,0.1818,0.1419,0.1124,0.087,0.0709,0.075,0.1042,0.068,0.0621,0.187,0.1592,0.0855,0.07,0.0667,0.1361,0.1357,0.0988,0.1121,0.1111,0.1148,0.0913,0.1125,0.2447,0.1374,0.1421,0.1604,0.117,0.1106,0.1385,0.1073,0.1022,0.0776,0.0782,0.0609,0.206]},"return_cohort":{"months":["2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12","2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"],"rate":[0.0867,0.0813,0.0861,0.0735,0.063,0.0622,0.0656,0.0721,0.0929,0.0908,0.0871,0.0762,0.0821,0.0821,0.0831,0.0693,0.0705,0.0818,0.0874,0.1018,0.1172,0.1191,0.1154,0.1157,0.1225,0.1182,0.0876,0.0785,0.0892,0.1194,0.1086,0.1008,0.1224,0.1286,0.1146,0.0623]},"return_lag_hist":{"before":[409,970,523,229,105,106,0,1,2,0,2,1,0,0],"after":[694,1306,787,419,250,263,118,108,90,115,106,76,0,0]},"monthly_channel":{"months":["2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12","2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"],"app":[33773.0,21051.0,32502.0,38853.0,43794.0,53990.0,51416.0,49297.0,41664.0,63102.0,78613.0,54325.0,53391.0,36775.0,45178.0,51275.0,53920.0,45155.0,57859.0,60640.0,53239.0,48114.0,81449.0,69073.0,40564.0,43746.0,42056.0,36187.0,50030.0,78599.0,60025.0,65404.0,56520.0,64030.0,98178.0,84082.0],"b2b":[90458.0,62955.0,129676.0,198394.0,204338.0,116142.0,70703.0,91930.0,132707.0,84577.0,124074.0,86513.0,88440.0,54485.0,165485.0,204460.0,221298.0,111927.0,73479.0,139255.0,73577.0,111652.0,97622.0,109901.0,87457.0,55104.0,193361.0,172514.0,198963.0,142760.0,68124.0,151672.0,99765.0,84690.0,97977.0,124765.0],"marketplace":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,3214.0,16472.0,25531.0,29524.0,27953.0,31441.0,34324.0,44175.0,32633.0,28609.0,23955.0,27409.0,22711.0,31080.0,33127.0,31013.0,29765.0,29136.0,35343.0,46725.0,40989.0],"web":[129109.0,113222.0,144454.0,168407.0,203238.0,173344.0,162891.0,169305.0,150888.0,180644.0,275829.0,164613.0,155291.0,130222.0,161926.0,170522.0,197161.0,204369.0,192018.0,187131.0,152095.0,177038.0,248561.0,239799.0,128034.0,117997.0,134473.0,133578.0,164784.0,199506.0,208706.0,215633.0,219576.0,204854.0,307778.0,243906.0]},"mk_fee_monthly":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,459.0,2322.0,3830.0,4689.0,4273.0,4613.0,5006.0,6318.0,5689.0,4309.0,3549.0,4151.0,3377.0,4416.0,5136.0,5126.0,4261.0,4415.0,5482.0,5895.0,7424.0],"three_monthly":{"months":["2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"],"order":[297122.0,221482.0,372590.0,429470.0,488850.0,386981.0,352880.0,414979.0,310351.0,371128.0,471806.0,451406.0,284664.0,240802.0,397300.0,364990.0,444858.0,453992.0,367869.0,462474.0,404996.0,388918.0,550658.0,493742.0],"invoice":[295598.0,224555.0,331549.0,437088.0,499123.0,396253.0,354520.0,415677.0,311458.0,361784.0,423397.0,492796.0,293475.0,240765.0,390670.0,356966.0,405084.0,494067.0,378532.0,444128.0,417003.0,382190.0,460644.0,580064.0],"web":[229079.0,182759.0,233316.0,248346.0,282488.0,280936.0,284330.0,278962.0,230286.0,247471.0,377828.0,355264.0,193561.0,185998.0,210478.0,216764.0,254203.0,309961.0,302056.0,319457.0,304275.0,295668.0,451194.0,361989.0]},"west_tent_cancel_monthly":{"months":["2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12","2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"],"rate":[0.0333,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0185,0.0,0.0,0.0,0.0,0.0,0.0,0.0256,0.0548,0.1239,0.0729,0.0435,0.0682,0.0,0.0323,0.0,0.0,0.0732,0.0,0.0125,0.0192,0.0101,0.0,0.0169,0.0233,0.0,0.0152,0.0]},"west_tent_split":{"q":["2023Q1","2023Q2","2023Q3","2023Q4","2024Q1","2024Q2","2024Q3","2024Q4","2025Q1","2025Q2","2025Q3","2025Q4"],"rate":[0.1778,0.2073,0.2247,0.0638,0.2812,0.2584,0.4074,0.125,0.1522,0.184,0.1761,0.1831]},"tent_search_oos_monthly":{"months":["2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12","2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"],"rate":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0173,0.0875,0.1049,0.0541,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},"region_by_year":{"2023":{"R-CENTRAL":542378.0,"R-EAST":1218289.0,"R-MOUNTAIN":0.0,"R-SOUTH":1322672.0,"R-WEST":876678.0},"2024":{"R-CENTRAL":579413.0,"R-EAST":1382938.0,"R-MOUNTAIN":0.0,"R-SOUTH":1596764.0,"R-WEST":984684.0},"2025":{"R-CENTRAL":616052.0,"R-EAST":1511881.0,"R-MOUNTAIN":350342.0,"R-SOUTH":1569127.0,"R-WEST":796186.0}},"old_west_states_by_year":{"2023":876678,"2024":984684,"2025":1043591},"repeat_90d":{"on_time":{"rate":0.2932,"n":6136},"late":{"rate":0.2543,"n":1109}},"arrived_late_returns_by_wh":{"WH-C":{"2023-01":1,"2023-03":1,"2023-04":2,"2023-05":1,"2023-06":2,"2023-07":2,"2023-09":4,"2023-11":1,"2023-12":4,"2024-01":1,"2024-03":2,"2024-04":1,"2024-05":2,"2024-06":3,"2024-07":2,"2024-08":1,"2024-10":2,"2024-11":2,"2024-12":6,"2025-01":3,"2025-03":3,"2025-04":2,"2025-05":5,"2025-06":10,"2025-07":2,"2025-08":6,"2025-09":6,"2025-10":9,"2025-11":13,"2025-12":19},"WH-E":{"2023-01":1,"2023-02":1,"2023-03":1,"2023-04":3,"2023-08":2,"2023-09":5,"2023-11":2,"2023-12":8,"2024-01":1,"2024-03":1,"2024-04":3,"2024-05":2,"2024-07":2,"2024-08":4,"2024-09":1,"2024-10":1,"2024-11":3,"2024-12":7,"2025-01":3,"2025-02":2,"2025-03":4,"2025-04":3,"2025-05":2,"2025-06":8,"2025-07":4,"2025-09":2,"2025-10":1,"2025-11":4,"2025-12":3},"WH-W":{"2023-01":2,"2023-02":2,"2023-03":1,"2023-07":1,"2023-08":1,"2023-11":2,"2023-12":9,"2024-03":3,"2024-05":3,"2024-08":1,"2024-10":1,"2024-11":3,"2024-12":7,"2025-01":4,"2025-03":4,"2025-04":1,"2025-05":1,"2025-06":1,"2025-07":1,"2025-08":1,"2025-09":1,"2025-10":3,"2025-11":3,"2025-12":6}}};
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const pct = v => Math.round(v * 100) + "%";
+const pct1 = v => (v * 100).toFixed(1) + "%";
+const k$ = v => "$" + Math.round(v / 1000).toLocaleString("en-US") + "k";
+
+// table colors (shared); names come from L[lang].tables
+const TC = {
+  web_sessions: "--d-web", web_searches: "--d-web", products: "--d-prod", orders: "--d-order", order_lines: "--d-order",
+  shipments: "--d-ship", shipment_lines: "--d-ship", invoices: "--d-bill", invoice_lines: "--d-bill", credit_memos: "--d-bill",
+  returns: "--d-ret", refunds: "--d-ret",
+};
+const DOMC = ["--d-web", "--d-prod", "--d-order", "--d-ship", "--d-bill", "--d-ret"];
+// join edges of the 12 tables: [from, to, key index into L.keys, label dx, label dy]
+const EDGES = [
+  ["web_searches", "web_sessions", 0], ["web_sessions", "orders", 1], ["orders", "order_lines", 1, 0, -6], ["products", "order_lines", 2],
+  ["orders", "shipments", 1], ["shipments", "shipment_lines", 3, 0, -8], ["order_lines", "shipment_lines", 4, 0, 8], ["shipments", "invoices", 3],
+  ["invoices", "invoice_lines", 5, 0, 65], ["order_lines", "invoice_lines", 4], ["order_lines", "returns", 4],
+  ["returns", "refunds", 6], ["invoices", "credit_memos", 5, 20, -10], ["refunds", "credit_memos", 7, 20, 10],
+];
+
+const L = {
+  ja: {
+    title: "SampleHyperStore の分析体験",
+    h1: ["12 枚の表をまたいで、", "AI と業務の問いを解く。"],
+    sub: "SampleHyperStore は、架空の小売企業の3年分の取引を、受注・出荷・請求・返品・Webの12枚の表に分けたデータセット。「遅配でお客さんは離れたか」「売上が部門で合わないのはなぜか」とAIに尋ねると、AIが表をつないで答えを組み立てる。売上も利益も1枚に入ったSuperstoreでは、こうした問いは立てられない。",
+    cta: "GitHub でデータを見る",
+    mapsLabel: "表のつながり",
+    ssName: "Tableau 定番のサンプル Superstore", tablesUnit: "枚の表", ssStat: "· つながり <b>2</b> 本",
+    hsName: "このデータセット SampleHyperStore", hsStat: "· つながり <b>14</b> 本 · つなぐ鍵 <b>8</b> 種類",
+    hsNote: "箱が 1 枚の表（CSV 1 ファイル）。線の上の文字は、表どうしをつなぐ列。",
+    pfName: "＋ 表の意味を決めるビジネス設定", pfUnit: "件の設定",
+    pfNote: "「売上」はどの売上か、「遅れ」は何日からか。表だけでは決まらない定義を、Tableau Knowledge に書いて AI に渡す。下の 6 つの答えは、すべてこのどれかに頼っている。",
+    ss: { returns: ["Returns", "返品フラグ"], orders: ["Orders", "売上・利益まで全部"], people: ["People", "地域の担当者"], k1: "Order ID", k2: "Region" },
+    tables: { web_sessions: "Web セッション", web_searches: "サイト内検索", products: "商品", orders: "受注", order_lines: "受注明細", shipments: "出荷", shipment_lines: "出荷明細",
+      invoices: "請求書", invoice_lines: "請求明細", credit_memos: "クレジットメモ", returns: "返品", refunds: "返金" },
+    keys: ["セッションID", "注文ID", "商品ID", "出荷ID", "注文明細ID", "請求書ID", "返品ID", "返金ID"],
+    doms: ["Web", "商品", "受注", "出荷", "請求", "返品・返金"],
+    prefs: [
+      ["使い方", ["使うデータソース", "どのデータソースの指標を使ったかを示す"]],
+      ["用語", ["売上の既定の意味", "経理の質問での会計期間", "配達遅れは約束日より後", "検索の結果なしと在庫なし"]],
+      ["方法", ["2025-01-01 の営業地域の再編", "経理の計上ベースで見るクレジット"]],
+      ["複数の表にまたがる指標", ["申請ベースの返品率", "注文コホートの返品率", "受領ベースの返品率", "返品明細の発生率", "純送料コスト", "セッションあたり注文数", "数量ベースのカート放棄率", "受注売上に対するマーケットプレイス手数料率"]],
+    ],
+    aLbl: "データから分かること", tLbl: (n, m) => `使う表 · ${n} 枚 ＋ 設定 ${m} 件`, pLbl: "＋ 頼るビジネス設定", eLbl: "根拠のグラフ", xLbl: "読み違えやすい所",
+    cases: {
+      tents: { ask: "2024年の夏、西部のテントの注文に何が起きたか。",
+        answer: "テントが足りなくなった。2024年5〜9月に、検索・キャンセル・分割出荷の 3 か所へ同時に跡が残っている。",
+        stack: [["web_searches", "検索語・結果のうち在庫ありの件数", "商品 ID"], ["products", "サブカテゴリ（テント）", "商品 ID"], ["order_lines", "注文数量・キャンセル数量・理由", "注文 ID"],
+          ["orders", "注文日・配送先の州", "注文 ID"], ["shipments", "出荷元の倉庫", "出荷 ID"], ["shipment_lines", "出荷した数量"]],
+        prefs: [["用語", "検索の結果なしと在庫なし"], ["方法", "2025-01-01 の営業地域の再編"]],
+        kpis: [["① 10.5%", "2024年8月、テントの検索のうち在庫ありの結果を出せなかった割合（全国）"], ["② 12.4%", "2024年6月、West のテント注文数量のうちキャンセルされた割合"], ["③ 41%", "2024年Q3、West のテント注文のうち別の倉庫から分割出荷になった割合"]],
+        trap: "地域で絞るときは、2025年1月の再編の前後で同じ州の集合を使う。" },
+      sales: { ask: "月の売上が、経理の報告と販売のダッシュボードで合わない。なぜか。",
+        answer: "「売上」が 3 通りあり、数える日が違う。11月は営業と経理で 9 万ドルずれた。どれも間違いではない。",
+        stack: [["web_sessions", "Web 計測の注文金額", "注文 ID"], ["orders", "注文日・販路", "注文 ID"], ["order_lines", "単価・数量・キャンセル", "注文明細 ID"],
+          ["invoice_lines", "請求した数量・単価", "請求書 ID"], ["invoices", "請求日・会計月", "出荷 ID"], ["shipments", "出荷日"]],
+        prefs: [["用語", "売上の既定の意味"], ["用語", "経理の質問での会計期間"]],
+        kpis: [["$550,658", "2025年11月・営業（注文日で数える）"], ["$460,644", "2025年11月・経理（出荷して請求した日で数える）"], ["$451,194", "2025年11月・デジタル（Web とアプリの計測のみ）"]],
+        trap: "11月末のセールの注文は、出荷と請求が 12 月にずれ込む。「売上は？」とだけ聞かれたら、どの定義で答えたかを添える。" },
+      marketplace: { ask: "モールに出店して以来、手数料を引いた後でも、伸びは本物か。",
+        answer: "本物。モール売上の 15% は手数料で消えるが、モールを除いても全社の売上は伸びている。",
+        stack: [["orders", "販路・注文日", "注文 ID"], ["order_lines", "単価・数量・キャンセル", "注文明細 ID"], ["invoice_lines", "請求金額", "請求書 ID"], ["invoices", "モール手数料"]],
+        prefs: [["指標", "受注売上に対するマーケットプレイス手数料率"]],
+        kpis: [["15.2%", "モールの請求売上に占める手数料"], ["$379,862", "2025年のモール受注売上。手数料は $57,539"], ["+12%", "モールを除いても、全社の売上は 2023 → 2025 で伸びている"]],
+        trap: "手数料は受注の表にはない。請求の表の列を、注文明細 ID でつないで持ってくる必要がある。" },
+      carrier: { ask: "配達が遅れた顧客は、遅れなかった顧客より再購入が少ないか。",
+        answer: "少ない。配送業者を替えた倉庫で遅配が 4 割を超え、遅配に遭った顧客ほど戻ってこなくなった。",
+        stack: [["shipments", "倉庫・配送業者・約束日・配達日", "注文 ID"], ["orders", "顧客 ID・注文日", "注文 ID"], ["returns", "返品理由（遅配）"]],
+        prefs: [["用語", "配達遅れは約束日より後"]],
+        kpis: [["1割 → 4割超", "WH-C の遅配率（2025年5月の業者切替の前後）"], ["29.3% → 25.4%", "90 日以内の再購入率。遅配なしと遅配ありの顧客"], ["約 4 倍", "WH-C の「届くのが遅かった」返品（月 2.2 件 → 8.8 件）"]],
+        trap: "遅配は「約束日」基準と「配送業者の見込み日」基準で数字が変わる。お客さんの体験を問うなら約束日。" },
+      window: { ask: "返品期限を 60 日に延ばしたら、返品は増えたのか。遅れて来るようになっただけか。",
+        answer: "両方起きた。遅い返品が新たに現れ、返品率そのものも約 8% から約 11% に上がった。",
+        stack: [["returns", "申請日・返品期限の日数・配達日", "注文明細 ID"], ["order_lines", "注文明細（分母）", "注文 ID"], ["orders", "注文日（注文月でまとめる）"]],
+        prefs: [["指標", "注文コホートの返品率"], ["指標", "申請ベース・受領ベースの返品率（比較用）"]],
+        kpis: [["8% → 11%", "注文月ごとに見た、最終的に返品された割合"], ["30〜60 日目", "期限変更後にだけ現れた、遅い返品"]],
+        trap: "返品率は「申請した月」「受け取った月」「注文した月」のどれで数えるかで答えが変わる。直近の月は返品が出揃っておらず、低く見える。" },
+      west: { ask: "1月以降、West 地域が前年割れしている。本当に業績が悪いのか。",
+        answer: "悪くない。営業地域の線引きが変わっただけで、同じ州で比べ直すと前年より伸びている。",
+        stack: [["invoices", "営業地域・州コード・請求日", "請求書 ID"], ["invoice_lines", "請求金額"]],
+        prefs: [["方法", "2025-01-01 の営業地域の再編", "6 州が West から新設の Mountain へ移った"]],
+        kpis: [["−19%", "営業地域 ID で集計した West（2024 → 2025）"], ["+6%", "再編前の West と同じ 11 州で集計し直すと"]],
+        trap: "再編の事実は表のどこにも書いていない。表が 2 枚の問いでも、ビジネス設定がないと答えを誤る。" },
+    },
+    ch: {
+      tents: ["① 検索で在庫なし（全国）", "② 注文のキャンセル", "③ 別倉庫からの分割出荷", "網掛けは 2024年5〜9月。①は全国のテント検索、②③は旧 West 11 州のテントを含む注文。③は四半期。"],
+      sales: ["3 つの「売上」の月次推移", "受注 / 請求 / Web 計測", "営業（受注・注文日）", "経理（請求・請求日）", "デジタル（Web 計測）", "営業 $551k", "経理 $580k"],
+      mk: ["販路別の月次売上（積み上げ）", ["法人", "Web", "アプリ", "モール"], "モール出店", "モールで払った手数料（月次）"],
+      carrier: ["倉庫別の遅配率", "WH-E・WH-W", "配送業者を切替", "90 日以内に再購入した顧客", ["遅配なし", "遅配あり"], "「届くのが遅い」返品（WH-C・月別件数）", "切替前", "切替後"],
+      window: ["注文月ごとの返品率", "返品期限を 60 日に", "まだ出揃っていない", "配達から返品申請までの日数", "変更前の注文", "変更後の注文", "30〜60 日目", "30〜60 日目：変更後だけに現れる", "日"],
+      west: ["West の請求売上を 2 つの方法で集計", "営業地域 ID = West", "再編前の West と同じ 11 州"],
+    },
+  },
+  en: {
+    title: "SampleHyperStore: analyses across 12 tables",
+    h1: ["Ask AI business questions", "that span 12 tables."],
+    sub: "SampleHyperStore splits three years of a fictional retailer's transactions into 12 tables: orders, shipments, invoices, returns and web. Ask an AI “Did late deliveries drive customers away?” or “Why don't the departments agree on revenue?”, and it joins the tables to build the answer. Superstore keeps sales and profit in one table, so these questions can't even be asked of it.",
+    cta: "See the data on GitHub",
+    mapsLabel: "How the tables connect",
+    ssName: "Superstore, Tableau's classic sample", tablesUnit: "tables", ssStat: "· <b>2</b> links",
+    hsName: "This dataset: SampleHyperStore", hsStat: "· <b>14</b> links · <b>8</b> kinds of key",
+    hsNote: "Each box is one table (one CSV). The text on a line is the column that joins the two tables.",
+    pfName: "+ Business settings that define what the tables mean", pfUnit: "settings",
+    pfNote: "Which “sales”? How many days count as “late”? Definitions the tables can't settle are written in Tableau Knowledge and handed to the AI. Every answer below relies on at least one of them.",
+    ss: { returns: ["Returns", "Return flag"], orders: ["Orders", "Sales and profit, all in one"], people: ["People", "Regional manager"], k1: "Order ID", k2: "Region" },
+    tables: { web_sessions: "Web sessions", web_searches: "Site searches", products: "Products", orders: "Orders", order_lines: "Order lines", shipments: "Shipments", shipment_lines: "Shipment lines",
+      invoices: "Invoices", invoice_lines: "Invoice lines", credit_memos: "Credit memos", returns: "Returns", refunds: "Refunds" },
+    keys: ["session_id", "order_id", "product_id", "shipment_id", "order_line_id", "invoice_id", "return_id", "refund_id"],
+    doms: ["Web", "Products", "Orders", "Shipping", "Billing", "Returns & refunds"],
+    prefs: [
+      ["Usage", ["Which data sources to use", "Say which data source's metric you used"]],
+      ["Term", ["Default meaning of sales and revenue", "Fiscal periods for Finance questions", "Late delivery means after the promised date", "No results vs nothing in stock in search"]],
+      ["Method", ["Sales region realignment on 2025-01-01", "Finance posting view of credits"]],
+      ["Cross-source metric", ["Requested return rate", "Order-cohort return rate", "Received return rate", "Return line incidence", "Net shipping cost", "Orders per session", "Unit cart abandonment", "Marketplace fee rate on booked sales"]],
+    ],
+    aLbl: "What the data shows", tLbl: (n, m) => `Tables used · ${n} + ${m} setting${m > 1 ? "s" : ""}`, pLbl: "+ Business settings it relies on", eLbl: "Evidence", xLbl: "Easy to misread",
+    cases: {
+      tents: { ask: "What happened to tent orders in the West in summer 2024?",
+        answer: "Tents ran short. From May to September 2024, the shortage left traces in three places at once: search, cancellations and split shipments.",
+        stack: [["web_searches", "Search term, in-stock result count", "product_id"], ["products", "Subcategory (tents)", "product_id"], ["order_lines", "Qty ordered, qty cancelled, reason", "order_id"],
+          ["orders", "Order date, ship-to state", "order_id"], ["shipments", "Shipping warehouse", "shipment_id"], ["shipment_lines", "Qty shipped"]],
+        prefs: [["Term", "No results vs nothing in stock in search"], ["Method", "Sales region realignment on 2025-01-01"]],
+        kpis: [["① 10.5%", "Aug 2024: tent searches that showed no in-stock result (nationwide)"], ["② 12.4%", "Jun 2024: West tent units ordered that were cancelled"], ["③ 41%", "2024 Q3: West tent orders split, with part shipped from another warehouse"]],
+        trap: "When you filter by region, use the same set of states before and after the January 2025 realignment." },
+      sales: { ask: "Finance's report and the sales dashboard disagree on monthly revenue. Why?",
+        answer: "There are three kinds of “revenue”, each counted on a different date. In November, Sales and Finance were $90k apart. None of them is wrong.",
+        stack: [["web_sessions", "Order amount tracked on the web", "order_id"], ["orders", "Order date, channel", "order_id"], ["order_lines", "Unit price, qty, cancellations", "order_line_id"],
+          ["invoice_lines", "Qty and unit price invoiced", "invoice_id"], ["invoices", "Invoice date, fiscal month", "shipment_id"], ["shipments", "Ship date"]],
+        prefs: [["Term", "Default meaning of sales and revenue"], ["Term", "Fiscal periods for Finance questions"]],
+        kpis: [["$550,658", "Nov 2025 · Sales (counted by order date)"], ["$460,644", "Nov 2025 · Finance (counted by invoice date, after shipping)"], ["$451,194", "Nov 2025 · Digital (web and app tracking only)"]],
+        trap: "Orders from the late-November sale are shipped and invoiced in December. When someone asks just for “revenue”, say which definition you used." },
+      marketplace: { ask: "Since we launched on the marketplace, how much of our growth is real after fees?",
+        answer: "It is real. Fees take 15% of marketplace revenue, but company sales grow even without the marketplace.",
+        stack: [["orders", "Channel, order date", "order_id"], ["order_lines", "Unit price, qty, cancellations", "order_line_id"], ["invoice_lines", "Invoiced amount", "invoice_id"], ["invoices", "Marketplace fee"]],
+        prefs: [["Metric", "Marketplace fee rate on booked sales"]],
+        kpis: [["15.2%", "Fees as a share of invoiced marketplace revenue"], ["$379,862", "Marketplace booked sales in 2025; fees were $57,539"], ["+12%", "Company sales grew from 2023 to 2025 even without the marketplace"]],
+        trap: "The fee is not in the order tables. You have to bring it over from the invoice tables, joined on order_line_id." },
+      carrier: { ask: "Do customers who got a late delivery buy again less often than those who didn't?",
+        answer: "Yes. At the warehouse that switched carriers, more than 40% of deliveries arrived late, and customers hit by a late delivery came back less.",
+        stack: [["shipments", "Warehouse, carrier, promised and delivered dates", "order_id"], ["orders", "Customer ID, order date", "order_id"], ["returns", "Return reason (arrived late)"]],
+        prefs: [["Term", "Late delivery means after the promised date"]],
+        kpis: [["10% → 40%+", "WH-C late-delivery rate, before and after the May 2025 carrier switch"], ["29.3% → 25.4%", "Repeat purchase within 90 days: on-time vs late customers"], ["About 4×", "WH-C returns for “arrived too late” (2.2 → 8.8 a month)"]],
+        trap: "Late counts change depending on whether you use the promised date or the carrier's estimated date. For the customer's experience, use the promised date." },
+      window: { ask: "Did extending the return window to 60 days raise returns, or just delay them?",
+        answer: "Both. Late returns appeared, and the return rate itself rose from about 8% to about 11%.",
+        stack: [["returns", "Request date, return window days, delivery date", "order_line_id"], ["order_lines", "Order lines (the denominator)", "order_id"], ["orders", "Order date (grouped by order month)"]],
+        prefs: [["Metric", "Order-cohort return rate"], ["Metric", "Requested and received return rates (for comparison)"]],
+        kpis: [["8% → 11%", "Share eventually returned, by order month"], ["Days 30–60", "Late returns that appear only after the change"]],
+        trap: "The return rate depends on whether you count by request month, receipt month or order month. Recent months look low because their returns are not all in yet." },
+      west: { ask: "Our West region is down year over year since January. Is business actually worse there?",
+        answer: "No. Only the region lines moved. Compared on the same states, the West grew over last year.",
+        stack: [["invoices", "Sales region, state code, invoice date", "invoice_id"], ["invoice_lines", "Invoiced amount"]],
+        prefs: [["Method", "Sales region realignment on 2025-01-01", "6 states moved from West to the new Mountain region"]],
+        kpis: [["−19%", "West by sales region ID (2024 → 2025)"], ["+6%", "Recounted on the same 11 states as the old West"]],
+        trap: "The realignment is not written anywhere in the tables. Even a two-table question goes wrong without the business setting." },
+    },
+    ch: {
+      tents: ["① Searches with nothing in stock (nationwide)", "② Cancelled units", "③ Split shipments from another warehouse", "Shaded: May–Sep 2024. ① is all tent searches nationwide; ② and ③ are orders with tents in the 11 old-West states. ③ is quarterly."],
+      sales: ["Three kinds of “revenue”, by month", "orders / invoices / web tracking", "Sales (orders, by order date)", "Finance (invoices, by invoice date)", "Digital (web tracking)", "Sales $551k", "Finance $580k"],
+      mk: ["Monthly sales by channel (stacked)", ["B2B", "Web", "App", "Marketplace"], "Marketplace launch", "Marketplace fees paid (monthly)"],
+      carrier: ["Late-delivery rate by warehouse", "WH-E and WH-W", "Carrier switched", "Customers who bought again within 90 days", ["On time", "Late"], "“Arrived too late” returns (WH-C, per month)", "Before switch", "After switch"],
+      window: ["Return rate by order month", "Return window to 60 days", "Not all in yet", "Days from delivery to return request", "Orders before the change", "Orders after the change", "Days 30–60", "Days 30–60: only after the change", "d"],
+      west: ["West invoiced sales, counted two ways", "Sales region ID = West", "Same 11 states as the old West"],
+    },
+  },
+};
+const ORDER = ["tents", "sales", "marketplace", "carrier", "window", "west"];
+let lang = "ja", t = L.ja;
+
+const NS = "http://www.w3.org/2000/svg";
+function el(tg, a, p) { const e = document.createElementNS(NS, tg); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
+function tx(p, x, y, s, a = {}, cls) { const e = el("text", { x, y, ...a }, p); e.textContent = s; if (cls) e.setAttribute("class", cls); return e; }
+function svg(host, W, H) { const s = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" }); host.appendChild(s); return s; }
+const fit = (host, W) => { const w = host.clientWidth; return w > 0 && w < W ? Math.max(280, Math.round(w)) : W; };
+const textW = s => [...s].reduce((a, ch) => a + (ch.charCodeAt(0) > 255 ? 12.5 : 7.2), 0);
+
+// join diagrams (edge labels are drawn last so they stay readable where they touch a box)
+function diagram(host, W, H, nodes, edges, nw, nh) {
+  const s = svg(host, W, H), c = k => [nodes[k].x + nw / 2, nodes[k].y + nh / 2];
+  edges.forEach(([a, b]) => { const [x1, y1] = c(a), [x2, y2] = c(b); el("line", { x1, y1, x2, y2, stroke: css("--edge"), "stroke-width": 1.6 }, s); });
+  Object.values(nodes).forEach(n => {
+    el("rect", { x: n.x, y: n.y, width: nw, height: nh, rx: 8, fill: css("--bg"), stroke: n.c ? css(n.c) : css("--ink"), "stroke-width": 1.5 }, s);
+    el("rect", { x: n.x, y: n.y, width: 6, height: nh, rx: 3, fill: n.c ? css(n.c) : css("--ink") }, s);
+    tx(s, n.x + 16, n.y + 24, n.jp, {}, "node-jp");
+    tx(s, n.x + 16, n.y + 43, n.en, {}, "node-en");
+  });
+  edges.forEach(([a, b, key, dx = 0, dy = 0]) => {
+    const [x1, y1] = c(a), [x2, y2] = c(b), mx = (x1 + x2) / 2 + dx, my = (y1 + y2) / 2 + dy, w = textW(key) + 14;
+    el("rect", { x: mx - w / 2, y: my - 11, width: w, height: 22, rx: 11, fill: css("--surface"), stroke: css("--line") }, s);
+    tx(s, mx, my + 4.5, key, { "text-anchor": "middle" }, "edge-lb");
+  });
+}
+function drawMaps() {
+  ["map-ss", "map-hs"].forEach(id => document.getElementById(id).innerHTML = "");
+  const ss = t.ss;
+  diagram(document.getElementById("map-ss"), 660, 80, {
+    returns: { x: 4, y: 12, jp: ss.returns[0], en: ss.returns[1] },
+    orders: { x: 244, y: 12, jp: ss.orders[0], en: ss.orders[1] },
+    people: { x: 484, y: 12, jp: ss.people[0], en: ss.people[1] },
+  }, [["returns", "orders", ss.k1], ["orders", "people", ss.k2]], 172, 56);
+  const N = (k, x, y) => ({ x, y, jp: t.tables[k], en: k, c: TC[k] });
+  diagram(document.getElementById("map-hs"), 1110, 540, {
+    web_searches: N("web_searches", 20, 30), web_sessions: N("web_sessions", 20, 250),
+    orders: N("orders", 250, 250), products: N("products", 250, 460),
+    shipments: N("shipments", 480, 30), order_lines: N("order_lines", 480, 300), returns: N("returns", 480, 460),
+    invoices: N("invoices", 720, 30), shipment_lines: N("shipment_lines", 720, 160), invoice_lines: N("invoice_lines", 720, 300), refunds: N("refunds", 720, 460),
+    credit_memos: N("credit_memos", 925, 240),
+  }, EDGES.map(([a, b, ki, dx, dy]) => [a, b, t.keys[ki], dx, dy]), 172, 56);
+}
+
+function renderText() {
+  document.documentElement.lang = lang;
+  document.title = t.title;
+  document.getElementById("h1").innerHTML = t.h1.map(s => `<span class="ln">${s}</span>`).join("");
+  document.getElementById("sub").textContent = t.sub;
+  document.getElementById("cta").textContent = t.cta;
+  document.getElementById("maps").setAttribute("aria-label", t.mapsLabel);
+  const set = (id, h) => document.getElementById(id).innerHTML = h;
+  set("ss-name", t.ssName); set("ss-unit", t.tablesUnit); set("ss-stat", t.ssStat);
+  set("hs-name", t.hsName); set("hs-unit", t.tablesUnit); set("hs-stat", t.hsStat); set("hs-note", t.hsNote);
+  set("pf-name", t.pfName); set("pf-unit", t.pfUnit); set("pf-note", t.pfNote);
+  set("pgrid", t.prefs.map(([g, xs]) => `<div class="pcard"><h3>${g}<span>${xs.length}</span></h3><ul>${xs.map(x => `<li>${x}</li>`).join("")}</ul></div>`).join(""));
+  set("domains", t.doms.map((n, i) => `<span style="--c:var(${DOMC[i]})"><i></i>${n}</span>`).join(""));
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+
+  const main = document.getElementById("cases");
+  main.innerHTML = "";
+  ORDER.forEach(id => {
+    const c = t.cases[id];
+    const title = lang === "ja" ? c.ask.split(/(?<=。)/).map(s => `<span class="ln">${s}</span>`).join("") : c.ask;
+    const st = c.stack.map(([k, cols, link]) => `<div class="trow" style="--c:var(${TC[k]})"><b>${t.tables[k]}</b><span class="csv">${k}.csv</span><span class="cols">${cols}</span></div>${link ? `<div class="link">${link}</div>` : ""}`).join("")
+      + `<p class="plbl">${t.pLbl}</p>` + c.prefs.map(([g, n, note]) => `<div class="trow know"><span class="cols">${g}</span><b>${n}</b>${note ? `<span class="cols">${note}</span>` : ""}</div>`).join("");
+    main.insertAdjacentHTML("beforeend", `
+    <section class="case" id="${id}"><div class="in">
+      <div class="qa">
+        <div class="q"><span class="mark" aria-hidden="true">Q</span><h2>${title}</h2></div>
+        <div class="a"><span class="mark" aria-hidden="true">A</span><div><p class="blbl">${t.aLbl}</p><p class="atext">${c.answer}</p></div></div>
+      </div>
+      <div class="cbody">
+        <aside class="block tables"><p class="blbl">${t.tLbl(c.stack.length, c.prefs.length)}</p><div class="stack">${st}</div></aside>
+        <div class="block evidence"><p class="blbl">${t.eLbl}</p><div class="charts"></div>
+          <div class="kpis">${c.kpis.map(([v, d]) => `<div class="kpi"><span class="v">${v}</span><span class="t">${d}</span></div>`).join("")}</div></div>
+      </div>
+      <div class="block trap"><p class="blbl">${t.xLbl}</p><p>${c.trap}</p></div>
+    </div></section>`);
+  });
+}
+
+// chart helpers
+function panel(host, title, src) { const d = document.createElement("div"); d.className = "panel"; d.innerHTML = `<h3>${title}${src ? `<span class="src">${src}</span>` : ""}</h3>`; host.appendChild(d); return d; }
+function legend(host, items) { host.insertAdjacentHTML("beforeend", `<div class="legend">${items.map(([n, c]) => `<span><i style="background:${c}"></i>${n}</span>`).join("")}</div>`); }
+
+function lines(host, xs, series, o) {
+  const W = fit(host, o.W || 640), H = o.H || 260, L = o.L ?? 48, R = 16, Tp = 18, B = 26, s = svg(host, W, H);
+  const lo = o.min || 0, x = i => L + i * (W - L - R) / (xs.length - 1), y = v => Tp + (1 - (v - lo) / (o.max - lo)) * (H - Tp - B);
+  (o.bands || []).forEach(([a, b, lb]) => { const i = xs.indexOf(a), j = xs.indexOf(b); el("rect", { x: x(i), y: Tp, width: x(j) - x(i), height: H - Tp - B, fill: css("--hot-soft") }, s); if (lb) tx(s, x(i) + 4, Tp - 4, lb, {}, "hot"); });
+  o.ticks.forEach(v => { el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: css("--grid") }, s); tx(s, L - 8, y(v) + 4, o.fmt(v), { "text-anchor": "end" }); });
+  xs.forEach((m, i) => { if (m.endsWith(o.xEvery || "-01")) tx(s, x(i), H - 6, o.xfmt ? o.xfmt(m) : m.slice(0, 4), { "text-anchor": "middle" }); });
+  (o.marks || []).forEach(([m, lb]) => { const i = xs.indexOf(m); el("line", { x1: x(i), x2: x(i), y1: Tp, y2: H - B, stroke: css("--hot"), "stroke-dasharray": "4 3", "stroke-width": 1.5 }, s); tx(s, x(i) + 5, Tp + 2, lb, {}, "hot"); });
+  series.forEach(se => {
+    const pts = se.v.map((v, i) => v == null ? null : [x(i), y(v)]).filter(Boolean);
+    el("path", { d: "M" + pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" L"), fill: "none", stroke: se.c, "stroke-width": se.w || 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, s);
+    if (se.end !== false) { const lp = pts[pts.length - 1]; el("circle", { cx: lp[0], cy: lp[1], r: 3.5, fill: se.c }, s); }
+  });
+  (o.notes || []).forEach(([m, v, lb, anchor, dy = -8]) => { const i = xs.indexOf(m); el("circle", { cx: x(i), cy: y(v), r: 5, fill: "none", stroke: css("--hot"), "stroke-width": 2 }, s); tx(s, x(i) + (anchor === "end" ? -9 : 9), y(v) + dy, lb, { "text-anchor": anchor || "start" }, "hot"); });
+}
+function vbars(host, labels, vals, o) {
+  const W = fit(host, o.W || 640), H = o.H || 220, L = o.L ?? 44, R = 10, Tp = 18, B = 26, s = svg(host, W, H), bw = (W - L - R) / labels.length;
+  const y = v => Tp + (1 - v / o.max) * (H - Tp - B);
+  o.ticks.forEach(v => { el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: css("--grid") }, s); tx(s, L - 6, y(v) + 4, o.fmt(v), { "text-anchor": "end" }); });
+  labels.forEach((lb, i) => {
+    const hot = o.hot && o.hot(lb, i), v = vals[i];
+    el("rect", { x: L + i * bw + bw * .15, y: y(v), width: bw * .7, height: H - B - y(v), rx: 2, fill: hot ? css("--hot") : (o.color || css("--dim")) }, s);
+    const xl = o.xl && o.xl(lb, i); if (xl) tx(s, L + i * bw + bw / 2, H - 6, xl, { "text-anchor": "middle" });
+    if (o.vlabel && o.vlabel(lb, i)) tx(s, L + i * bw + bw / 2, y(v) - 5, o.fmt(v), { "text-anchor": "middle" }, hot ? "hot" : "ink");
+  });
+}
+function groups(host, cats, series, o) {
+  const W = fit(host, o.W || 640), H = o.H || 240, L = o.L ?? 56, R = 10, Tp = 22, B = 28, s = svg(host, W, H), gw = (W - L - R) / cats.length, bw = gw * .7 / series.length;
+  const y = v => Tp + (1 - v / o.max) * (H - Tp - B);
+  o.ticks.forEach(v => { el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: css("--grid") }, s); tx(s, L - 6, y(v) + 4, o.fmt(v), { "text-anchor": "end" }); });
+  cats.forEach((c, i) => {
+    series.forEach((se, j) => { const v = se.v[i], xx = L + i * gw + gw * .15 + j * bw; el("rect", { x: xx, y: y(v), width: bw - 4, height: H - B - y(v), rx: 2, fill: se.c }, s); tx(s, xx + (bw - 4) / 2, y(v) - 6, o.fmt(v), { "text-anchor": "middle" }, "ink"); });
+    tx(s, L + i * gw + gw / 2, H - 6, c, { "text-anchor": "middle" });
+  });
+}
+const win = (obj, a, b) => { const i = obj.months.indexOf(a), j = obj.months.indexOf(b); return { months: obj.months.slice(i, j + 1), rate: obj.rate.slice(i, j + 1) }; };
+
+const DRAW = {
+  tents(h) {
+    const g = t.ch.tents, m = document.createElement("div"); m.className = "multi"; h.appendChild(m);
+    const s1 = win(D.tent_search_oos_monthly, "2023-07", "2025-06");
+    lines(panel(m, g[0], "web_searches"), s1.months, [{ v: s1.rate, c: css("--d-web"), w: 2.5, end: false }], { W: 300, H: 190, L: 38, max: .12, ticks: [0, .04, .08, .12], fmt: pct, bands: [["2024-05", "2024-09"]] });
+    const s2 = win(D.west_tent_cancel_monthly, "2023-07", "2025-06");
+    lines(panel(m, g[1], "order_lines"), s2.months, [{ v: s2.rate, c: css("--d-order"), w: 2.5, end: false }], { W: 300, H: 190, L: 38, max: .15, ticks: [0, .05, .1, .15], fmt: pct, bands: [["2024-05", "2024-09"]] });
+    const q = D.west_tent_split, qi = q.q.indexOf("2023Q3"), qq = q.q.slice(qi, qi + 8), qv = q.rate.slice(qi, qi + 8);
+    vbars(panel(m, g[2], "shipments"), qq, qv, { W: 300, H: 190, L: 38, max: .5, ticks: [0, .25, .5], fmt: pct, hot: l => l === "2024Q3", vlabel: l => l === "2024Q3", xl: l => l.endsWith("Q1") ? l.slice(0, 4) : "", color: css("--d-ship") });
+    h.insertAdjacentHTML("beforeend", `<p class="legend">${g[3]}</p>`);
+  },
+  sales(h) {
+    const g = t.ch.sales, d = D.three_monthly, p = panel(h, g[0], g[1]);
+    legend(p, [[g[2], css("--d-order")], [g[3], css("--d-bill")], [g[4], css("--d-web")]]);
+    lines(p, d.months, [{ v: d.web, c: css("--d-web"), w: 2 }, { v: d.invoice, c: css("--d-bill"), w: 2.5 }, { v: d.order, c: css("--d-order"), w: 2.5 }],
+      { max: 600000, ticks: [0, 200000, 400000, 600000], fmt: k$, L: 52, notes: [["2025-11", 550658, g[5], "end", 22], ["2025-12", 580064, g[6], "end"]] });
+  },
+  marketplace(h) {
+    const g = t.ch.mk, mc = D.monthly_channel, keys = [["b2b", css("--d-prod")], ["web", css("--d-web")], ["app", css("--d-order")], ["marketplace", css("--d-ship")]];
+    const p = panel(h, g[0], "orders + order_lines");
+    legend(p, keys.map(([, c], i) => [g[1][i], c]));
+    const W = fit(p, 640), H = 300, Lm = 52, R = 16, Tp = 14, B = 26, s = svg(p, W, H), n = mc.months.length, x = i => Lm + i * (W - Lm - R) / (n - 1);
+    const max = 700000, y = v => Tp + (1 - v / max) * (H - Tp - B);
+    [0, 200000, 400000, 600000].forEach(v => { el("line", { x1: Lm, x2: W - R, y1: y(v), y2: y(v), stroke: css("--grid") }, s); tx(s, Lm - 8, y(v) + 4, k$(v), { "text-anchor": "end" }); });
+    let base = Array(n).fill(0);
+    keys.forEach(([k, c]) => { const top = base.map((b, i) => b + mc[k][i]);
+      const d = "M" + top.map((v, i) => `${x(i)},${y(v)}`).join(" L") + " L" + base.map((v, i) => `${x(i)},${y(v)}`).reverse().join(" L") + " Z";
+      el("path", { d, fill: c, opacity: .88 }, s); base = top; });
+    mc.months.forEach((m, i) => { if (m.endsWith("-01")) tx(s, x(i), H - 6, m.slice(0, 4), { "text-anchor": "middle" }); });
+    const i0 = mc.months.indexOf("2024-04"); el("line", { x1: x(i0), x2: x(i0), y1: Tp, y2: H - B, stroke: css("--hot"), "stroke-dasharray": "4 3", "stroke-width": 1.5 }, s); tx(s, x(i0) + 5, Tp + 10, g[2], {}, "hot");
+    const fm = mc.months.map((m, i) => ({ m, fee: D.mk_fee_monthly[i] })).filter(r => r.m >= "2024-04");
+    vbars(panel(h, g[3], "invoices"), fm.map(r => r.m), fm.map(r => r.fee), { H: 170, max: 8000, ticks: [0, 4000, 8000], fmt: v => "$" + (v / 1000).toFixed(0) + "k", color: css("--hot"), xl: m => m.endsWith("-01") ? m.slice(0, 4) : "" });
+  },
+  carrier(h) {
+    const g = t.ch.carrier, l = D.late_by_wh_month, p = panel(h, g[0], "shipments");
+    legend(p, [["WH-C", css("--d-ship")], [g[1], css("--dim")]]);
+    lines(p, l.months, [{ v: l["WH-E"], c: css("--dim"), w: 1.5 }, { v: l["WH-W"], c: css("--dim"), w: 1.5 }, { v: l["WH-C"], c: css("--d-ship"), w: 3 }], { max: .6, ticks: [0, .2, .4, .6], fmt: pct, marks: [["2025-05", g[2]]] });
+    const d = document.createElement("div"); d.className = "duo"; h.appendChild(d);
+    const r = D.repeat_90d;
+    groups(panel(d, g[3], "shipments + orders"), g[4], [{ v: [r.on_time.rate, r.late.rate], c: css("--d-order") }], { W: 300, H: 200, L: 38, max: .35, ticks: [0, .1, .2, .3], fmt: pct1 });
+    const al = D.arrived_late_returns_by_wh["WH-C"] || {}, ms = l.months.filter(m => m >= "2024-05"), av = ms.map(m => al[m] || 0);
+    const pr = panel(d, g[5], "returns"); legend(pr, [[g[6], css("--dim")], [g[7], css("--hot")]]); vbars(pr, ms, av, { W: 300, H: 200, L: 30, max: 20, ticks: [0, 10, 20], fmt: v => v, hot: m => m >= "2025-05", xl: m => m.endsWith("-01") ? m.slice(0, 4) : "", color: css("--dim") });
+  },
+  window(h) {
+    const g = t.ch.window, c = D.return_cohort, p = panel(h, g[0], "returns + order_lines + orders");
+    lines(p, c.months, [{ v: c.rate, c: css("--d-ret"), w: 3 }], { max: .14, ticks: [0, .04, .08, .12], fmt: pct, marks: [["2024-07", g[1]]], notes: [["2025-12", c.rate[c.rate.length - 1], g[2], "end"]] });
+    const lag = D.return_lag_hist, n = 12, nb = lag.before.slice(0, n), na = lag.after.slice(0, n), sb = nb.reduce((a, b) => a + b), sa = na.reduce((a, b) => a + b);
+    const q = panel(h, g[3], "returns");
+    legend(q, [[g[4], css("--dim")], [g[5], css("--d-ret")]]);
+    const W = fit(q, 640), H = 200, Lm = 44, R = 10, Tp = 10, B = 24, s = svg(q, W, H), bw = (W - Lm - R) / n, y = v => Tp + (1 - v / .45) * (H - Tp - B);
+    [0, .2, .4].forEach(v => { el("line", { x1: Lm, x2: W - R, y1: y(v), y2: y(v), stroke: css("--grid") }, s); tx(s, Lm - 6, y(v) + 4, pct(v), { "text-anchor": "end" }); });
+    el("rect", { x: Lm + 6 * bw, y: Tp, width: 6 * bw, height: H - Tp - B, fill: css("--hot-soft") }, s); tx(s, Lm + 6 * bw + 6, Tp + 14, (W < 520 ? g[6] : g[7]), {}, "hot");
+    for (let i = 0; i < n; i++) { const a = nb[i] / sb, b = na[i] / sa;
+      el("rect", { x: Lm + i * bw + bw * .1, y: y(a), width: bw * .38, height: H - B - y(a), fill: css("--dim") }, s);
+      el("rect", { x: Lm + i * bw + bw * .52, y: y(b), width: bw * .38, height: H - B - y(b), fill: css("--d-ret") }, s);
+      if (i % 2 === 0) tx(s, Lm + i * bw + bw / 2, H - 6, i * 5 + g[8], { "text-anchor": "middle" }); }
+  },
+  west(h) {
+    const g = t.ch.west, rb = D.region_by_year, ow = D.old_west_states_by_year, p = panel(h, g[0], "invoices + invoice_lines");
+    legend(p, [[g[1], css("--hot")], [g[2], css("--d-bill")]]);
+    groups(p, ["2023", "2024", "2025"], [{ v: ["2023", "2024", "2025"].map(yr => rb[yr]["R-WEST"]), c: css("--hot") }, { v: ["2023", "2024", "2025"].map(yr => ow[yr]), c: css("--d-bill") }], { max: 1200000, ticks: [0, 400000, 800000, 1200000], fmt: k$, H: 260 });
+  },
+};
+function drawCharts() { drawMaps(); ORDER.forEach(id => { const h = document.querySelector(`#${id} .charts`); h.innerHTML = ""; DRAW[id](h); }); }
+
+// language: ?lang= in the URL, else the browser's language (Japanese → ja, anything else → en)
+function pickLang() {
+  try { const q = new URLSearchParams(location.search).get("lang"); if (q === "ja" || q === "en") return q; } catch (e) {}
+  const nav = (navigator.languages && navigator.languages[0]) || navigator.language || "ja";
+  return nav.toLowerCase().startsWith("ja") ? "ja" : "en";
+}
+function setLang(l, push) {
+  lang = l; t = L[l]; renderText(); drawCharts();
+  if (push) { try { const u = new URL(location.href); u.searchParams.set("lang", l); history.replaceState(null, "", u); } catch (e) {} }
+}
+document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => { if (b.dataset.lang !== lang) setLang(b.dataset.lang, true); }));
+setLang(pickLang(), false);
+let rz, lastW = innerWidth; addEventListener("resize", () => { if (innerWidth === lastW) return; lastW = innerWidth; clearTimeout(rz); rz = setTimeout(drawCharts, 200); });
+</script>
