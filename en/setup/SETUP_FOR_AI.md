@@ -13,7 +13,7 @@ Project B (rpt_ layer)     6 published data sources "rpt_samplehyperstore__<dept
 Tableau Knowledge (opt.)   a graph over the 18 data sources + 16 Business Preferences <- web UI + Tableau MCP
 ```
 
-The 12 tables are: products, orders, order_lines, shipments, shipment_lines, returns, refunds, invoices, invoice_lines, credit_memos, web_sessions, web_searches. The other 12 CSVs in `../csv/` are not part of this setup.
+The 12 tables are: products, orders, order_lines, shipments, shipment_lines, returns, refunds, invoices, invoice_lines, credit_memos, web_sessions, web_searches. Their CSVs are in `../csv/in_use/`. The other 12 CSVs, in `../csv/planned/`, are not part of this setup.
 
 ## Rules
 
@@ -134,7 +134,7 @@ Check: `check_metadata.py --layer rpt` shows the descriptions, and the same tota
 
 ## Step 5. Try it
 
-The setup is usable now. Give the user `../docs/questions.md`: 19 of the 40 questions (marked "Tableau setup") can be asked against these six data sources.
+The setup is usable now. Give the user `../docs/questions.md`: all 19 questions can be asked against these six data sources.
 
 ## Step 6. Tableau Knowledge (optional, Tableau+)
 

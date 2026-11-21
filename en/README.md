@@ -8,9 +8,10 @@ Tableau's classic sample data is one tidy table with ready-made profit and sales
 
 | Folder | Contents |
 |---|---|
-| `csv/` | 24 tables of a fictional US retailer of outdoor and home & garden goods (web store, app, marketplaces, B2B), 2023-01-01 to 2025-12-31, about 105 MB. Checksums in `SHA256SUMS`. |
+| `csv/in_use/` | The 12 tables the Tableau setup uses: a fictional US retailer of outdoor and home & garden goods (web store, app, marketplaces, B2B), 2023-01-01 to 2025-12-31. Checksums for all CSVs in `SHA256SUMS`. |
+| `csv/planned/` | 12 more tables of the same world (marketing, customers, inventory, procurement, support, targets), not used by the setup yet. About 110 MB with `in_use/`. |
 | `docs/data_dictionary.md` | Tables, grains, keys and columns. |
-| `docs/questions.md` | 40 business questions to ask an AI agent. The intended answers are not published. |
+| `docs/questions.md` | 19 business questions to ask an AI agent. The intended answers are not published. |
 | `setup/` | Everything needed to put 12 of the tables on Tableau Cloud with descriptions, 53 calculated fields and Tableau Knowledge Business Preferences. |
 | `generator/` | The code that generates the CSVs (fixed seed, byte-identical output). |
 

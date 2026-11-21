@@ -1,7 +1,7 @@
 """Build the Japanese edition of SampleHyperStore from the English CSVs.
 
-Reads  ../en/csv/*.csv, translation/columns.yaml, translation/values.yaml
-Writes csv/*.csv (UTF-8, no BOM, LF, same row order, Japanese header), columns.yaml, SHA256SUMS
+Reads  ../en/csv/<folder>/*.csv, translation/columns.yaml, translation/values.yaml
+Writes csv/<folder>/*.csv (same folders as the English edition; UTF-8, no BOM, LF, same row order, Japanese header), columns.yaml, SHA256SUMS
 
 Only column names and the categorical / free-text values listed in translation/values.yaml change.
 IDs, codes, dates, timestamps, numbers and booleans are copied as they are.
@@ -30,6 +30,22 @@ OUT_CSV = HERE / "csv"
 # A file must stay below this size (GitHub warns at 50 MB). A table that exceeds it is split by year.
 MAX_BYTES = 50_000_000
 SPLIT_BY_YEAR = {"web_sessions": "session_start_date"}
+
+
+def en_csv(table) -> Path:
+    """The English CSV of a table: csv/in_use/<table>.csv or csv/planned/<table>.csv."""
+    hits = sorted(EN_CSV.glob(f"*/{table}.csv"))
+    if len(hits) != 1:
+        raise SystemExit(f"{table}: expected one English CSV under {EN_CSV}, found {len(hits)}")
+    return hits[0]
+
+
+def rel(p: Path) -> str:
+    return p.relative_to(OUT_CSV).as_posix()
+
+
+def jp_files():
+    return sorted(OUT_CSV.glob("*/*.csv"))
 
 
 def load_translation():
@@ -81,7 +97,7 @@ def to_bytes(header, rows) -> bytes:
 
 
 def translate_table(table, cl, vals):
-    header, rows = read_rows(EN_CSV / f"{table}.csv")
+    header, rows = read_rows(en_csv(table))
     if header != [en for en, _, _ in cl]:
         raise SystemExit(f"{table}: English CSV header differs from translation/columns.yaml")
     maps = [vals.get(table, {}).get(en) for en, _, _ in cl]
@@ -140,8 +156,7 @@ def sha256(path: Path) -> str:
 
 
 def write_sums():
-    files = sorted(p.name for p in OUT_CSV.glob("*.csv"))
-    text = "".join(f"{sha256(OUT_CSV / n)} *{n}\n" for n in files)
+    text = "".join(f"{sha256(p)} *{rel(p)}\n" for p in jp_files())
     (HERE / "SHA256SUMS").write_text(text, encoding="utf-8", newline="\n")
 
 
@@ -150,22 +165,26 @@ def build(cols, vals):
     expected = set()
     for t, cl in cols.items():
         header, rows = translate_table(t, cl, vals)
+        folder = en_csv(t).parent.name
         for name, (data, n) in output_files(t, cl, header, rows).items():
-            (OUT_CSV / name).write_bytes(data)
-            expected.add(name)
-            print(f"[build] {name}: {n:,} rows, {len(data):,} bytes")
-    for p in OUT_CSV.glob("*.csv"):
-        if p.name not in expected:
+            out = OUT_CSV / folder / name
+            out.parent.mkdir(exist_ok=True)
+            out.write_bytes(data)
+            expected.add(rel(out))
+            print(f"[build] {rel(out)}: {n:,} rows, {len(data):,} bytes")
+    for p in list(OUT_CSV.rglob("*.csv")):
+        if p.parent == OUT_CSV or rel(p) not in expected:
             p.unlink()
-            print(f"[build] removed stale {p.name}")
+            print(f"[build] removed stale {rel(p)}")
     write_columns_yaml(cols)
     write_sums()
 
 
 # ----------------------------------------------------------------- check
 def read_jp_table(table):
-    single = OUT_CSV / f"{table}.csv"
-    parts = [single] if single.exists() else sorted(OUT_CSV.glob(f"{table}_*.csv"))
+    d = OUT_CSV / en_csv(table).parent.name
+    single = d / f"{table}.csv"
+    parts = [single] if single.exists() else sorted(d.glob(f"{table}_*.csv"))
     if not parts:
         raise SystemExit(f"{table}: no output file")
     header, rows = None, []
@@ -175,7 +194,7 @@ def read_jp_table(table):
             raise SystemExit(f"{p.name}: header differs from the other parts")
         header = h
         rows += r
-    return header, rows, [p.name for p in parts]
+    return header, rows, [rel(p) for p in parts]
 
 
 def check(cols, vals) -> bool:
@@ -183,7 +202,7 @@ def check(cols, vals) -> bool:
     total_en = total_jp = 0
     print(f"{'table':<22}{'files':>6}{'rows EN':>10}{'rows JP':>10}{'kept cols':>10}{'translated':>11}  result")
     for t, cl in cols.items():
-        en_header, en_rows = read_rows(EN_CSV / f"{t}.csv")
+        en_header, en_rows = read_rows(en_csv(t))
         jp_header, jp_rows, files = read_jp_table(t)
         problems = []
         if jp_header != [ja for _, ja, _ in cl]:
@@ -225,7 +244,7 @@ def check(cols, vals) -> bool:
     for line in (HERE / "SHA256SUMS").read_text(encoding="utf-8").splitlines():
         h, name = line.split(" *", 1)
         sums[name] = h
-    for p in sorted(OUT_CSV.glob("*.csv")):
+    for p in jp_files():
         b = p.read_bytes()
         bad = []
         if len(b) >= MAX_BYTES:
@@ -234,12 +253,12 @@ def check(cols, vals) -> bool:
             bad.append("BOM")
         if b"\r" in b:
             bad.append("CR")
-        if sums.get(p.name) != hashlib.sha256(b).hexdigest():
+        if sums.get(rel(p)) != hashlib.sha256(b).hexdigest():
             bad.append("SHA256SUMS")
         if bad:
-            print(f"[file] {p.name}: {', '.join(bad)}")
+            print(f"[file] {rel(p)}: {', '.join(bad)}")
             ok = False
-    if set(sums) != {p.name for p in OUT_CSV.glob("*.csv")}:
+    if set(sums) != {rel(p) for p in jp_files()}:
         print("[file] SHA256SUMS lists a different set of files")
         ok = False
     print(f"rows: EN {total_en:,} / JP {total_jp:,}; files {len(sums)}")

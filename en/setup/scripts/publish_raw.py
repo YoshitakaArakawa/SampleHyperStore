@@ -1,7 +1,7 @@
 """Publish the SampleHyperStore raw layer: one published data source per CSV, with display names and descriptions.
 
 For each table in setup/metadata/raw_layer.json (12 tables):
-  1. Build a .hyper extract from csv/<table>.csv (column types from generator/columns.yaml).
+  1. Build a .hyper extract from csv/in_use/<table>.csv (column types from generator/columns.yaml).
   2. Publish it as "SampleHyperStore - <table>" with the data source description (REST, CreateNew).
   3. Download the published .tdsx, write the column display names and descriptions into its .tds,
      and publish it again over the same data source (Overwrite). The data source keeps its id.
@@ -54,9 +54,9 @@ def caption(col: str) -> str:
 
 # ----------------------------------------------------------------- 1. hyper
 def csv_files(data: Path, table: str) -> list[Path]:
-    """csv/<table>.csv, or csv/<table>_<part>.csv when a large table is split (e.g. by year)."""
-    one = data / "csv" / f"{table}.csv"
-    return [one] if one.exists() else sorted((data / "csv").glob(f"{table}_[0-9]*.csv"))
+    """csv/<folder>/<table>.csv, or csv/<folder>/<table>_<part>.csv when a large table is split (e.g. by year)."""
+    one = sorted((data / "csv").glob(f"*/{table}.csv"))
+    return one if one else sorted((data / "csv").glob(f"*/{table}_[0-9]*.csv"))
 
 
 def build_hyper(table: str, columns: list[list[str]], out: Path, data: Path = ROOT) -> int:

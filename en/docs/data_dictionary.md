@@ -2,7 +2,7 @@
 
 SampleHyperStore: a fictional US retailer of outdoor and home & garden goods, selling through its own web store, app, third-party marketplaces and B2B. 24 tables, one CSV each, covering 2023-01-01 to 2025-12-31. All names, places and numbers are synthetic.
 
-Columns marked **Tableau** are in the 12 tables that `setup/` publishes to Tableau Cloud. The other 12 are provided as CSV only.
+Tables marked **Tableau** are the 12 tables that `setup/` publishes to Tableau Cloud; their CSVs are in `csv/in_use/`. The other 12 are not used by the setup yet; their CSVs are in `csv/planned/`.
 
 ## Tables
 
@@ -39,7 +39,7 @@ Keys are shared across domains: `product_id`, `customer_id`, `order_id`, `order_
 
 Site and app searches: query, number of results, how many were in stock at the visitor's serving warehouse, and the first clicked result.
 
-- File: `csv/web_searches.csv` (100,524 rows)
+- File: `csv/in_use/web_searches.csv` (100,524 rows)
 - Grain: One row per on-site search executed
 - Primary key: `search_id`
 - Owner (fictional department): Digital Marketing
@@ -61,7 +61,7 @@ Site and app searches: query, number of results, how many were in stock at the v
 
 Sessions recorded by the web/app analytics tool: when, from where, on which device, who (if identified), how far into the funnel, and which order (if any) completed in the session.
 
-- File: `csv/web_sessions.csv` (455,057 rows)
+- File: `csv/in_use/web_sessions.csv` (455,057 rows)
 - Grain: One row per web or app session (direct channels only; marketplace and b2b orders have no session)
 - Primary key: `session_id`
 - Owner (fictional department): Digital Marketing
@@ -91,7 +91,7 @@ Sessions recorded by the web/app analytics tool: when, from where, on which devi
 
 Daily delivery and cost as reported by each platform: impressions, clicks, email funnel counts, spend, and the platform's own conversions and conversion value.
 
-- File: `csv/campaign_daily.csv` (9,295 rows)
+- File: `csv/planned/campaign_daily.csv` (9,295 rows)
 - Grain: One row per campaign x day with delivery
 - Primary key: `campaign_id`, `report_date`
 - Owner (fictional department): Marketing
@@ -114,7 +114,7 @@ Daily delivery and cost as reported by each platform: impressions, clicks, email
 
 Campaign master: paid media, email, push, affiliate and marketplace-ad campaigns with their channel, platform, objective, audience, period, planned budget and the attribution window the platform uses.
 
-- File: `csv/campaigns.csv` (82 rows)
+- File: `csv/planned/campaigns.csv` (82 rows)
 - Grain: One row per marketing campaign
 - Primary key: `campaign_id`
 - Owner (fictional department): Marketing
@@ -140,7 +140,7 @@ Campaign master: paid media, email, push, affiliate and marketplace-ad campaigns
 
 Products covered by product-scoped promotions, with any per-product override and whether the product was featured in creatives.
 
-- File: `csv/promotion_products.csv` (821 rows)
+- File: `csv/planned/promotion_products.csv` (821 rows)
 - Grain: One row per promotion x product for product-scoped promotions
 - Primary key: `promotion_id`, `product_id`
 - Owner (fictional department): Marketing
@@ -157,7 +157,7 @@ Products covered by product-scoped promotions, with any per-product override and
 
 Promotion master: type, discount parameters, thresholds, eligibility, channels and validity period. Applied promotions are recorded on orders / order_lines (group T).
 
-- File: `csv/promotions.csv` (59 rows)
+- File: `csv/planned/promotions.csv` (59 rows)
 - Grain: One row per promotion (coupon code or automatic discount)
 - Primary key: `promotion_id`
 - Owner (fictional department): Marketing
@@ -186,7 +186,7 @@ Promotion master: type, discount parameters, thresholds, eligibility, channels a
 
 Customer master: when and how the record was created, acquisition source, account type, current home state, current loyalty tier and email subscription status.
 
-- File: `csv/customers.csv` (16,008 rows)
+- File: `csv/planned/customers.csv` (16,008 rows)
 - Grain: One row per customer record
 - Primary key: `customer_id`
 - Owner (fictional department): CRM
@@ -214,7 +214,7 @@ Customer master: when and how the record was created, acquisition source, accoun
 
 Order lines with list price copied from product_prices at order time, actual unit selling price, line-level discount, tax, and cancelled quantity with reason. Stock-out lost demand is recorded here.
 
-- File: `csv/order_lines.csv` (71,007 rows)
+- File: `csv/in_use/order_lines.csv` (71,007 rows)
 - Grain: One row per order x product (one line per SKU in an order)
 - Primary key: `order_line_id`
 - Owner (fictional department): Sales & E-commerce
@@ -242,7 +242,7 @@ Order lines with list price copied from product_prices at order time, actual uni
 
 Order header as captured by the order management system at the moment the order is placed. Holds order-level charges (shipping charged, order-level coupon) that are NOT allocated to lines here.
 
-- File: `csv/orders.csv` (31,281 rows)
+- File: `csv/in_use/orders.csv` (31,281 rows)
 - Grain: One row per order (checkout confirmation, marketplace order import, or B2B order entry)
 - Primary key: `order_id`
 - Owner (fictional department): Sales & E-commerce
@@ -271,7 +271,7 @@ Order header as captured by the order management system at the moment the order 
 
 Product master. One SKU per sellable variant (apparel and footwear sizes are separate SKUs sharing a style_code). Holds hierarchy, brand, physical and lifecycle attributes. Price and cost live in their own history tables.
 
-- File: `csv/products.csv` (202 rows)
+- File: `csv/in_use/products.csv` (202 rows)
 - Grain: One row per SKU
 - Primary key: `product_id`
 - Owner (fictional department): Merchandising
@@ -300,7 +300,7 @@ Product master. One SKU per sellable variant (apparel and footwear sizes are sep
 
 Units of an order line shipped in a shipment. Denormalises warehouse_id and shipped_date so inventory outflow can be aggregated per warehouse x product x day without joining.
 
-- File: `csv/shipment_lines.csv` (68,621 rows)
+- File: `csv/in_use/shipment_lines.csv` (68,621 rows)
 - Grain: One row per shipment x order line
 - Primary key: `shipment_line_id`
 - Owner (fictional department): Logistics
@@ -319,7 +319,7 @@ Units of an order line shipped in a shipment. Denormalises warehouse_id and ship
 
 Outbound shipments with origin warehouse, carrier, carrier's delivery estimate, actual delivery scan, and freight cost billed by the carrier.
 
-- File: `csv/shipments.csv` (32,568 rows)
+- File: `csv/in_use/shipments.csv` (32,568 rows)
 - Grain: One row per shipment (one parcel group leaving one warehouse with one carrier)
 - Primary key: `shipment_id`
 - Owner (fictional department): Logistics
@@ -352,7 +352,7 @@ Outbound shipments with origin warehouse, carrier, carrier's delivery estimate, 
 
 Money returned to customers: for returns, for late or damaged deliveries (shipping refund), goodwill, and price adjustments. Split into merchandise, tax and shipping components.
 
-- File: `csv/refunds.csv` (6,493 rows)
+- File: `csv/in_use/refunds.csv` (6,493 rows)
 - Grain: One row per refund payment issued to a customer
 - Primary key: `refund_id`
 - Owner (fictional department): Customer Support
@@ -376,7 +376,7 @@ Money returned to customers: for returns, for late or damaged deliveries (shippi
 
 Return requests and their receipt, inspection and restocking at a warehouse. qty_restocked feeds inventory_daily (S).
 
-- File: `csv/returns.csv` (6,680 rows)
+- File: `csv/in_use/returns.csv` (6,680 rows)
 - Grain: One row per return authorization line (one order line returned once; a line may be returned in more than one authorization)
 - Primary key: `return_id`
 - Owner (fictional department): Customer Support
@@ -410,7 +410,7 @@ Return requests and their receipt, inspection and restocking at a warehouse. qty
 
 Customer support cases with category, contact method, timings, resolution and an optional post-case survey score.
 
-- File: `csv/support_tickets.csv` (6,587 rows)
+- File: `csv/planned/support_tickets.csv` (6,587 rows)
 - Grain: One row per customer contact case
 - Primary key: `ticket_id`
 - Owner (fictional department): Customer Support
@@ -440,7 +440,7 @@ Customer support cases with category, contact method, timings, resolution and an
 
 End-of-day stock position per warehouse and SKU, with the day's unit movements (stock ledger summary). Rows exist for every day a SKU is stocked at a warehouse, including days with zero on hand.
 
-- File: `csv/inventory_daily.csv` (575,899 rows)
+- File: `csv/planned/inventory_daily.csv` (575,899 rows)
 - Grain: One row per date x warehouse x SKU, end-of-day snapshot plus that day's movements
 - Primary key: `snapshot_date`, `warehouse_id`, `product_id`
 - Owner (fictional department): Inventory Planning
@@ -461,7 +461,7 @@ End-of-day stock position per warehouse and SKU, with the day's unit movements (
 
 Ordered quantity, negotiated unit cost and dates promised by the supplier for each SKU on a PO.
 
-- File: `csv/purchase_order_lines.csv` (13,044 rows)
+- File: `csv/planned/purchase_order_lines.csv` (13,044 rows)
 - Grain: One row per PO x SKU
 - Primary key: `po_line_id`
 - Owner (fictional department): Procurement
@@ -481,7 +481,7 @@ Ordered quantity, negotiated unit cost and dates promised by the supplier for ea
 
 Purchase order headers. Each PO ships to one warehouse. Holds dates, type and the actual inbound freight billed for the PO.
 
-- File: `csv/purchase_orders.csv` (5,837 rows)
+- File: `csv/planned/purchase_orders.csv` (5,837 rows)
 - Grain: One row per purchase order (one supplier, one destination warehouse)
 - Primary key: `po_id`
 - Owner (fictional department): Procurement
@@ -501,7 +501,7 @@ Purchase order headers. Each PO ships to one warehouse. Holds dates, type and th
 
 Each physical arrival against a PO line, with inspection result and supplier lot. Partial deliveries create multiple receipts per line. Accepted units enter on hand at put-away.
 
-- File: `csv/receipts.csv` (13,766 rows)
+- File: `csv/planned/receipts.csv` (13,766 rows)
 - Grain: One row per receipt (one delivery of one PO line)
 - Primary key: `receipt_id`
 - Owner (fictional department): Procurement
@@ -528,7 +528,7 @@ Each physical arrival against a PO line, with inspection result and supplier lot
 
 Supplier master with commercial terms. All names are fictional.
 
-- File: `csv/suppliers.csv` (20 rows)
+- File: `csv/planned/suppliers.csv` (20 rows)
 - Grain: One row per supplier
 - Primary key: `supplier_id`
 - Owner (fictional department): Procurement
@@ -548,7 +548,7 @@ Supplier master with commercial terms. All names are fictional.
 
 Accounting reversals of revenue for refunds and price adjustments, posted in batches and possibly in a later fiscal period than the refund. Includes the marketplace's fee reversal.
 
-- File: `csv/credit_memos.csv` (6,441 rows)
+- File: `csv/in_use/credit_memos.csv` (6,441 rows)
 - Grain: One row per credit memo line (revenue reversal posted by Finance)
 - Primary key: `credit_memo_id`
 - Owner (fictional department): Finance & Sales Ops
@@ -574,7 +574,7 @@ Accounting reversals of revenue for refunds and price adjustments, posted in bat
 
 Invoiced units and amounts per order line, with order-level discount allocated, and standard unit cost at invoice date.
 
-- File: `csv/invoice_lines.csv` (68,621 rows)
+- File: `csv/in_use/invoice_lines.csv` (68,621 rows)
 - Grain: One row per invoice x order line
 - Primary key: `invoice_line_id`
 - Owner (fictional department): Finance & Sales Ops
@@ -595,7 +595,7 @@ Invoiced units and amounts per order line, with order-level discount allocated, 
 
 Invoices issued at shipment. Header holds billed shipping and the marketplace fee reported in the marketplace settlement.
 
-- File: `csv/invoices.csv` (32,568 rows)
+- File: `csv/in_use/invoices.csv` (32,568 rows)
 - Grain: One row per invoice (one invoice per shipment; revenue recognition event)
 - Primary key: `invoice_id`
 - Owner (fictional department): Finance & Sales Ops
@@ -622,7 +622,7 @@ Invoices issued at shipment. Header holds billed shipping and the marketplace fe
 
 Monthly sales targets set by Sales Ops in the annual plan. The revenue basis of target_amount is not documented in the source system.
 
-- File: `csv/sales_targets.csv` (584 rows)
+- File: `csv/planned/sales_targets.csv` (584 rows)
 - Grain: One row per sales region x channel x fiscal month
 - Primary key: `sales_region_id`, `channel`, `fiscal_month`
 - Owner (fictional department): Finance & Sales Ops

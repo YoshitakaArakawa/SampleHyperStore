@@ -1,7 +1,7 @@
 """Generate the SampleHyperStore CSVs.
 
 Usage (from this folder):
-    python generate.py                      # full scale, fixed seed -> ./out
+    python generate.py                      # full scale, fixed seed -> ./out/{in_use,planned}/
     python generate.py --scale 0.2 --out small
     python generate.py --check              # full scale, then compare with ../SHA256SUMS
 
@@ -21,6 +21,12 @@ HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from gen.sim import World  # noqa: E402
 from gen.write import build_tables, load_schema, write_csvs  # noqa: E402
+
+
+def folder_of(name, used=frozenset(json.loads(
+        (HERE.parent / 'setup' / 'metadata' / 'raw_layer.json').read_text(encoding='utf-8')))):
+    """in_use: the tables the Tableau setup publishes (setup/metadata/raw_layer.json). planned: the rest."""
+    return 'in_use' if name in used else 'planned'
 
 
 def check(out):
@@ -53,7 +59,7 @@ def main():
     t1 = time.time()
     T = build_tables(w)
     cols = load_schema(HERE / 'columns.yaml')
-    info = write_csvs(T, cols, a.out)
+    info = write_csvs(T, cols, a.out, folder_of)
     t2 = time.time()
     ak = HERE / 'answer_key'
     ak.mkdir(exist_ok=True)

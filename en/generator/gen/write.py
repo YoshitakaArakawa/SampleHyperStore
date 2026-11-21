@@ -405,7 +405,8 @@ def build_targets(w, T, rng):
     return rows
 
 
-def write_csvs(T, cols, out_dir):
+def write_csvs(T, cols, out_dir, folder_of=lambda name: ''):
+    """Write <out_dir>/<folder_of(name)>/<name>.csv for every table."""
     out = pathlib.Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     info = {}
@@ -422,7 +423,8 @@ def write_csvs(T, cols, out_dir):
                 df[c] = df[c].astype(str)
             else:
                 df[c] = _fmt(df[c].astype(object), typ)
-        p = out / f"{name}.csv"
+        p = out / folder_of(name) / f"{name}.csv"
+        p.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(p, index=False, lineterminator=chr(10))
         info[name] = dict(rows=len(df), bytes=p.stat().st_size)
     return info
