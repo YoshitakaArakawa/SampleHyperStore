@@ -1,0 +1,443 @@
+<title>SampleHyperStore の分析体験</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap">
+<style>
+/* Single light theme by request (white background in every viewer theme). Layout: white page. Hero → join diagram (3 tables vs 12 tables) → one section per analysis: vertical table stack on the left, charts on the right */
+:root {
+  --bg: #ffffff; --surface: #f4f6f5; --ink: #141b19; --muted: #56635f; --line: #d9e0dd; --grid: #e8ecea;
+  --accent: #1f7a5c; --accent-soft: #e4f2ec; --hot: #c8501f; --hot-soft: #fbeae1; --dim: #b3bcb9; --edge: #9aa6a2;
+  --d-prod: #2e8a63; --d-web: #2f6fc0; --d-order: #7552c2; --d-ship: #d27a1c; --d-bill: #c23d4b; --d-ret: #a98515;
+  --f-display: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --f-body: "IBM Plex Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --f-num: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 17px; line-height: 1.75; }
+.in { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--f-display); margin: 0; line-height: 1.45; word-break: auto-phrase; line-break: strict; text-wrap: balance; }
+p { margin: 0; }
+.ln { display: block; }
+
+/* hero */
+.hero .in { padding-block: 64px 24px; display: grid; gap: 20px; }
+.hero h1 { font-size: clamp(32px, 6vw, 56px); font-weight: 900; line-height: 1.3; }
+.hero .sub { font-size: 19px; color: var(--muted); max-width: 44em; word-break: auto-phrase; line-break: strict; text-wrap: pretty; }
+.hero .role { font-size: 17px; font-weight: 700; max-width: 38em; border-left: 3px solid var(--accent); padding-left: 14px; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn { display: inline-block; font-weight: 700; font-size: 16px; padding: 10px 20px; border-radius: 10px; background: var(--accent); color: var(--bg); text-decoration: none; border: 2px solid var(--accent); }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn:hover, .btn:focus-visible { outline: 3px solid var(--hot-soft); }
+
+/* diagrams */
+.maps .in { padding-block: 24px 64px; display: grid; gap: 40px; }
+.map.small .frame { max-width: 720px; }
+.map.small .frame svg { min-width: 520px; }
+.map { display: grid; gap: 10px; min-width: 0; }
+.map .head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.map .count { font-family: var(--f-num); font-weight: 800; font-size: 64px; line-height: 1; }
+.map .name { font-size: 18px; font-weight: 700; }
+.map .unit { font-size: 22px; font-weight: 700; font-family: var(--f-display); margin-left: -6px; }
+.map .stat { font-size: 15px; color: var(--muted); }
+.map .stat b { color: var(--ink); font-family: var(--f-num); font-size: 18px; }
+.map .frame { background: var(--surface); border-radius: 14px; padding: 16px; overflow-x: auto; }
+.map.big .frame svg { min-width: 720px; }
+.map svg text { font-family: var(--f-body); }
+.node-jp { font-size: 15px; font-weight: 700; fill: var(--ink); }
+.node-en { font-family: var(--f-num) !important; font-size: 12px; fill: var(--muted); }
+.edge-lb { font-size: 12.5px; fill: var(--ink); }
+.domains { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; color: var(--muted); }
+.pgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.pcard { border: 1.5px dashed var(--ink); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.pcard h3 { font-size: 16px; font-family: var(--f-body); display: flex; justify-content: space-between; gap: 8px; }
+.pcard h3 span { font-family: var(--f-num); color: var(--muted); }
+.pcard ul { margin: 0; padding-left: 1.1em; font-size: 14px; line-height: 1.6; color: var(--muted); display: grid; gap: 2px; }
+@media (max-width: 900px) { .pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .pgrid { grid-template-columns: minmax(0, 1fr); } }
+.domains i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--c); margin-right: 6px; vertical-align: -1px; }
+
+/* case */
+.case { border-top: 1px solid var(--line); scroll-margin-top: 8px; }
+.case > .in { padding-block: 64px; display: grid; gap: 20px; }
+.qa { display: grid; gap: 16px; }
+.q, .a { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 16px; align-items: start; }
+.mark { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-family: var(--f-num); font-weight: 800; font-size: 26px; line-height: 1; }
+.q { padding-inline: 20px 24px; }
+.q .mark { background: var(--ink); color: var(--bg); }
+.q h2 { font-size: clamp(24px, 3.4vw, 32px); font-weight: 900; padding-top: 2px; max-width: 30em; }
+.a { background: var(--accent-soft); border-radius: 16px; padding: 20px 24px 22px 20px; }
+.a .mark { background: var(--accent); color: var(--bg); }
+.atext { font-size: 20px; font-weight: 700; line-height: 1.65; }
+.blbl { font-size: 13px; font-weight: 700; letter-spacing: .04em; color: var(--muted); margin-bottom: 8px; }
+.a .blbl { color: var(--accent); margin-bottom: 2px; }
+.cbody { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start; }
+.block { border-radius: 16px; padding: 22px 24px; min-width: 0; }
+.block.tables { background: var(--surface); align-self: start; }
+@media (min-width: 901px) { .block.tables { position: sticky; top: 16px; } }
+.block.evidence { background: var(--bg); border: 1.5px solid var(--line); display: grid; gap: 22px; }
+.block.evidence > .blbl { margin-bottom: -8px; }
+.block.trap { background: var(--hot-soft); padding-block: 16px 18px; }
+.block.trap .blbl { color: var(--hot); margin-bottom: 2px; }
+.block.trap p:last-child { font-size: 16px; }
+
+/* vertical table stack */
+.stack { display: grid; gap: 0; }
+.trow { background: var(--bg); border-left: 5px solid var(--c); border-radius: 8px; padding: 10px 14px; display: grid; gap: 2px; }
+.trow b { font-size: 16px; }
+.trow .csv { font-family: var(--f-num); font-size: 13px; color: var(--c); }
+.trow .cols { font-size: 13px; color: var(--muted); line-height: 1.55; }
+.trow.know { background: transparent; border: 1.5px dashed var(--ink); margin-top: 8px; }
+.trow.know b { font-size: 15px; }
+.plbl { font-size: 13px; font-weight: 700; color: var(--muted); margin-top: 18px; }
+.link { display: flex; align-items: center; gap: 8px; padding: 3px 0 3px 22px; font-size: 12px; color: var(--muted); }
+.link::before { content: ""; width: 2px; height: 22px; background: var(--line); }
+
+.charts { display: grid; gap: 22px; min-width: 0; }
+.panel { display: grid; gap: 6px; min-width: 0; }
+.panel h3 { font-family: var(--f-body); font-size: 15px; font-weight: 700; }
+.panel .src { display: block; font-family: var(--f-num); font-size: 12px; color: var(--muted); font-weight: 400; }
+.panel h3 { word-break: auto-phrase; }
+.multi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+svg { width: 100%; height: auto; display: block; overflow: visible; }
+.charts svg text { fill: var(--muted); font-family: var(--f-num); font-size: 12px; }
+.charts svg text.hot { fill: var(--hot); font-weight: 600; }
+.charts svg text.ink { fill: var(--ink); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
+.kpi { border-top: 3px solid var(--ink); padding-top: 8px; display: grid; gap: 2px; }
+.kpi .v { font-family: var(--f-num); font-weight: 800; font-size: 28px; line-height: 1.2; }
+.kpi .t { font-size: 14px; color: var(--muted); line-height: 1.55; }
+
+.close .in { padding-block: 64px 72px; display: grid; gap: 24px; border-top: 1px solid var(--line); }
+.close h2 { font-size: clamp(24px, 3.4vw, 32px); font-weight: 900; }
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.steps div { background: var(--surface); border-radius: 12px; padding: 18px; display: grid; gap: 6px; }
+.steps b { font-family: var(--f-display); font-size: 19px; }
+.steps p { font-size: 15px; color: var(--muted); }
+footer { font-size: 13px; color: var(--muted); }
+.start { display: grid; gap: 16px; scroll-margin-top: 16px; }
+.start ol { margin: 0; padding-left: 1.4em; display: grid; gap: 10px; }
+.start li b { display: block; }
+.start code { font-size: 14px; background: var(--surface); padding: 1px 6px; border-radius: 4px; overflow-wrap: anywhere; }
+
+@media (max-width: 900px) {
+  .cbody, .steps { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .multi, .duo { grid-template-columns: minmax(0, 1fr); }
+  .q, .a { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .mark { width: 36px; height: 36px; font-size: 20px; border-radius: 10px; }
+  .block { padding: 18px 16px; }
+  .a { padding: 16px; }
+  .q { padding-inline: 16px; }
+}
+</style>
+
+<header class="hero">
+  <div class="in">
+    <h1><span class="ln">12 枚の表をまたいで、</span><span class="ln">AI と業務の問いを解く。</span></h1>
+    <p class="sub">SampleHyperStore は、架空の小売企業の3年分の取引を、受注・出荷・請求・返品・Webの12枚の表に分けたデータセット。「遅配でお客さんは離れたか」「売上が部門で合わないのはなぜか」とAIに尋ねると、AIが表をつないで答えを組み立てる。売上も利益も1枚に入ったSuperstoreでは、こうした問いは立てられない。</p>
+    <div class="cta"><a class="btn" href="https://github.com/YoshitakaArakawa/SampleHyperStore" target="_blank" rel="noopener">GitHub でデータを見る</a></div>
+  </div>
+</header>
+
+<section class="maps" aria-label="表のつながり">
+  <div class="in">
+    <div class="map small">
+      <p class="name">Tableau 定番のサンプル Superstore</p>
+      <div class="head"><span class="count">3</span><span class="unit">枚の表</span><span class="stat">· つながり <b>2</b> 本</span></div>
+      <div class="frame" id="map-ss"></div>
+    </div>
+    <div class="map big">
+      <p class="name">このデータセット SampleHyperStore</p>
+      <div class="head"><span class="count">12</span><span class="unit">枚の表</span><span class="stat">· つながり <b>14</b> 本 · つなぐ鍵 <b>8</b> 種類</span></div>
+      <p class="stat">箱が 1 枚の表（CSV 1 ファイル）。線の上の文字は、表どうしをつなぐ列。</p>
+      <div class="frame" id="map-hs"></div>
+      <div class="domains" id="domains"></div>
+    </div>
+    <div class="map prefs">
+      <p class="name">＋ 表の意味を決めるビジネス設定</p>
+      <div class="head"><span class="count">16</span><span class="unit">件の設定</span></div>
+      <p class="stat">「売上」はどの売上か、「遅れ」は何日からか。表だけでは決まらない定義を、Tableau Knowledge に書いて AI に渡す。下の 6 つの答えは、すべてこのどれかに頼っている。</p>
+      <div class="pgrid" id="pgrid"></div>
+    </div>
+  </div>
+</section>
+
+<main id="cases"></main>
+
+
+<script>
+const D = __DATA__;
+const T = {
+  web_sessions: ["Web セッション", "--d-web"], web_searches: ["サイト内検索", "--d-web"],
+  products: ["商品", "--d-prod"], orders: ["受注", "--d-order"], order_lines: ["受注明細", "--d-order"],
+  shipments: ["出荷", "--d-ship"], shipment_lines: ["出荷明細", "--d-ship"],
+  invoices: ["請求書", "--d-bill"], invoice_lines: ["請求明細", "--d-bill"], credit_memos: ["クレジットメモ", "--d-bill"],
+  returns: ["返品", "--d-ret"], refunds: ["返金", "--d-ret"],
+};
+const DOMS = [["Web", "--d-web"], ["商品", "--d-prod"], ["受注", "--d-order"], ["出荷", "--d-ship"], ["請求", "--d-bill"], ["返品・返金", "--d-ret"]];
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const pct = v => Math.round(v * 100) + "%";
+const pct1 = v => (v * 100).toFixed(1) + "%";
+const k$ = v => "$" + Math.round(v / 1000).toLocaleString() + "k";
+const PREFS = [
+  ["使い方", ["使うデータソース", "どのデータソースの指標を使ったかを示す"]],
+  ["用語", ["売上の既定の意味", "経理の質問での会計期間", "配達遅れは約束日より後", "検索の結果なしと在庫なし"]],
+  ["方法", ["2025-01-01 の営業地域の再編", "経理の計上ベースで見るクレジット"]],
+  ["複数の表にまたがる指標", ["申請ベースの返品率", "注文コホートの返品率", "受領ベースの返品率", "返品明細の発生率", "純送料コスト", "セッションあたり注文数", "数量ベースのカート放棄率", "受注売上に対するマーケットプレイス手数料率"]],
+];
+document.getElementById("pgrid").innerHTML = PREFS.map(([g, xs]) => `<div class="pcard"><h3>${g}<span>${xs.length}</span></h3><ul>${xs.map(x => `<li>${x}</li>`).join("")}</ul></div>`).join("");
+document.getElementById("domains").innerHTML = DOMS.map(([n, c]) => `<span style="--c:var(${c})"><i></i>${n}</span>`).join("");
+
+const NS = "http://www.w3.org/2000/svg";
+function el(t, a, p) { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
+function tx(p, x, y, s, a = {}, cls) { const t = el("text", { x, y, ...a }, p); t.textContent = s; if (cls) t.setAttribute("class", cls); return t; }
+function svg(host, W, H) { const s = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" }); host.appendChild(s); return s; }
+const fit = (host, W) => { const w = host.clientWidth; return w > 0 && w < W ? Math.max(280, Math.round(w)) : W; };
+
+// join diagrams
+function diagram(host, W, H, nodes, edges, nw, nh) {
+  const s = svg(host, W, H), c = k => [nodes[k].x + nw / 2, nodes[k].y + nh / 2];
+  edges.forEach(([a, b]) => { const [x1, y1] = c(a), [x2, y2] = c(b); el("line", { x1, y1, x2, y2, stroke: css("--edge"), "stroke-width": 1.6 }, s); });
+  edges.forEach(([a, b, key, dx = 0, dy = 0]) => {
+    const [x1, y1] = c(a), [x2, y2] = c(b), mx = (x1 + x2) / 2 + dx, my = (y1 + y2) / 2 + dy;
+    const w = key.length * 12.5 + 14;
+    el("rect", { x: mx - w / 2, y: my - 11, width: w, height: 22, rx: 11, fill: css("--surface"), stroke: css("--line") }, s);
+    tx(s, mx, my + 4.5, key, { "text-anchor": "middle" }, "edge-lb");
+  });
+  Object.entries(nodes).forEach(([k, n]) => {
+    el("rect", { x: n.x, y: n.y, width: nw, height: nh, rx: 8, fill: css("--bg"), stroke: n.c ? css(n.c) : css("--ink"), "stroke-width": 1.5 }, s);
+    el("rect", { x: n.x, y: n.y, width: 6, height: nh, rx: 3, fill: n.c ? css(n.c) : css("--ink") }, s);
+    tx(s, n.x + 16, n.y + 24, n.jp, {}, "node-jp");
+    tx(s, n.x + 16, n.y + 43, n.en, {}, "node-en");
+  });
+}
+function drawMaps() {
+  ["map-ss", "map-hs"].forEach(id => document.getElementById(id).innerHTML = "");
+  diagram(document.getElementById("map-ss"), 660, 80, {
+    returns: { x: 4, y: 12, jp: "Returns", en: "返品フラグ" },
+    orders: { x: 244, y: 12, jp: "Orders", en: "売上・利益まで全部" },
+    people: { x: 484, y: 12, jp: "People", en: "地域の担当者" },
+  }, [["returns", "orders", "Order ID"], ["orders", "people", "Region"]], 172, 56);
+  const N = (k, x, y) => ({ x, y, jp: T[k][0], en: k, c: T[k][1] });
+  diagram(document.getElementById("map-hs"), 1110, 540, {
+    web_searches: N("web_searches", 20, 30), web_sessions: N("web_sessions", 20, 250),
+    orders: N("orders", 250, 250), products: N("products", 250, 460),
+    shipments: N("shipments", 480, 30), order_lines: N("order_lines", 480, 300), returns: N("returns", 480, 460),
+    invoices: N("invoices", 720, 30), shipment_lines: N("shipment_lines", 720, 160), invoice_lines: N("invoice_lines", 720, 300), refunds: N("refunds", 720, 460),
+    credit_memos: N("credit_memos", 925, 240),
+  }, [
+    ["web_searches", "web_sessions", "セッションID"], ["web_sessions", "orders", "注文ID"],
+    ["orders", "order_lines", "注文ID", 0, -6], ["products", "order_lines", "商品ID"], ["orders", "shipments", "注文ID"],
+    ["shipments", "shipment_lines", "出荷ID", 0, -8], ["order_lines", "shipment_lines", "注文明細ID", 0, 8], ["shipments", "invoices", "出荷ID"],
+    ["invoices", "invoice_lines", "請求書ID", -40, 0], ["order_lines", "invoice_lines", "注文明細ID"], ["order_lines", "returns", "注文明細ID"],
+    ["returns", "refunds", "返品ID"], ["invoices", "credit_memos", "請求書ID", 20, -10], ["refunds", "credit_memos", "返金ID", 20, 10],
+  ], 172, 56);
+}
+
+const C = [
+  { id: "tents", ask: "2024年の夏、西部のテントの注文に何が起きたか。",
+    answer: "テントが足りなくなった。2024年5〜9月に、検索・キャンセル・分割出荷の 3 か所へ同時に跡が残っている。",
+    stack: [
+      ["web_searches", "検索語・結果のうち在庫ありの件数", "商品 ID"],
+      ["products", "サブカテゴリ（テント）", "商品 ID"],
+      ["order_lines", "注文数量・キャンセル数量・理由", "注文 ID"],
+      ["orders", "注文日・配送先の州", "注文 ID"],
+      ["shipments", "出荷元の倉庫", "出荷 ID"],
+      ["shipment_lines", "出荷した数量"],
+    ],
+    prefs: [["用語", "検索の結果なしと在庫なし"], ["方法", "2025-01-01 の営業地域の再編"]],
+    draw: "tents",
+    kpis: [["① 10.5%", "2024年8月、テントの検索のうち在庫ありの結果を出せなかった割合（全国）"], ["② 12.4%", "2024年6月、West のテント注文数量のうちキャンセルされた割合"], ["③ 41%", "2024年Q3、West のテント注文のうち別の倉庫から分割出荷になった割合"]],
+    trap: "地域で絞るときは、2025年1月の再編の前後で同じ州の集合を使う。" },
+  { id: "sales", ask: "月の売上が、経理の報告と販売のダッシュボードで合わない。なぜか。",
+    answer: "「売上」が 3 通りあり、数える日が違う。11月は営業と経理で 9 万ドルずれた。どれも間違いではない。",
+    stack: [
+      ["web_sessions", "Web 計測の注文金額", "注文 ID"],
+      ["orders", "注文日・販路", "注文 ID"],
+      ["order_lines", "単価・数量・キャンセル", "注文明細 ID"],
+      ["invoice_lines", "請求した数量・単価", "請求書 ID"],
+      ["invoices", "請求日・会計月", "出荷 ID"],
+      ["shipments", "出荷日"],
+    ],
+    prefs: [["用語", "売上の既定の意味"], ["用語", "経理の質問での会計期間"]],
+    draw: "sales",
+    kpis: [["$550,658", "2025年11月・営業（注文日で数える）"], ["$460,644", "2025年11月・経理（出荷して請求した日で数える）"], ["$451,194", "2025年11月・デジタル（Web とアプリの計測のみ）"]],
+    trap: "11月末のセールの注文は、出荷と請求が 12 月にずれ込む。「売上は？」とだけ聞かれたら、どの定義で答えたかを添える。" },
+  { id: "marketplace", ask: "モールに出店して以来、手数料を引いた後でも、伸びは本物か。",
+    answer: "本物。モール売上の 15% は手数料で消えるが、モールを除いても全社の売上は伸びている。",
+    stack: [
+      ["orders", "販路・注文日", "注文 ID"],
+      ["order_lines", "単価・数量・キャンセル", "注文明細 ID"],
+      ["invoice_lines", "請求金額", "請求書 ID"],
+      ["invoices", "モール手数料"],
+    ],
+    prefs: [["指標", "受注売上に対するマーケットプレイス手数料率"]],
+    draw: "marketplace",
+    kpis: [["15.2%", "モールの請求売上に占める手数料"], ["$379,862", "2025年のモール受注売上。手数料は $57,539"], ["+12%", "モールを除いても、全社の売上は 2023 → 2025 で伸びている"]],
+    trap: "手数料は受注の表にはない。請求の表の列を、注文明細 ID でつないで持ってくる必要がある。" },
+  { id: "carrier", ask: "配達が遅れた顧客は、遅れなかった顧客より再購入が少ないか。",
+    answer: "少ない。配送業者を替えた倉庫で遅配が 4 割を超え、遅配に遭った顧客ほど戻ってこなくなった。",
+    stack: [
+      ["shipments", "倉庫・配送業者・約束日・配達日", "注文 ID"],
+      ["orders", "顧客 ID・注文日", "注文 ID"],
+      ["returns", "返品理由（遅配）"],
+    ],
+    prefs: [["用語", "配達遅れは約束日より後"]],
+    draw: "carrier",
+    kpis: [["1割 → 4割超", "WH-C の遅配率（2025年5月の業者切替の前後）"], ["29.3% → 25.4%", "90 日以内の再購入率。遅配なしと遅配ありの顧客"], ["約 4 倍", "WH-C の「届くのが遅かった」返品（月 2.2 件 → 8.8 件）"]],
+    trap: "遅配は「約束日」基準と「配送業者の見込み日」基準で数字が変わる。お客さんの体験を問うなら約束日。" },
+  { id: "window", ask: "返品期限を 60 日に延ばしたら、返品は増えたのか。遅れて来るようになっただけか。",
+    answer: "両方起きた。遅い返品が新たに現れ、返品率そのものも約 8% から約 11% に上がった。",
+    stack: [
+      ["returns", "申請日・返品期限の日数・配達日", "注文明細 ID"],
+      ["order_lines", "注文明細（分母）", "注文 ID"],
+      ["orders", "注文日（注文月でまとめる）"],
+    ],
+    prefs: [["指標", "注文コホートの返品率"], ["指標", "申請ベース・受領ベースの返品率（比較用）"]],
+    draw: "window",
+    kpis: [["8% → 11%", "注文月ごとに見た、最終的に返品された割合"], ["30〜60 日目", "期限変更後にだけ現れた、遅い返品"]],
+    trap: "返品率は「申請した月」「受け取った月」「注文した月」のどれで数えるかで答えが変わる。直近の月は返品が出揃っておらず、低く見える。" },
+  { id: "west", ask: "1月以降、West 地域が前年割れしている。本当に業績が悪いのか。",
+    answer: "悪くない。営業地域の線引きが変わっただけで、同じ州で比べ直すと前年より伸びている。",
+    stack: [
+      ["invoices", "営業地域・州コード・請求日", "請求書 ID"],
+      ["invoice_lines", "請求金額"],
+    ],
+    prefs: [["方法", "2025-01-01 の営業地域の再編", "6 州が West から新設の Mountain へ移った"]],
+    draw: "west",
+    kpis: [["−19%", "営業地域 ID で集計した West（2024 → 2025）"], ["+6%", "再編前の West と同じ 11 州で集計し直すと"]],
+    trap: "再編の事実は表のどこにも書いていない。表が 2 枚の問いでも、ビジネス設定がないと答えを誤る。" },
+];
+
+const main = document.getElementById("cases");
+C.forEach(c => {
+  const title = c.ask.split(/(?<=。)/).map(s => `<span class="ln">${s}</span>`).join("");
+  const st = c.stack.map(([k, cols, link]) => `<div class="trow" style="--c:var(${T[k][1]})"><b>${T[k][0]}</b><span class="csv">${k}.csv</span><span class="cols">${cols}</span></div>${link ? `<div class="link">${link}</div>` : ""}`).join("")
+    + `<p class="plbl">＋ 頼るビジネス設定</p>` + c.prefs.map(([g, n, note]) => `<div class="trow know"><span class="cols">${g}</span><b>${n}</b>${note ? `<span class="cols">${note}</span>` : ""}</div>`).join("");
+  main.insertAdjacentHTML("beforeend", `
+  <section class="case" id="${c.id}"><div class="in">
+    <div class="qa">
+      <div class="q"><span class="mark" aria-hidden="true">Q</span><h2>${title}</h2></div>
+      <div class="a"><span class="mark" aria-hidden="true">A</span><div><p class="blbl">データから分かること</p><p class="atext">${c.answer}</p></div></div>
+    </div>
+    <div class="cbody">
+      <aside class="block tables"><p class="blbl">使う表 · ${c.stack.length} 枚 ＋ 設定 ${c.prefs.length} 件</p><div class="stack">${st}</div></aside>
+      <div class="block evidence"><p class="blbl">根拠のグラフ</p><div class="charts"></div>
+        <div class="kpis">${c.kpis.map(([v, t]) => `<div class="kpi"><span class="v">${v}</span><span class="t">${t}</span></div>`).join("")}</div></div>
+    </div>
+    <div class="block trap"><p class="blbl">読み違えやすい所</p><p>${c.trap}</p></div>
+    </div></section>`);
+});
+
+// chart helpers
+function panel(host, title, src) { const d = document.createElement("div"); d.className = "panel"; d.innerHTML = `<h3>${title}${src ? `<span class="src">${src}</span>` : ""}</h3>`; host.appendChild(d); return d; }
+function legend(host, items) { host.insertAdjacentHTML("beforeend", `<div class="legend">${items.map(([n, c]) => `<span><i style="background:${c}"></i>${n}</span>`).join("")}</div>`); }
+
+function lines(host, xs, series, o) {
+  const W = fit(host, o.W || 640), H = o.H || 260, L = o.L ?? 48, R = 16, Tp = 18, B = 26, s = svg(host, W, H);
+  const lo = o.min || 0, x = i => L + i * (W - L - R) / (xs.length - 1), y = v => Tp + (1 - (v - lo) / (o.max - lo)) * (H - Tp - B);
+  (o.bands || []).forEach(([a, b, lb]) => { const i = xs.indexOf(a), j = xs.indexOf(b); el("rect", { x: x(i), y: Tp, width: x(j) - x(i), height: H - Tp - B, fill: css("--hot-soft") }, s); if (lb) tx(s, x(i) + 4, Tp - 4, lb, {}, "hot"); });
+  o.ticks.forEach(t => { el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), stroke: css("--grid") }, s); tx(s, L - 8, y(t) + 4, o.fmt(t), { "text-anchor": "end" }); });
+  xs.forEach((m, i) => { if (m.endsWith(o.xEvery || "-01")) tx(s, x(i), H - 6, o.xfmt ? o.xfmt(m) : m.slice(0, 4), { "text-anchor": "middle" }); });
+  (o.marks || []).forEach(([m, lb]) => { const i = xs.indexOf(m); el("line", { x1: x(i), x2: x(i), y1: Tp, y2: H - B, stroke: css("--hot"), "stroke-dasharray": "4 3", "stroke-width": 1.5 }, s); tx(s, x(i) + 5, Tp + 2, lb, {}, "hot"); });
+  series.forEach(se => {
+    const pts = se.v.map((v, i) => v == null ? null : [x(i), y(v)]).filter(Boolean);
+    el("path", { d: "M" + pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" L"), fill: "none", stroke: se.c, "stroke-width": se.w || 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, s);
+    if (se.end !== false) { const lp = pts[pts.length - 1]; el("circle", { cx: lp[0], cy: lp[1], r: 3.5, fill: se.c }, s); }
+  });
+  (o.notes || []).forEach(([m, v, lb, anchor]) => { const i = xs.indexOf(m); el("circle", { cx: x(i), cy: y(v), r: 5, fill: "none", stroke: css("--hot"), "stroke-width": 2 }, s); tx(s, x(i) + (anchor === "end" ? -9 : 9), y(v) - 8, lb, { "text-anchor": anchor || "start" }, "hot"); });
+}
+function vbars(host, labels, vals, o) {
+  const W = fit(host, o.W || 640), H = o.H || 220, L = o.L ?? 44, R = 10, Tp = 18, B = 26, s = svg(host, W, H), bw = (W - L - R) / labels.length;
+  const y = v => Tp + (1 - v / o.max) * (H - Tp - B);
+  o.ticks.forEach(t => { el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), stroke: css("--grid") }, s); tx(s, L - 6, y(t) + 4, o.fmt(t), { "text-anchor": "end" }); });
+  labels.forEach((lb, i) => {
+    const hot = o.hot && o.hot(lb, i), v = vals[i];
+    el("rect", { x: L + i * bw + bw * .15, y: y(v), width: bw * .7, height: H - B - y(v), rx: 2, fill: hot ? css("--hot") : (o.color || css("--dim")) }, s);
+    const xl = o.xl && o.xl(lb, i); if (xl) tx(s, L + i * bw + bw / 2, H - 6, xl, { "text-anchor": "middle" });
+    if (o.vlabel && o.vlabel(lb, i)) tx(s, L + i * bw + bw / 2, y(v) - 5, o.fmt(v), { "text-anchor": "middle" }, hot ? "hot" : "ink");
+  });
+}
+function groups(host, cats, series, o) {
+  const W = fit(host, o.W || 640), H = o.H || 240, L = o.L ?? 56, R = 10, Tp = 22, B = 28, s = svg(host, W, H), gw = (W - L - R) / cats.length, bw = gw * .7 / series.length;
+  const y = v => Tp + (1 - v / o.max) * (H - Tp - B);
+  o.ticks.forEach(t => { el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), stroke: css("--grid") }, s); tx(s, L - 6, y(t) + 4, o.fmt(t), { "text-anchor": "end" }); });
+  cats.forEach((c, i) => {
+    series.forEach((se, j) => { const v = se.v[i], xx = L + i * gw + gw * .15 + j * bw; el("rect", { x: xx, y: y(v), width: bw - 4, height: H - B - y(v), rx: 2, fill: se.c }, s); tx(s, xx + (bw - 4) / 2, y(v) - 6, o.fmt(v), { "text-anchor": "middle" }, "ink"); });
+    tx(s, L + i * gw + gw / 2, H - 6, c, { "text-anchor": "middle" });
+  });
+}
+const win = (obj, a, b) => { const i = obj.months.indexOf(a), j = obj.months.indexOf(b); return { months: obj.months.slice(i, j + 1), rate: obj.rate.slice(i, j + 1) }; };
+
+const DRAW = {
+  tents(h) {
+    const m = document.createElement("div"); m.className = "multi"; h.appendChild(m);
+    const s1 = win(D.tent_search_oos_monthly, "2023-07", "2025-06");
+    lines(panel(m, "① 検索で在庫なし（全国）", "web_searches"), s1.months, [{ v: s1.rate, c: css("--d-web"), w: 2.5, end: false }], { W: 300, H: 190, L: 38, max: .12, ticks: [0, .04, .08, .12], fmt: pct, bands: [["2024-05", "2024-09"]] });
+    const s2 = win(D.west_tent_cancel_monthly, "2023-07", "2025-06");
+    lines(panel(m, "② 注文のキャンセル", "order_lines"), s2.months, [{ v: s2.rate, c: css("--d-order"), w: 2.5, end: false }], { W: 300, H: 190, L: 38, max: .15, ticks: [0, .05, .1, .15], fmt: pct, bands: [["2024-05", "2024-09"]] });
+    const q = D.west_tent_split, qi = q.q.indexOf("2023Q3"), qq = q.q.slice(qi, qi + 8), qv = q.rate.slice(qi, qi + 8);
+    vbars(panel(m, "③ 別倉庫からの分割出荷", "shipments"), qq, qv, { W: 300, H: 190, L: 38, max: .5, ticks: [0, .25, .5], fmt: pct, hot: l => l === "2024Q3", vlabel: l => l === "2024Q3", xl: l => l.endsWith("Q1") ? l.slice(0, 4) : "", color: css("--d-ship") });
+    h.insertAdjacentHTML("beforeend", `<p class="legend">網掛けは 2024年5〜9月。①は全国のテント検索、②③は旧 West 11 州のテントを含む注文。③は四半期。</p>`);
+  },
+  sales(h) {
+    const t = D.three_monthly, p = panel(h, "3 つの「売上」の月次推移", "受注 / 請求 / Web 計測");
+    legend(p, [["営業（受注・注文日）", css("--d-order")], ["経理（請求・請求日）", css("--d-bill")], ["デジタル（Web 計測）", css("--d-web")]]);
+    lines(p, t.months, [{ v: t.web, c: css("--d-web"), w: 2 }, { v: t.invoice, c: css("--d-bill"), w: 2.5 }, { v: t.order, c: css("--d-order"), w: 2.5 }],
+      { max: 600000, ticks: [0, 200000, 400000, 600000], fmt: k$, L: 52, notes: [["2025-11", 550658, "営業 $551k", "end"], ["2025-12", 580064, "経理 $580k", "end"]] });
+  },
+  marketplace(h) {
+    const mc = D.monthly_channel, keys = [["b2b", "法人", css("--d-prod")], ["web", "Web", css("--d-web")], ["app", "アプリ", css("--d-order")], ["marketplace", "モール", css("--d-ship")]];
+    const p = panel(h, "販路別の月次売上（積み上げ）", "orders + order_lines");
+    legend(p, keys.map(k => [k[1], k[2]]));
+    const W = fit(p, 640), H = 300, L = 52, R = 16, Tp = 14, B = 26, s = svg(p, W, H), n = mc.months.length, x = i => L + i * (W - L - R) / (n - 1);
+    const max = 700000, min = 0, y = v => Tp + (1 - (v - min) / (max - min)) * (H - Tp - B);
+    [0, 200000, 400000, 600000].forEach(t => { el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), stroke: css("--grid") }, s); tx(s, L - 8, y(t) + 4, k$(t), { "text-anchor": "end" }); });
+    let base = Array(n).fill(0);
+    keys.forEach(([k, , c]) => { const top = base.map((b, i) => b + mc[k][i]);
+      const d = "M" + top.map((v, i) => `${x(i)},${y(v)}`).join(" L") + " L" + base.map((v, i) => `${x(i)},${y(v)}`).reverse().join(" L") + " Z";
+      el("path", { d, fill: c, opacity: .88 }, s); base = top; });
+    mc.months.forEach((m, i) => { if (m.endsWith("-01")) tx(s, x(i), H - 6, m.slice(0, 4), { "text-anchor": "middle" }); });
+    const i0 = mc.months.indexOf("2024-04"); el("line", { x1: x(i0), x2: x(i0), y1: Tp, y2: H - B, stroke: css("--hot"), "stroke-dasharray": "4 3", "stroke-width": 1.5 }, s); tx(s, x(i0) + 5, Tp + 10, "モール出店", {}, "hot");
+    const fm = mc.months.map((m, i) => ({ m, fee: D.mk_fee_monthly[i], rev: mc.marketplace[i] })).filter(r => r.m >= "2024-04");
+    vbars(panel(h, "モールで払った手数料（月次）", "invoices"), fm.map(r => r.m), fm.map(r => r.fee), { H: 170, max: 8000, ticks: [0, 4000, 8000], fmt: v => "$" + (v / 1000).toFixed(0) + "k", color: css("--hot"), xl: m => m.endsWith("-01") ? m.slice(0, 4) : "" });
+  },
+  carrier(h) {
+    const l = D.late_by_wh_month, p = panel(h, "倉庫別の遅配率", "shipments");
+    legend(p, [["WH-C", css("--d-ship")], ["WH-E・WH-W", css("--dim")]]);
+    lines(p, l.months, [{ v: l["WH-E"], c: css("--dim"), w: 1.5 }, { v: l["WH-W"], c: css("--dim"), w: 1.5 }, { v: l["WH-C"], c: css("--d-ship"), w: 3 }], { max: .6, ticks: [0, .2, .4, .6], fmt: pct, marks: [["2025-05", "配送業者を切替"]] });
+    const d = document.createElement("div"); d.className = "duo"; h.appendChild(d);
+    const r = D.repeat_90d;
+    groups(panel(d, "90 日以内に再購入した顧客", "shipments + orders"), ["遅配なし", "遅配あり"], [{ v: [r.on_time.rate, r.late.rate], c: css("--d-order") }], { W: 300, H: 200, L: 38, max: .35, ticks: [0, .1, .2, .3], fmt: pct1 });
+    const al = D.arrived_late_returns_by_wh["WH-C"] || {}, ms = l.months.filter(m => m >= "2024-05"), av = ms.map(m => al[m] || 0);
+    const pr = panel(d, "「届くのが遅い」返品（WH-C・月別件数）", "returns"); legend(pr, [["切替前", css("--dim")], ["切替後", css("--hot")]]); vbars(pr, ms, av, { W: 300, H: 200, L: 30, max: 20, ticks: [0, 10, 20], fmt: v => v, hot: m => m >= "2025-05", xl: m => m.endsWith("-01") ? m.slice(0, 4) : "", color: css("--dim") });
+  },
+  window(h) {
+    const c = D.return_cohort, p = panel(h, "注文月ごとの返品率", "returns + order_lines + orders");
+    lines(p, c.months, [{ v: c.rate, c: css("--d-ret"), w: 3 }], { max: .14, ticks: [0, .04, .08, .12], fmt: pct, marks: [["2024-07", "返品期限を 60 日に"]], notes: [["2025-12", c.rate[c.rate.length - 1], "まだ出揃っていない", "end"]] });
+    const lag = D.return_lag_hist, n = 12, nb = lag.before.slice(0, n), na = lag.after.slice(0, n), sb = nb.reduce((a, b) => a + b), sa = na.reduce((a, b) => a + b);
+    const q = panel(h, "配達から返品申請までの日数", "returns");
+    legend(q, [["変更前の注文", css("--dim")], ["変更後の注文", css("--d-ret")]]);
+    const W = fit(q, 640), H = 200, L = 44, R = 10, Tp = 10, B = 24, s = svg(q, W, H), bw = (W - L - R) / n, y = v => Tp + (1 - v / .45) * (H - Tp - B);
+    [0, .2, .4].forEach(t => { el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), stroke: css("--grid") }, s); tx(s, L - 6, y(t) + 4, pct(t), { "text-anchor": "end" }); });
+    el("rect", { x: L + 6 * bw, y: Tp, width: 6 * bw, height: H - Tp - B, fill: css("--hot-soft") }, s); tx(s, L + 6 * bw + 6, Tp + 14, (W < 520 ? "30〜60 日目" : "30〜60 日目：変更後だけに現れる"), {}, "hot");
+    for (let i = 0; i < n; i++) { const a = nb[i] / sb, b = na[i] / sa;
+      el("rect", { x: L + i * bw + bw * .1, y: y(a), width: bw * .38, height: H - B - y(a), fill: css("--dim") }, s);
+      el("rect", { x: L + i * bw + bw * .52, y: y(b), width: bw * .38, height: H - B - y(b), fill: css("--d-ret") }, s);
+      if (i % 2 === 0) tx(s, L + i * bw + bw / 2, H - 6, i * 5 + "日", { "text-anchor": "middle" }); }
+  },
+  west(h) {
+    const rb = D.region_by_year, ow = D.old_west_states_by_year, p = panel(h, "West の請求売上を 2 つの方法で集計", "invoices + invoice_lines");
+    legend(p, [["営業地域 ID = West", css("--hot")], ["再編前の West と同じ 11 州", css("--d-bill")]]);
+    groups(p, ["2023", "2024", "2025"], [{ v: ["2023", "2024", "2025"].map(yr => rb[yr]["R-WEST"]), c: css("--hot") }, { v: ["2023", "2024", "2025"].map(yr => ow[yr]), c: css("--d-bill") }], { max: 1200000, ticks: [0, 400000, 800000, 1200000], fmt: k$, H: 260 });
+  },
+};
+function drawAll() { drawMaps(); C.forEach(c => { const h = document.querySelector(`#${c.id} .charts`); h.innerHTML = ""; DRAW[c.draw](h); }); }
+drawAll();
+let rz; let lastW = innerWidth; addEventListener("resize", () => { if (innerWidth === lastW) return; lastW = innerWidth; clearTimeout(rz); rz = setTimeout(drawAll, 200); });
+</script>
