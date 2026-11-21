@@ -141,7 +141,7 @@ The setup is usable now. Give the user `../docs/questions.md`: all 19 questions 
 1. The user creates a knowledge graph in the web UI (a site holds up to 5 graphs): Manage Graphs → New knowledge graph → Published Data Sources → search `samplehyperstore` → select all 18 → create. It does not need to be the primary graph.
 2. Find the graph id with `inspect-knowledge-context` (action `status`).
 3. For each item in `metadata/business_preferences.json`, call `manage-knowledge-context` with `action: create`, `isGlobal: true`, the graph id, `name` = title, `statements` = [text]. Replace `{{RPT_PROJECT_PATH}}` with the rpt_ project path written as `A > B`. Show the user the 16 items before writing.
-   If Tableau MCP cannot write them, the user can add each item in the web UI instead: open the graph → Actions → Add Business Preferences → Add Preference (Name = title, Scope = Global, Preference Rules = text). `docs/setup_manual.md` step 4 lists all 16.
+   If Tableau MCP cannot write them, the user can add each item in the web UI instead: open the graph → Actions → Add Business Preferences → Add Preference (Name = title, Scope = Global, Preference Rules = text). The appendix of `../docs/setup_manual.md` lists all 16.
 4. Check with `inspect-knowledge-context` (action `list`, `isGlobal: true`): 16 items.
 5. Knowledge reads field descriptions when a data source is published. Allow about 15 minutes after the last publish before relying on it.
 
@@ -153,6 +153,6 @@ Tell the user they can remove the saved sign-in with `python scripts/tableau_aut
 
 ## Known limits
 
-- `get-datasource-metadata` in Tableau MCP may not return field descriptions; Knowledge does.
-- Column descriptions on the raw layer are not inherited by the composed rpt_ data sources (as of Tableau 2026.2). The rpt_ layer carries only calculated-field descriptions on purpose.
+- The rpt_ data sources show the raw layer's column descriptions on their columns (confirmed through the Metadata API, 2026-11). The rpt_ layer adds only calculated-field descriptions.
+- `get-datasource-metadata` in Tableau MCP takes descriptions from the Metadata API and, when that call fails (for example on rate limits), returns the fields without descriptions and without an error. This is MCP behaviour, not a problem with the data sources. Check descriptions with `scripts/check_metadata.py`.
 - The address of a data source page (`.../datasources/<number>`) changes on every overwrite. Open data sources by searching for their name.

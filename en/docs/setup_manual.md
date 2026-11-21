@@ -2,22 +2,42 @@
 
 This guide puts SampleHyperStore on Tableau Cloud without an AI agent or Tableau MCP. It follows the same steps as [`setup/SETUP_FOR_AI.md`](../setup/SETUP_FOR_AI.md), written for a person to follow in order.
 
-You end up with two layers:
+## Overview
 
-| Layer | Tableau project | Data source names | Name in the scripts |
+| Step | What you do | Who acts | What you get |
 |---|---|---|---|
-| Raw layer | raw | `SampleHyperStore - <table>` (12) | `--layer raw` |
-| Department layer | marts | `rpt_samplehyperstore__<department>` (6) | `--layer rpt` |
+| 0 | Prepare | Script, you | The raw and marts projects |
+| 1 | Publish the raw layer | Script | 12 data sources `SampleHyperStore - <table>` |
+| 2 | Compose the department layer | You (web editor) | 6 data sources `rpt_samplehyperstore__<department>` |
+| 3 | Describe the calculated fields | Script, you | Descriptions on the department layer's calculated fields |
+| 4 | Set up Tableau Knowledge (optional) | You (web UI) | A knowledge graph and 16 Business Preferences |
+| 5 | Try it | You | — |
 
-Step 4 also covers Tableau Knowledge (optional), set up by hand in the web UI.
+Go through steps 2 and 3 with billing first, then do the other five.
 
 ## What you need
 
 - Tableau Cloud with the Creator role and permission to publish to a project
 - Python 3.10 or later
-- Access to the Tableau web editor (steps 2 and 3)
+- Access to the Tableau web editor (steps 2 to 4)
+- Tableau+ (step 4 only)
+
+## Terms and values to replace
+
+| Written as | Meaning |
+|---|---|
+| Raw layer | The 12 data sources in the raw project. `--layer raw` in the scripts |
+| Department layer | The 6 data sources in the marts project. `--layer rpt` in the scripts |
+| `<parent project>` | Where the projects go: the path of an existing project, from the top level, with `/` between levels (for example `Sandbox/Team A`) |
+| `<raw path>`, `<marts path>` | The two paths printed at the end of step 0. Paste them as they are |
+
+For the Japanese edition, add `--data ../../ja` to every script; see `ja/docs/setup_manual.md`.
+
+---
 
 ## Step 0. Prepare
+
+### What to do
 
 1. Get this repository (`git clone`, or download the ZIP from GitHub).
 2. From the repository root, move to `en/setup/`. Run every command below from this folder.
@@ -25,8 +45,6 @@ Step 4 also covers Tableau Knowledge (optional), set up by hand in the web UI.
    ```
    cd en/setup
    ```
-
-   For the Japanese edition, add `--data ../../ja` to each command; see `ja/docs/setup_manual.md`.
 
 3. Install the libraries. Creating a virtual environment first (`python -m venv .venv`) keeps them apart from your other projects.
 
@@ -37,19 +55,13 @@ Step 4 also covers Tableau Knowledge (optional), set up by hand in the web UI.
 4. Copy `.env.example` to `.env` and fill in these two values. Neither is secret.
    - `SERVER`: the host part of your site's URL, for example `https://<pod>.online.tableau.com`
    - `SITE_NAME`: the name in `#/site/<here>/` of your site's URL
-5. Check the sign-in. If you are not signed in, the first script run opens your browser. You sign in with OAuth; you do not write any token or password into a file.
-
-   ```
-   python scripts/tableau_auth.py status
-   ```
-
-6. Create the projects. `<parent project>` is the path of an existing project, such as a sandbox. Write it from the top level, with `/` between levels (for example `Sandbox/Team A`).
+5. Create the projects. The first script run opens your browser; sign in to Tableau Cloud there. You sign in with OAuth and do not write any token or password into a file.
 
    ```
    python scripts/create_projects.py --parent "<parent project>"
    ```
 
-   This creates the structure below. `<yyyymmdd>` is the date you run it. Note the raw and marts paths printed at the end, and paste them wherever `<raw path>` and `<marts path>` appear below.
+   This creates the structure below. `<yyyymmdd>` is the date you run it.
 
    ```
    <parent project>/
@@ -58,11 +70,17 @@ Step 4 also covers Tableau Knowledge (optional), set up by hand in the web UI.
        marts/   the 6 department data sources
    ```
 
-   If it fails for lack of permission, create the same projects in the web UI. The paths are then `<parent project>/<yyyymmdd>_SampleHyperStore/raw` and `.../marts`.
+### How to check
 
-   Do not use a project that already holds other SampleHyperStore data sources. When you later use an AI agent, it would see both.
+- The raw and marts paths are printed at the end. Note them.
+- If it fails for lack of permission, create the same projects in the web UI. The paths are then `<parent project>/<yyyymmdd>_SampleHyperStore/raw` and `.../marts`.
+- Do not use a project that already holds other SampleHyperStore data sources. When you later use an AI agent, it would see both.
+
+---
 
 ## Step 1. Publish the raw layer
+
+### What to do
 
 Run with `--dry-run` first. It only builds the .hyper files; it does not sign in or publish. If there are no errors, run it again without `--dry-run`.
 
@@ -71,21 +89,22 @@ python scripts/publish_raw.py --project "<raw path>" --dry-run
 python scripts/publish_raw.py --project "<raw path>"
 ```
 
-Each of the 12 tables is published as `SampleHyperStore - <table>`, with column display names and descriptions. The script ends with `done`. If it prints `check these tables: [...]` instead, look at those tables.
+Each of the 12 tables is published with column display names and descriptions.
 
-Check the descriptions:
+### How to check
 
-```
-python scripts/check_metadata.py --project "<raw path>" --layer raw
-```
+- `publish_raw.py` ends with `done`.
+- Check the descriptions with the command below. It passes when every data source shows `described n/n` and the last line is `all present`.
 
-It passes when every data source shows `described n/n` and the last line is `all present`. Right after publishing, the catalog can take a few minutes to catch up. If you see `[missing]`, wait a few minutes and run it again.
+  ```
+  python scripts/check_metadata.py --project "<raw path>" --layer raw
+  ```
+
+---
 
 ## Step 2. Compose the department layer
 
-Build the six department data sources one at a time in the Tableau web editor. Go through steps 2 and 3 with billing first, then do the other five.
-
-`setup/metadata/rpt_layer.json` holds how to compose them and their calculated fields.
+Build the six department data sources one at a time in the Tableau web editor. `setup/metadata/rpt_layer.json` holds how to compose them and their calculated fields.
 
 | Data source | Root table | Relationships (→ points to the table you add; the key is in brackets) |
 |---|---|---|
@@ -98,42 +117,46 @@ Build the six department data sources one at a time in the Tableau web editor. G
 
 The root table is where the relationship tree starts. Each data source must have exactly one.
 
-For each data source:
+### 2-1. Compose
 
-1. In Tableau Cloud, choose New → Published Data Source. In the connection list choose "On this site", and connect to the root's raw data source (`SampleHyperStore - <root>`). Open the Data Source tab.
-2. Add the other tables one at a time, in the order of `parent_tables` in the JSON, skipping the root. Use "Add published data source".
-3. Right after adding each table, draw its relationship. Always draw from the "+" at the right edge of a table already in the tree to the new table. Drawing the other way makes a second root, and totals then repeat when you split by the other tables' fields.
-4. Pick the key fields from the table above. No dashed line or "!" may remain.
-5. When column names collide, the table added later gets ` (<table>.csv)` appended. The order decides which one. In sales_orders, check that the data pane has `Order Id (order_lines.csv)`: the calculated field "Fulfillable Orders" uses that name.
-6. Create each calculated field in `calculated_fields`, copying the name and formula exactly: data pane menu (▾) → Create Calculated Field. Check that it says "The calculation is valid."
-7. Publish as `rpt_samplehyperstore__<department>`. In the dialog, change the project to marts: it defaults to raw. Leave "Embed credentials" off.
+1. **Connect to the root**: New → Published Data Source → "On this site", connect to the root's raw data source (`SampleHyperStore - <root>`), and open the Data Source tab.
+2. **Add tables and draw relationships**: Add the other tables one at a time with "Add published data source", in the order of `parent_tables` in the JSON, skipping the root. Draw each relationship right after adding the table.
+   - Always draw from the "+" at the right edge of a table already in the tree to the new table. Drawing the other way makes a second root.
+   - Pick the keys from the table above. No dashed line or "!" may remain.
+3. **Check column names**: When column names collide, the table added later gets ` (<table>.csv)` appended. In sales_orders, check that the data pane has `Order Id (order_lines.csv)`: the calculated field "Fulfillable Orders" uses that name.
+4. **Create the calculated fields**: Copy each name and formula in `calculated_fields` exactly, through the data pane menu (▾) → Create Calculated Field. Check that it says "The calculation is valid."
+5. **Publish**: Name it `rpt_samplehyperstore__<department>`. In the dialog, change the project to marts (it defaults to raw). Leave "Embed credentials" off.
 
-After publishing, check the calculated fields:
+### 2-2. Check
 
-```
-python scripts/check_metadata.py --project "<marts path>" --layer rpt
-```
+1. **Calculated fields**: The command below passes when the data source you built shows `formula match n/n`. Data sources you have not built yet show `[missing]`; that is expected along the way.
 
-It passes when the data source you built shows `formula match n/n`. Data sources you have not built yet show `[missing]`; that is expected along the way. Once all six are built, the last line is `all present`.
+   ```
+   python scripts/check_metadata.py --project "<marts path>" --layer rpt
+   ```
 
-Then check the totals. Open a new workbook from the data source's page, put the field below on the sheet, and read the total:
+2. **Totals**: Open a new workbook from the data source's page and read these totals.
 
-| Data source | Field | Expected |
-|---|---|---:|
-| billing | Gross Revenue | 13,347,403.19 |
-| sales_orders | Units | 111,008 |
-| merchandising | Units / Order Lines | 115,435 / 71,007 |
-| shipments | Units | 110,762 |
-| returns_refunds | Requested Units / Received Units / Refunds | 7,944 / 6,704 / 907,537.58 |
-| web_analytics | Sessions / Transactions / Units Added to Cart | 455,057 / 24,484 / 191,594 |
+   | Data source | Field | Expected |
+   |---|---|---:|
+   | billing | Gross Revenue | 13,347,403.19 |
+   | sales_orders | Units | 111,008 |
+   | merchandising | Units / Order Lines | 115,435 / 71,007 |
+   | shipments | Units | 110,762 |
+   | returns_refunds | Requested Units / Received Units / Refunds | 7,944 / 6,704 / 907,537.58 |
+   | web_analytics | Sessions / Transactions / Units Added to Cart | 455,057 / 24,484 / 191,594 |
 
-sales_orders and merchandising are composed the same way, but their Units differ: sales_orders excludes cancelled units, merchandising includes them.
+   sales_orders and merchandising are composed the same way, but their Units differ: sales_orders excludes cancelled units, merchandising includes them.
 
-Last, in the five data sources that include products (all except web_analytics), split by product category: Gross Revenue for billing, Units for the others. If every category shows the same value, the data source has two roots: redo this step from item 3.
+3. **One root**: In the five data sources that include products (all except web_analytics), split by product category: Gross Revenue for billing, Units for the others. If every category shows the same value, the data source has two roots: redo 2-1 from item 2.
+
+---
 
 ## Step 3. Describe the calculated fields
 
-The web editor cannot write field descriptions. Add them in two steps:
+The web editor cannot write field descriptions. Add them in two steps.
+
+### What to do
 
 1. Write the descriptions with the script. Pass the data source names without `rpt_samplehyperstore__`, separated by spaces (for example `billing`, or `sales_orders shipments`). Leave `--datasources` out to do all six. The relationships drop for a moment.
 
@@ -141,34 +164,79 @@ The web editor cannot write field descriptions. Add them in two steps:
    python scripts/describe_rpt.py --project "<marts path>" --datasources billing
    ```
 
-2. Open the data source again from its page, then Edit → Publish → same name and project → Overwrite, without changes. This restores the relationships and keeps the descriptions. If Publish does nothing on the first click, click again.
+2. Open the data source again from its page, then Edit → Publish → same name and project → Overwrite, without changes. This restores the relationships and keeps the descriptions.
+   - Do not use an editor tab that was open before you ran the script in item 1: it would publish the old version.
+   - If Publish does nothing on the first click, click again.
 
-   Do not use an editor tab that was open before you ran the script in item 1: it would publish the old version.
+### How to check
 
-Check that the descriptions are there: the data source shows `described n/n`. Then check that the totals from step 2 still match.
+- The command below passes when the data source shows `described n/n`.
 
-```
-python scripts/check_metadata.py --project "<marts path>" --layer rpt
-```
+  ```
+  python scripts/check_metadata.py --project "<marts path>" --layer rpt
+  ```
 
-If an error says the data source is connected only to published data sources, item 2 has not been done yet.
+- The totals from 2-2 still match.
+
+---
 
 ## Step 4. Set up Tableau Knowledge (optional)
 
 Tableau Knowledge tells AI agents what to use when. It requires Tableau+.
 
+### What to do
+
 1. In Tableau Cloud, open "Tableau Knowledge" from the left menu and choose "Manage Graphs".
 2. Create a graph with "New knowledge graph". Select all 18 data sources of the raw and department layers (search for `samplehyperstore`).
 3. Open the graph, then choose "Actions" (top right) → "Add Business Preferences" → "Add Preference".
-4. For each row of the table below, fill in the form and click "Save":
+4. Enter the 16 items in the [appendix](#appendix-business-preferences) one at a time, and click "Save" for each:
    - Name: the "Name" column
    - Scope: leave it as "Global (all entities)"
    - Preference Rules: the "Text" column (the limit is 1,000 characters; every text fits)
-5. After all 16, wait about 15 minutes after your last publish. Knowledge reads field descriptions when a data source is published.
+   - In the first text, replace `{{RPT_PROJECT_PATH}}` with the path of the department layer's project, with " > " between levels (for example `Sandbox > 20261121_SampleHyperStore > marts`).
 
-In the first text, replace `{{RPT_PROJECT_PATH}}` with the path of the department layer's project, with " > " between levels (for example `Sandbox > 20261121_SampleHyperStore > marts`).
+### How to check
 
-The table matches `setup/metadata/business_preferences.json`.
+- The graph has 16 Business Preferences.
+- Wait about 15 minutes after your last publish before you rely on it. Knowledge reads field descriptions when a data source is published.
+
+---
+
+## Step 5. Try it
+
+The setup is complete, without any AI so far.
+
+- To check in Tableau only: the totals table in 2-2 is the check.
+- To try it with an AI agent: ask an AI agent connected through Tableau MCP the questions in [`questions.md`](questions.md). See your agent's documentation for connecting Tableau MCP.
+
+When you are done, remove the saved sign-in. It is stored outside the repository (`%LOCALAPPDATA%\samplehyperstore` on Windows, `~/.config/samplehyperstore` elsewhere).
+
+```
+python scripts/tableau_auth.py logout
+```
+
+---
+
+## If something goes wrong
+
+| Symptom | What to do |
+|---|---|
+| `publish_raw.py` ends with `check these tables: [...]` instead of `done` | Run again with `--tables` for those tables (for example `--tables orders`). If a data source for that table already exists in raw, delete it in the web UI first. |
+| `check_metadata.py` shows `[missing]` | Right after publishing, wait a few minutes and run it again. Also check that the last level of the project path (raw or marts) is right. |
+| Totals do not match | Review 2-1 items 2 (direction of the line) and 3 (column names with ` (<table>.csv)`). |
+| Step 3 fails with an error saying the data source is connected only to published data sources | Item 2 of step 3 (the overwrite) has not been done yet. |
+
+## Notes
+
+- **Descriptions on the department layer**: The department layer's columns show the raw layer's column descriptions as they are (confirmed through the Metadata API). The only descriptions you add on the department layer are those of the calculated fields.
+- **When Tableau MCP shows no descriptions**: Tableau MCP's `get-datasource-metadata` may return no descriptions. MCP takes them from the Metadata API and, when that call fails, returns the fields without descriptions and without an error. This is not a problem with your data sources. Use `check_metadata.py` to check the descriptions.
+- **Data source page URLs**: They change on every overwrite. Open data sources by searching for their name.
+
+---
+
+## Appendix: Business Preferences
+
+The 16 items for step 4. They match `setup/metadata/business_preferences.json`.
 
 | # | Name | Text |
 |---|---|---|
@@ -188,27 +256,3 @@ The table matches `setup/metadata/business_preferences.json`.
 | 14 | Cross-source metric: Orders per session | Orders per session (Sales) = Orders in rpt_samplehyperstore__sales_orders for the web and app channels by Order Date ÷ Sessions in rpt_samplehyperstore__web_analytics by Session Start Date. |
 | 15 | Cross-source metric: Unit cart abandonment | Unit cart abandonment (Merchandising) = 1 − Units in rpt_samplehyperstore__merchandising for web and app orders ÷ Units Added to Cart in rpt_samplehyperstore__web_analytics, both by week (Order Date and Cart Added Date). |
 | 16 | Cross-source metric: Marketplace fee rate on booked sales | Marketplace fee rate on booked sales (Sales) = Marketplace Fees in rpt_samplehyperstore__billing by month of Invoice Date ÷ Revenue in rpt_samplehyperstore__sales_orders for the marketplace channel by month of Order Date. |
-
-## Step 5. Try it
-
-The setup is complete, without any AI so far.
-
-- To check in Tableau only: the totals table in step 2 is the check.
-- To try it with an AI agent: ask an AI agent connected through Tableau MCP the questions in [`questions.md`](questions.md). See your agent's documentation for connecting Tableau MCP.
-
-When you are done, remove the saved sign-in. It is stored outside the repository (`%LOCALAPPDATA%\samplehyperstore` on Windows, `~/.config/samplehyperstore` elsewhere).
-
-```
-python scripts/tableau_auth.py logout
-```
-
-## If something goes wrong
-
-- `check these tables: [...]` instead of `done`: run again with `--tables` for those tables (for example `--tables orders`). If a data source for that table already exists in raw, delete it in the web UI first.
-- `[missing]` from `check_metadata.py`: right after publishing, wait a few minutes and run it again. Also check that the last level of the project path (raw or marts) is right.
-- Totals do not match: review items 3 (direction of the line) and 5 (column names with ` (<table>.csv)`) of step 2.
-
-## Notes
-
-- Column descriptions on the raw layer are not inherited by the department layer. The department layer carries only the calculated-field descriptions.
-- A data source page's URL changes on every overwrite. Open data sources by searching for their name.
