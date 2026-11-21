@@ -2,6 +2,8 @@
 
 Sample data for testing whether an AI agent connected through Tableau MCP answers business questions with the right metric. It holds three years of transactions of a fictional US retailer, generated with Claude Code. Every company, person and number in it is fictional.
 
+**[See what you can analyze →](https://yoshitakaarakawa.github.io/SampleHyperStore/?lang=en)** A one-page tour of how the 12 tables connect, with six business questions answered across them.
+
 ## Why this dataset
 
 Tableau's classic sample data, Superstore, is one table with sales and profit columns already in place. Real business data is not like that. It is split across systems, the same word means different things in different departments, and the metrics have to be defined by the business.
