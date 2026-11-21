@@ -2,7 +2,7 @@
 
 19 analysis questions to ask an AI agent connected to SampleHyperStore on Tableau. Each is phrased the way a business user would ask it, and every table it needs is published by `setup/`. The intended answers and the common mistakes are not published, so that the questions stay useful as a test.
 
-The [showcase page](https://yoshitakaarakawa.github.io/SampleHyperStore/) reveals all or part of the answers to Q02, Q11, Q15, Q17, Q45, Q49, Q50, Q52, Q62, Q63, Q68, Q70. When you test an AI agent with these questions, do not let it read that page or the top-level `docs/` folder.
+The [showcase page](https://yoshitakaarakawa.github.io/SampleHyperStore/?lang=en) reveals all or part of the answers to Q02, Q11, Q15, Q17, Q45, Q49, Q50, Q52, Q62, Q63, Q68, Q70. When you test an AI agent with these questions, do not let it read that page or the top-level `docs/` folder.
 
 - "As of" for relative periods: the user asks in early December 2025 (data ends 2025-12-31). "last month" = November 2025; "last quarter" = calendar Q3 2025.
 - The fiscal year starts on February 1 (FY2025 = 2025-02-01 .. 2026-01-31).

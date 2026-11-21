@@ -17,7 +17,7 @@ body = (here / "page.template.html").read_text(encoding="utf-8").replace("__DATA
 
 head = ('<!doctype html>\n<html lang="ja">\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-        '<meta name="description" content="SampleHyperStore の 12 枚の表をまたいで、AI と業務の問いを解く。">\n'
+        '<meta name="description" content="SampleHyperStore: ask AI business questions that span 12 tables. / 12 枚の表をまたいで、AI と業務の問いを解く。">\n'
         '<style>body{margin:0}</style>\n')
 (root / "docs").mkdir(exist_ok=True)
 (root / "docs" / "index.html").write_text(head + body, encoding="utf-8")

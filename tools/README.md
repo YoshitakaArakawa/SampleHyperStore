@@ -8,7 +8,7 @@ These tools generate the SampleHyperStore data, build the Japanese edition, and 
 |---|---|
 | `generator/` | Simulates one world from `world_spec.yaml` and a fixed seed, and writes the 24 English CSVs. Column order and types come from `en/columns.yaml`. |
 | `build_ja/build_jp.py` | Builds `ja/csv/`, `ja/columns.yaml` and `ja/SHA256SUMS` from the English CSVs, using the translation tables in `build_ja/translation/`. |
-| `showcase/` | Computes the numbers for the showcase page from `en/csv/` with pandas, and writes `docs/index.html` (Japanese). The page shows the answers to some questions in `docs/questions.md`. |
+| `showcase/` | Computes the numbers for the showcase page from `en/csv/` with pandas, and writes `docs/index.html`. The page holds English and Japanese text and switches between them (`?lang=en` / `?lang=ja`; without it, the browser language decides). The page shows the answers to some questions in `docs/questions.md`. |
 | `requirements.txt` | The exact versions that reproduce the published files byte for byte. |
 
 ## Regenerate and check
