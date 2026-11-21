@@ -1,44 +1,135 @@
 # SampleHyperStore
 
-A synthetic retail dataset for trying AI-driven data analysis on Tableau.
+Sample data for testing whether an AI agent connected through Tableau MCP answers business questions with the right metric. It holds three years of transactions of a fictional US retailer, generated with Claude Code. Every company, person and number in it is fictional.
 
-Tableau's classic sample data is one tidy table with ready-made profit and sales columns. Real business data is not like that: it is split across systems, the same word means different things in different departments, and the metrics have to be defined. SampleHyperStore reproduces that situation on purpose, so you can see what an AI agent gets wrong on raw tables, and what changes once the data is described and the metrics are defined.
+## Why this dataset
+
+Tableau's classic sample data, Superstore, is one table with sales and profit columns already in place. Real business data is not like that. It is split across systems, the same word means different things in different departments, and the metrics have to be defined by the business.
+
+Connect an AI agent to data like that as it is, and the agent cannot tell which metric to use. Ask "What was our revenue last month?" and this happens:
+
+```mermaid
+flowchart LR
+    Q["'What was our revenue last month?'"] --> A["AI agent"]
+    A --> S1["Booked revenue (Sales)"]
+    A --> S2["Invoiced revenue (Finance)"]
+    A --> S3["Web-tracked revenue<br/>(Digital Marketing)"]
+    S1 --> X["Picks one,<br/>without saying which"]
+    S2 --> X
+    S3 --> X
+```
+
+Once the data is described and the meaning of each metric is defined, the agent can pick the metric that fits the question. SampleHyperStore provides three things for that:
+
+| What is added | What it holds | Example |
+|---|---|---|
+| Column descriptions | What each column means | `Qty Cancelled`: units cancelled before shipment |
+| Calculated fields | Each department's metrics, with formulas and descriptions | Sales' `Revenue`: booked revenue net of cancellations, by order date |
+| Business Preferences (Tableau Knowledge) | The default meaning of words, and when to use which metric | Unqualified "revenue" means booked revenue; questions about fiscal periods or returns use invoiced revenue |
+
+```mermaid
+flowchart LR
+    Q["'What was our revenue last month?'"] --> A["AI agent"]
+    K["Column descriptions,<br/>calculated fields,<br/>knowledge of what to use when"] --> A
+    A --> R["Answers with booked revenue,<br/>and says which metric it used"]
+```
+
+With SampleHyperStore you can compare the raw state and the described state on the same data.
+
+## Where AI agents trip up
+
+The data contains situations that AI agents tend to get wrong, on purpose. Each is meant to be solved by the descriptions, calculated fields and Business Preferences that the setup adds.
+
+| Where agents trip up | What is in the data | What solves it |
+|---|---|---|
+| Mixing up metrics with the same name | "Revenue" exists in three versions, one per department | Each department's `Revenue` calculated field, and the Business Preference "Default meaning of sales and revenue" |
+| Not choosing among several definitions | Return rate has several definitions by department: requested, received, order cohort | Business Preferences with the formula of each definition |
+| Confusing calendar and fiscal years | The fiscal year starts in February | The description of `Fiscal Month`, and the Business Preference "Fiscal periods for Finance questions" |
+| Missing a change over time | Sales regions were realigned in January 2025 | The Business Preference "Sales region realignment on 2025-01-01" (compare by state) |
+| Failing to build a metric across data sources | Return rate and net shipping cost take their numerator and denominator from different data sources | Business Preferences that name where each part comes from |
+
+The questions are in [`docs/questions.md`](docs/questions.md). There are two ways to compare. One is to show the agent only the raw-table data sources and ask. The other is to add the data sources with defined metrics and the Tableau Knowledge settings, and ask the same questions again.
 
 ## What is inside
 
-| Folder | Contents |
+| Location | Contents |
 |---|---|
-| `csv/in_use/` | The 12 tables the Tableau setup uses: a fictional US retailer of outdoor and home & garden goods (web store, app, marketplaces, B2B), 2023-01-01 to 2025-12-31. Checksums for all CSVs in `SHA256SUMS`. |
-| `csv/planned/` | 12 more tables of the same world (marketing, customers, inventory, procurement, support, targets), not used by the setup yet. About 110 MB with `in_use/`. |
-| `docs/data_dictionary.md` | Tables, grains, keys and columns. |
-| `docs/questions.md` | 19 business questions to ask an AI agent. The intended answers are not published. |
-| `setup/` | Everything needed to put 12 of the tables on Tableau Cloud with descriptions, 53 calculated fields and Tableau Knowledge Business Preferences. |
-| `generator/` | The code that generates the CSVs (fixed seed, byte-identical output). |
+| `csv/in_use/` | The 12 tables the Tableau setup uses |
+| `csv/planned/` | 12 more tables, not used yet (kept for future extensions) |
+| `docs/data_dictionary.md` | Tables, grains, keys and columns |
+| `docs/questions.md` | Business questions to ask an AI agent |
+| `setup/` | Setup instructions, scripts, and the metadata: column descriptions, calculated fields and Tableau Knowledge Business Preferences |
+| `generator/` | The code that generates the CSVs (fixed seed, byte-identical output) |
 
-A Japanese edition (Japanese column names, values, descriptions and metadata; identical numbers) is in `../ja/`.
+The data covers 2023-01-01 to 2025-12-31. The company is a US retailer of outdoor and home & garden goods that sells through its web store, app, marketplaces and B2B.
 
-The data is built from one simulated world: sessions turn into orders, orders into shipments and invoices, shipments into returns and refunds. Keys line up across tables, and several business events are planted in the data for the questions to find.
+The 12 tables in `csv/in_use/` connect as follows. Each line is labelled with its key.
 
-## Use it with Tableau and an AI agent
+```mermaid
+erDiagram
+    web_sessions ||--o{ web_searches : "Session Id"
+    web_sessions |o--o| orders : "Order Id"
+    orders ||--|{ order_lines : "Order Id"
+    products ||--o{ order_lines : "Product Id"
+    orders ||--o{ shipments : "Order Id"
+    shipments ||--|{ shipment_lines : "Shipment Id"
+    order_lines ||--o{ shipment_lines : "Order Line Id"
+    shipments ||--|| invoices : "Shipment Id"
+    invoices ||--|{ invoice_lines : "Invoice Id"
+    order_lines ||--o{ invoice_lines : "Order Line Id"
+    order_lines ||--o{ returns : "Order Line Id"
+    returns ||--o{ refunds : "Return Id"
+    invoices ||--o{ credit_memos : "Invoice Id"
+    refunds |o--o{ credit_memos : "Refund Id"
+```
 
-Open this repository in an AI coding agent that has Tableau MCP connected (for example Claude Code), and say:
+## How to use it
+
+After the setup, your Tableau Cloud site looks like this:
+
+```mermaid
+flowchart LR
+    subgraph site["Tableau Cloud site"]
+        subgraph raw["Project raw (raw tables)"]
+            R["12 data sources<br/>SampleHyperStore - table name<br/>with column names and descriptions"]
+        end
+        subgraph marts["Project marts (per department)"]
+            M["6 data sources<br/>rpt_samplehyperstore__department<br/>with calculated fields and descriptions"]
+        end
+        K["Tableau Knowledge (optional)<br/>a graph of the 18 data sources,<br/>16 Business Preferences"]
+    end
+    R -- "composed with relationships" --> M
+    AI["AI agent"] -- "queries through Tableau MCP" --> M
+    K -. "knowledge of what to use when" .-> AI
+```
+
+The six department data sources are billing, sales_orders (booked orders), merchandising, shipments, returns_refunds and web_analytics.
+
+### Set it up with an AI agent
+
+Open this repository in an AI agent that has Tableau MCP connected (for example Claude Code), and say:
 
 > Read `en/setup/SETUP_FOR_AI.md` and set up SampleHyperStore on my Tableau Cloud site.
 
-The agent publishes the raw tables with a script (you sign in through your browser; no token is stored), then guides you, or a computer-use agent, through composing six department data sources in the Tableau web editor. Knowledge (Tableau+) is optional.
+The agent asks you before every write to Tableau. It cannot do everything alone: part of the setup is done by hand in the Tableau web editor. See [`SETUP_FOR_AI.md`](setup/SETUP_FOR_AI.md) for the prerequisites.
 
-Then ask the questions in `docs/questions.md`, with and without the descriptions and Knowledge, and compare.
+### Set it up by hand
 
-## Use the CSVs on their own
-
-The CSVs work with any tool. Start from `docs/data_dictionary.md`. To regenerate them:
-
-```
-cd generator
-pip install -r requirements.txt
-python generate.py --check
-```
+Without Tableau MCP, follow [`docs/setup_manual.md`](docs/setup_manual.md).
 
 ## License
 
-Data and documents: CC BY 4.0. Code: MIT. See `LICENSE-DATA.md`.
+The data and documents (CSVs, metadata, READMEs, `docs/`) are under CC BY 4.0.
+
+- You may: copy, redistribute, adapt, and use them commercially
+- Condition: when you publish or share, give credit (author, license name, and whether you changed it)
+- Credit example: `"SampleHyperStore" by Yoshitaka Arakawa, CC BY 4.0`
+
+The code (`generator/`, `setup/scripts/`) is under the MIT License.
+
+- You may: use, copy, modify, redistribute and sell it
+- Condition: when you share the code, keep the copyright notice and the license text (the root [`LICENSE`](../LICENSE))
+
+Both come without warranty. Using them only on your own machine puts no conditions on you. See [`LICENSE-DATA.md`](LICENSE-DATA.md) for details.
+
+A Japanese edition is in [`../ja/`](../ja/).
