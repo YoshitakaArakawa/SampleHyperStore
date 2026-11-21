@@ -141,6 +141,7 @@ The setup is usable now. Give the user `../docs/questions.md`: all 19 questions 
 1. The user creates a knowledge graph in the web UI (a site holds up to 5 graphs): Manage Graphs → New knowledge graph → Published Data Sources → search `samplehyperstore` → select all 18 → create. It does not need to be the primary graph.
 2. Find the graph id with `inspect-knowledge-context` (action `status`).
 3. For each item in `metadata/business_preferences.json`, call `manage-knowledge-context` with `action: create`, `isGlobal: true`, the graph id, `name` = title, `statements` = [text]. Replace `{{RPT_PROJECT_PATH}}` with the rpt_ project path written as `A > B`. Show the user the 16 items before writing.
+   If Tableau MCP cannot write them, the user can add each item in the web UI instead: open the graph → Actions → Add Business Preferences → Add Preference (Name = title, Scope = Global, Preference Rules = text). `docs/setup_manual.md` step 4 lists all 16.
 4. Check with `inspect-knowledge-context` (action `list`, `isGlobal: true`): 16 items.
 5. Knowledge reads field descriptions when a data source is published. Allow about 15 minutes after the last publish before relying on it.
 
