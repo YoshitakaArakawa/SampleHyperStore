@@ -160,6 +160,12 @@ The setup is complete, without any AI so far.
 - To check in Tableau only: the totals table in step 2 is the check.
 - To try it with an AI agent: ask an AI agent connected through Tableau MCP the questions in [`questions.md`](questions.md). See your agent's documentation for connecting Tableau MCP.
 
+When you are done, remove the saved sign-in. It is stored outside the repository (`%LOCALAPPDATA%\samplehyperstore` on Windows, `~/.config/samplehyperstore` elsewhere).
+
+```
+python scripts/tableau_auth.py logout
+```
+
 ## If something goes wrong
 
 - `check these tables: [...]` instead of `done`: run again with `--tables` for those tables (for example `--tables orders`). If a data source for that table already exists in raw, delete it in the web UI first.

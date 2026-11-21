@@ -1,9 +1,6 @@
-# Local settings and sign-in cache (never commit)
+# Local settings (never commit). The sign-in cache lives outside the repository.
 .env
 .auth-cache/
-# Generator outputs: regenerated CSVs and the answer key (the answers to docs/questions.md)
-generator/out/
-generator/answer_key/
 # Setup work files (downloaded / built data sources)
 setup/work/
 hyperd*.log

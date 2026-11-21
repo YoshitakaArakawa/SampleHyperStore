@@ -127,7 +127,7 @@ Tableau MCP を使わない場合は、[`docs/setup_manual.md`](docs/setup_manua
 - 条件: 公開や配布をするときに、クレジットを書くこと（作者名、ライセンス名、改変したかどうか）
 - クレジットの例: `"SampleHyperStore" by Yoshitaka Arakawa, CC BY 4.0`
 
-コード（`build_jp.py` と、英語版の生成器・スクリプト）は MIT です。
+コード（`en/setup/scripts/` のスクリプトと、作者用のツール `tools/`）は MIT です。
 
 - できること: 使用、複製、改変、再配布、販売を含む商用での利用
 - 条件: コードを配るときに、著作権表示とライセンス文（ルートの [`LICENSE`](../LICENSE)）を残すこと

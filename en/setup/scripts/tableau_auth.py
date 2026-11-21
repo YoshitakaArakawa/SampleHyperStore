@@ -1,9 +1,10 @@
 """OAuth (PKCE) sign-in helper for the SampleHyperStore setup scripts.
 
 Adapted from tableau-datasource-steward (MIT). No token is stored in files you edit:
-the sign-in happens in your browser and the session is cached in setup/.auth-cache/.
+the sign-in happens in your browser and the session is cached outside the repository
+(%LOCALAPPDATA%/samplehyperstore on Windows, ~/.config/samplehyperstore elsewhere).
 
-Loads .env from the nearest ancestor directory, runs OAuth 2.0
+Reads setup/.env, runs OAuth 2.0
 Authorization Code + PKCE flow against Tableau Cloud, injects the
 resulting access_token into a tableauserverclient Server instance,
 and yields it as a context manager.
@@ -43,11 +44,6 @@ try:
 except ImportError:
     sys.exit("ERROR: tableauserverclient is required. Install with: pip install -r requirements.txt")
 
-try:
-    from dotenv import load_dotenv
-except ImportError:
-    sys.exit("ERROR: python-dotenv is required. Install with: pip install -r requirements.txt")
-
 
 CLIENT_TYPE = "samplehyperstore-setup"
 USER_AGENT = "samplehyperstore-setup/0.1 (python)"
@@ -55,26 +51,28 @@ DEFAULT_CALLBACK_PORT = 8799
 OAUTH_TIMEOUT_SECONDS = 300
 
 
-def find_env_file(start: Path | None = None) -> Path | None:
-    """Look for .env in start (or cwd) and ancestors (up to 6 levels)."""
-    cur = (start or Path.cwd()).resolve()
-    for _ in range(6):
-        candidate = cur / ".env"
-        if candidate.exists():
-            return candidate
-        if cur.parent == cur:
-            break
-        cur = cur.parent
-    return None
+ENV_FILE = Path(__file__).resolve().parent.parent / ".env"   # setup/.env only, never a parent folder's
+
+
+def load_env_file(path: Path) -> None:
+    """Minimal KEY=VALUE reader (no python-dotenv). Existing environment variables win."""
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        os.environ.setdefault(key.strip(), value)
 
 
 def load_credentials() -> dict:
-    env_path = find_env_file()
-    if env_path:
-        load_dotenv(env_path)
-        print(f"[auth] Loaded .env from: {env_path}", file=sys.stderr)
+    if ENV_FILE.exists():
+        load_env_file(ENV_FILE)
+        print(f"[auth] Loaded .env from: {ENV_FILE}", file=sys.stderr)
     else:
-        print("[auth] WARNING: No .env file found. Relying on environment only.", file=sys.stderr)
+        print(f"[auth] WARNING: {ENV_FILE} not found. Relying on environment only.", file=sys.stderr)
 
     server_url = (os.environ.get("SERVER") or "").rstrip("/")
     if not server_url:
@@ -117,7 +115,7 @@ def _make_callback_handler(expected_state: str, result: _CallbackResult):
             query = urllib.parse.parse_qs(parsed.query)
             received_state = (query.get("state") or [None])[0]
             if received_state != expected_state:
-                result.error = f"state mismatch: expected {expected_state!r}, got {received_state!r}"
+                result.error = "state mismatch"
             else:
                 result.code = (query.get("code") or [None])[0]
                 if "error" in query:
@@ -186,9 +184,11 @@ def _probe_session(server_url: str, api_version: str, access_token: str) -> dict
         return None
 
 
-# ----- Session cache (repo-internal, gitignored) -----
+# ----- Session cache (outside the repository, so it is never committed or synced with the repo) -----
 def _cache_path() -> Path:
-    return Path(__file__).resolve().parent.parent / ".auth-cache" / "session.json"
+    base = os.environ.get("LOCALAPPDATA") if os.name == "nt" else None
+    root = Path(base) if base else Path.home() / ".config"
+    return root / "samplehyperstore" / "session.json"
 
 
 def _load_cached_session(server_url: str, site_name: str, api_version: str) -> dict | None:
@@ -228,11 +228,10 @@ def _save_session(server_url: str, site_name: str, access_token: str) -> None:
         "site_name": site_name,
         "access_token": access_token,
     }
-    tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    try:
-        os.chmod(tmp, 0o600)
-    except OSError:
-        pass
+    # Create the file owner-only from the start (no window with default permissions on POSIX).
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(json.dumps(payload, indent=2))
     os.replace(tmp, path)
     print(f"[auth] cached session at {path}", file=sys.stderr)
 
@@ -271,6 +270,7 @@ def _run_oauth_flow(server_url: str, site_name: str, port: int) -> str:
     print(f"[auth] waiting for callback (up to {OAUTH_TIMEOUT_SECONDS}s)...", file=sys.stderr)
     received = result.event.wait(timeout=OAUTH_TIMEOUT_SECONDS)
     httpd.shutdown()
+    httpd.server_close()
     if not received:
         raise SystemExit("[auth] ERROR: timeout waiting for OAuth callback")
     if result.error or not result.code:

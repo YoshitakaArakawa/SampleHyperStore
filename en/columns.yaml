@@ -1,4 +1,4 @@
-# Column order and types of the 24 CSVs (the generator writes columns in this order).
+# Column order and types of the 24 CSVs. Read by the setup scripts and by tools/generator (which writes columns in this order).
 # Derived from the private design schema; descriptions are in docs/data_dictionary.md.
 web_sessions:
 - [session_id, 'string']

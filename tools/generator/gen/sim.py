@@ -5,7 +5,6 @@ receipts). Every table is a record of a step of that loop. Internal keys are int
 assigned in chronological order by write.py."""
 from __future__ import annotations
 
-import bisect
 import collections
 import datetime as dt
 import math

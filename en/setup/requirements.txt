@@ -1,4 +1,7 @@
-tableauserverclient>=0.40
-tableauhyperapi>=0.0.25080
-python-dotenv>=1.0
-PyYAML>=6.0
+# Pinned to the versions the setup was tested with. Update deliberately.
+tableauserverclient==0.40
+tableauhyperapi==0.0.25080
+PyYAML==6.0.3
+# Floors for transitive dependencies with published security advisories.
+urllib3>=2.7.0,<3
+requests>=2.33.0

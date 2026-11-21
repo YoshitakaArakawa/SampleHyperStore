@@ -146,6 +146,10 @@ The setup is usable now. Give the user `../docs/questions.md`: all 19 questions 
 
 Knowledge is English only. Business Preferences can only be global on this setup (attaching to a field node was refused).
 
+## When you are done
+
+Tell the user they can remove the saved sign-in with `python scripts/tableau_auth.py logout`. The session is cached outside the repository (`%LOCALAPPDATA%\samplehyperstore` on Windows, `~/.config/samplehyperstore` elsewhere).
+
 ## Known limits
 
 - `get-datasource-metadata` in Tableau MCP may not return field descriptions; Knowledge does.

@@ -14,7 +14,8 @@ Sample data for testing whether an AI agent connected through Tableau MCP answer
 ## フォルダー / Folders
 
 - [`ja/`](ja/): 日本語版。列名・値・説明を日本語にした版で、数値は英語版と同じです。
-- [`en/`](en/): English edition, the source. It also holds the data generator and the setup scripts used by both editions.
+- [`en/`](en/): English edition, the source. It also holds the setup scripts used by both editions.
+- [`tools/`](tools/): maintainer tools that generate the data and build the Japanese edition. Users do not need them. / データの生成と日本語版の作成に使う作者用のツールです。利用者は使いません。
 
 ## License / ライセンス
 

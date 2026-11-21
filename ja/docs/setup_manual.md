@@ -164,6 +164,12 @@ python scripts/check_metadata.py --project "<marts のパス>" --layer rpt --dat
 - Tableau だけで確かめる場合: 手順2の合計の表が、そのまま確認になります。
 - AI エージェントから試す場合: Tableau MCP をつないだ AI エージェントに、[`questions.md`](questions.md) の問いを尋ねます。Tableau MCP のつなぎ方は、使う AI エージェントの説明を参照してください。
 
+作業が終わったら、サインインの記録を消しておきます。記録はリポジトリの外（Windows では `%LOCALAPPDATA%\samplehyperstore`）に保存されています。
+
+```
+python scripts/tableau_auth.py logout
+```
+
 ## うまくいかない時
 
 - `done` の代わりに `check these tables: [...]` と出た: そのテーブルを `--tables` で指定して実行し直します（例: `--tables orders`）。そのテーブルのデータソースが raw にすでにできていたら、先に Web の画面で削除します。

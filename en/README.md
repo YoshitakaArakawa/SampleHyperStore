@@ -59,7 +59,6 @@ The questions are in [`docs/questions.md`](docs/questions.md). There are two way
 | `docs/data_dictionary.md` | Tables, grains, keys and columns |
 | `docs/questions.md` | Business questions to ask an AI agent |
 | `setup/` | Setup instructions, scripts, and the metadata: column descriptions, calculated fields and Tableau Knowledge Business Preferences |
-| `generator/` | The code that generates the CSVs (fixed seed, byte-identical output) |
 
 The data covers 2023-01-01 to 2025-12-31. The company is a US retailer of outdoor and home & garden goods that sells through its web store, app, marketplaces and B2B.
 
@@ -125,7 +124,7 @@ The data and documents (CSVs, metadata, READMEs, `docs/`) are under CC BY 4.0.
 - Condition: when you publish or share, give credit (author, license name, and whether you changed it)
 - Credit example: `"SampleHyperStore" by Yoshitaka Arakawa, CC BY 4.0`
 
-The code (`generator/`, `setup/scripts/`) is under the MIT License.
+The code (`setup/scripts/`, and the maintainer tools in `../tools/`) is under the MIT License.
 
 - You may: use, copy, modify, redistribute and sell it
 - Condition: when you share the code, keep the copyright notice and the license text (the root [`LICENSE`](../LICENSE))

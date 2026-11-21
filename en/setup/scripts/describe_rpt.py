@@ -56,7 +56,7 @@ def main():
     ap.add_argument("--datasources", nargs="*", help="short names, e.g. billing shipments (default: all)")
     ap.add_argument("--dry-run", action="store_true", help="download and edit, but do not publish")
     ap.add_argument("--data", help="dataset folder (default: en)")
-    ap.add_argument("--prefix", default=PREFIX, help="data source name prefix; change it only for a test run")
+    ap.add_argument("--prefix", default=PREFIX, help=argparse.SUPPRESS)  # test runs only
     a = ap.parse_args()
 
     spec = {k[len(PREFIX):]: v for k, v in json.loads((dataset_dir(a.data) / "setup" / "metadata" / "rpt_layer.json").read_text(encoding="utf-8")).items()

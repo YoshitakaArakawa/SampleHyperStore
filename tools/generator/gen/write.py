@@ -1,4 +1,4 @@
-"""Turn the simulated world into the 24 tables (column order and names from generator/columns.yaml)."""
+"""Turn the simulated world into the 24 tables (column order and names from en/columns.yaml)."""
 from __future__ import annotations
 
 import datetime as dt
@@ -18,7 +18,7 @@ TD = dt.timedelta
 
 
 def load_schema(columns_file):
-    """{table: [(column, type), ...]} in CSV column order, from generator/columns.yaml."""
+    """{table: [(column, type), ...]} in CSV column order, from en/columns.yaml."""
     y = yaml.safe_load(open(pathlib.Path(columns_file), encoding='utf-8'))
     return {t: [(c[0], c[1]) for c in cols] for t, cols in y.items()}
 

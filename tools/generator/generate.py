@@ -3,7 +3,7 @@
 Usage (from this folder):
     python generate.py                      # full scale, fixed seed -> ./out/{in_use,planned}/
     python generate.py --scale 0.2 --out small
-    python generate.py --check              # full scale, then compare with ../SHA256SUMS
+    python generate.py --check              # full scale, then compare with en/SHA256SUMS
 
 The generator writes what it planted (which IDs each event touched) to ./answer_key/.
 That file is the answer to the question catalog; it is git-ignored and not distributed.
@@ -18,13 +18,14 @@ import time
 import yaml
 
 HERE = pathlib.Path(__file__).resolve().parent
+EN = HERE.parent.parent / 'en'   # the English edition this generator writes for
 sys.path.insert(0, str(HERE))
 from gen.sim import World  # noqa: E402
 from gen.write import build_tables, load_schema, write_csvs  # noqa: E402
 
 
 def folder_of(name, used=frozenset(json.loads(
-        (HERE.parent / 'setup' / 'metadata' / 'raw_layer.json').read_text(encoding='utf-8')))):
+        (EN / 'setup' / 'metadata' / 'raw_layer.json').read_text(encoding='utf-8')))):
     """in_use: the tables the Tableau setup publishes (setup/metadata/raw_layer.json). planned: the rest."""
     return 'in_use' if name in used else 'planned'
 
@@ -32,7 +33,7 @@ def folder_of(name, used=frozenset(json.loads(
 def check(out):
     """Compare the generated CSVs with the published checksums."""
     expected = {}
-    for line in (HERE.parent / 'SHA256SUMS').read_text().splitlines():
+    for line in (EN / 'SHA256SUMS').read_text().splitlines():
         digest, name = line.split()
         expected[name.lstrip('*')] = digest
     bad = []
@@ -49,7 +50,7 @@ def main():
     ap.add_argument('--scale', type=float, default=1.0)
     ap.add_argument('--out', default=str(HERE / 'out'))
     ap.add_argument('--seed', type=int, default=None, help='override the seed in world_spec.yaml')
-    ap.add_argument('--check', action='store_true', help='compare the output with ../SHA256SUMS')
+    ap.add_argument('--check', action='store_true', help='compare the output with en/SHA256SUMS')
     a = ap.parse_args()
     spec = yaml.safe_load(open(HERE / 'world_spec.yaml', encoding='utf-8'))
     if a.seed is not None:
@@ -58,7 +59,7 @@ def main():
     w = World(spec, scale_factor=a.scale).run()
     t1 = time.time()
     T = build_tables(w)
-    cols = load_schema(HERE / 'columns.yaml')
+    cols = load_schema(EN / 'columns.yaml')
     info = write_csvs(T, cols, a.out, folder_of)
     t2 = time.time()
     ak = HERE / 'answer_key'

@@ -20,7 +20,6 @@ import urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SETUP = HERE.parent
 sys.path.insert(0, str(HERE))
 
 QUERY = """
@@ -41,7 +40,7 @@ def graphql(server, query: str, variables: dict) -> dict:
     req = urllib.request.Request(url, data=json.dumps({"query": query, "variables": variables}).encode(),
                                  headers={"X-Tableau-Auth": server.auth_token, "Content-Type": "application/json",
                                           "Accept": "application/json"})
-    with urllib.request.urlopen(req) as r:
+    with urllib.request.urlopen(req, timeout=60) as r:
         out = json.loads(r.read())
     if out.get("errors"):
         raise SystemExit(f"Metadata API error: {out['errors']}")
@@ -56,9 +55,9 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--project", required=True, help="project path; only its last level is matched")
     ap.add_argument("--layer", choices=["raw", "rpt"], required=True)
-    ap.add_argument("--name-format", default="SampleHyperStore - {table}", help="raw names (test runs only)")
+    ap.add_argument("--name-format", default="SampleHyperStore - {table}", help=argparse.SUPPRESS)  # test runs only
     ap.add_argument("--data", help="dataset folder (default: en)")
-    ap.add_argument("--prefix", default="rpt_samplehyperstore__", help="rpt_ name prefix (test runs only)")
+    ap.add_argument("--prefix", default="rpt_samplehyperstore__", help=argparse.SUPPRESS)  # test runs only
     a = ap.parse_args()
 
     from tableau_auth import signed_in_server

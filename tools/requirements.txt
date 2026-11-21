@@ -1,0 +1,5 @@
+# For maintainers only (tools/generator and tools/build_ja).
+# Byte-identical output to en/SHA256SUMS was confirmed with Python 3.14.2 and exactly these versions.
+numpy==2.4.1
+pandas==2.3.3
+PyYAML==6.0.3

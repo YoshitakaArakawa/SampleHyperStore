@@ -1,7 +1,7 @@
 """Publish the SampleHyperStore raw layer: one published data source per CSV, with display names and descriptions.
 
 For each table in setup/metadata/raw_layer.json (12 tables):
-  1. Build a .hyper extract from csv/in_use/<table>.csv (column types from generator/columns.yaml).
+  1. Build a .hyper extract from csv/in_use/<table>.csv (column types from columns.yaml).
   2. Publish it as "SampleHyperStore - <table>" with the data source description (REST, CreateNew).
   3. Download the published .tdsx, write the column display names and descriptions into its .tds,
      and publish it again over the same data source (Overwrite). The data source keeps its id.
@@ -21,7 +21,6 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import shutil
 import sys
 import zipfile
 from pathlib import Path
@@ -43,8 +42,7 @@ def dataset_dir(path: str | None) -> Path:
 
 def load_inputs(data: Path = ROOT):
     raw = json.loads((data / "setup" / "metadata" / "raw_layer.json").read_text(encoding="utf-8"))
-    cfile = data / "columns.yaml" if (data / "columns.yaml").exists() else data / "generator" / "columns.yaml"
-    cols = yaml.safe_load(cfile.read_text(encoding="utf-8"))
+    cols = yaml.safe_load((data / "columns.yaml").read_text(encoding="utf-8"))
     return raw, cols
 
 
@@ -221,10 +219,8 @@ def main():
     ap.add_argument("--project", required=True, help='existing project path, e.g. "SampleHyperStore/raw"')
     ap.add_argument("--tables", nargs="*", help="subset of tables (default: all 12)")
     ap.add_argument("--dry-run", action="store_true", help="build the .hyper files only; do not sign in")
-    ap.add_argument("--name-format", default="SampleHyperStore - {table}",
-                    help='data source name; change it only for a test run (e.g. "SetupTest - {table}")')
-    ap.add_argument("--data", help="dataset folder (default: en; the Japanese edition is "
-                                   "ja)")
+    ap.add_argument("--name-format", default="SampleHyperStore - {table}", help=argparse.SUPPRESS)  # test runs only
+    ap.add_argument("--data", help="dataset folder (default: en; the Japanese edition: ../../ja)")
     a = ap.parse_args()
 
     data = dataset_dir(a.data)
