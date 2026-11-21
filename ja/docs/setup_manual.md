@@ -230,7 +230,7 @@ python scripts/tableau_auth.py logout
 ## 気をつけること
 
 - **部門の層の列の説明**: 部門の層の列には、生の層の列の説明がそのまま付いて見えます（Metadata API で確認）。部門の層で自分で付けるのは、計算フィールドの説明だけです。
-- **Tableau MCP で説明が見えない時**: Tableau MCP の `get-datasource-metadata` は、説明を返さないことがあります。MCP は説明を Metadata API から取りますが、その呼び出しに失敗した時に、エラーを出さずに説明なしで返す作りになっているためです。データソースの設定の問題ではありません。説明が付いているかは `check_metadata.py` で確かめてください。
+- **Tableau MCP で説明が見えない時**: Tableau MCP の `get-datasource-metadata` は、説明を返さないことがあります。MCP は説明を Metadata API から取りますが、Metadata API を使わない設定（`DISABLE_METADATA_API_REQUESTS`）の時や、その呼び出しが失敗した時は、エラーを出さずに説明なしで返します。データソースの設定の問題ではありません。説明が付いているかは `check_metadata.py` で確かめてください。
 - **データソースのページの URL**: 上書きするたびに変わります。データソースは名前で検索して開いてください。
 
 ---

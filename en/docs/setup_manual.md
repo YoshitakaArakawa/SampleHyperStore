@@ -229,7 +229,7 @@ python scripts/tableau_auth.py logout
 ## Notes
 
 - **Descriptions on the department layer**: The department layer's columns show the raw layer's column descriptions as they are (confirmed through the Metadata API). The only descriptions you add on the department layer are those of the calculated fields.
-- **When Tableau MCP shows no descriptions**: Tableau MCP's `get-datasource-metadata` may return no descriptions. MCP takes them from the Metadata API and, when that call fails, returns the fields without descriptions and without an error. This is not a problem with your data sources. Use `check_metadata.py` to check the descriptions.
+- **When Tableau MCP shows no descriptions**: Tableau MCP's `get-datasource-metadata` may return no descriptions. MCP takes them from the Metadata API; when Metadata API requests are turned off (`DISABLE_METADATA_API_REQUESTS`) or the call fails, it returns the fields without descriptions and without an error. This is not a problem with your data sources. Use `check_metadata.py` to check the descriptions.
 - **Data source page URLs**: They change on every overwrite. Open data sources by searching for their name.
 
 ---
