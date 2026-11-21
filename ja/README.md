@@ -9,12 +9,13 @@ Tableau の定番のサンプルデータ Superstore は、売上や利益の列
 このようなデータに AI エージェントをそのままつなぐと、どの指標を使えばよいかを AI が選べません。たとえば「先月の売上は？」と尋ねると、次のようになります。
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 400}}}%%
 flowchart LR
     Q["「先月の売上は？」"] --> A["AI エージェント"]
-    A --> S1["受注の売上（営業）"]
-    A --> S2["請求の売上（経理）"]
-    A --> S3["Web 計測の売上<br/>（デジタルマーケティング）"]
-    S1 --> X["どれか1つを選び、<br/>どれを使ったか言わずに答える"]
+    A --> S1["受注の売上<br/>（営業）"]
+    A --> S2["請求の売上<br/>（経理）"]
+    A --> S3["Web 計測の売上<br/>（デジタル<br/>マーケティング）"]
+    S1 --> X["どれか1つを選び、<br/>どれを使ったか<br/>言わずに答える"]
     S2 --> X
     S3 --> X
 ```
@@ -28,9 +29,10 @@ flowchart LR
 | ビジネス設定（Tableau Knowledge） | 言葉の既定の意味と、使い分けのルール | 修飾のない「売上」は受注ベース。会計期間や返品に触れた質問では請求ベース |
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 400}}}%%
 flowchart LR
     Q["「先月の売上は？」"] --> A["AI エージェント"]
-    K["列の説明、<br/>計算フィールド、<br/>何をいつ使うべきかの知識"] --> A
+    K["列の説明、<br/>計算フィールド、<br/>何をいつ使うべきか<br/>の知識"] --> A
     A --> R["受注の売上で答え、<br/>使った指標を示す"]
 ```
 
@@ -87,15 +89,16 @@ erDiagram
 セットアップが終わると、Tableau Cloud のサイトは次のようになります。
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 400}}}%%
 flowchart LR
     subgraph site["Tableau Cloud のサイト"]
         subgraph raw["プロジェクト raw（元テーブル）"]
-            R["12 データソース<br/>SampleHyperStore - テーブル名<br/>列の表示名と説明つき"]
+            R["12 データソース<br/>SampleHyperStore - テーブル名<br/>列の表示名と<br/>説明つき"]
         end
         subgraph marts["プロジェクト marts（部門ごと）"]
-            M["6 データソース<br/>rpt_samplehyperstore__部門名<br/>計算フィールドと説明つき"]
+            M["6 データソース<br/>rpt_samplehyperstore__部門名<br/>計算フィールドと<br/>説明つき"]
         end
-        K["Tableau Knowledge（任意）<br/>18 データソースのグラフ、<br/>ビジネス設定 16 件"]
+        K["Tableau Knowledge（任意）<br/>18 データソースの<br/>グラフ、<br/>ビジネス設定 16 件"]
     end
     R -- "関係でつないで組む" --> M
     AI["AI エージェント"] -- "Tableau MCP で問い合わせ" --> M
