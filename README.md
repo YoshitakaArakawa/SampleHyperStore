@@ -1,16 +1,25 @@
 # SampleHyperStore
 
-Sample data for testing whether an AI agent connected through Tableau MCP answers business questions with the right metric. Three years of transactions of a fictional US retailer, generated with Claude Code.
-
 Tableau MCP でつないだ AI エージェントが、業務の問いに正しい指標で答えられるかを試すためのサンプルデータです。架空の米国小売企業の3年分の取引を、Claude Code で生成しました。
 
-| Edition | Folder | |
-|---|---|---|
-| English | [`en/`](en/) | The source edition. Includes the generator and the setup scripts. |
-| 日本語 | [`ja/`](ja/) | 列名・値・説明を日本語にした版です。数値は英語版と同じです。セットアップには `en/setup/` のスクリプトを使います。 |
+Sample data for testing whether an AI agent connected through Tableau MCP answers business questions with the right metric. Three years of transactions of a fictional US retailer, generated with Claude Code.
+
+## まずはこちら / Start here
+
+| 日本語 | English |
+|---|---|
+| **[日本語版の README を読む →](ja/README.md)** | **[Read the English README →](en/README.md)** |
+| 何が試せるか、データの中身、セットアップの方法 | What you can test, what is inside, how to set it up |
+
+## フォルダー / Folders
+
+- [`ja/`](ja/): 日本語版。列名・値・説明を日本語にした版で、数値は英語版と同じです。
+- [`en/`](en/): English edition, the source. It also holds the data generator and the setup scripts used by both editions.
 
 ## License / ライセンス
 
-Data and documents: CC BY 4.0. Code: MIT ([`LICENSE`](LICENSE)). See `en/LICENSE-DATA.md` / `ja/LICENSE-DATA.md`.
+Data and documents: CC BY 4.0. Code: MIT ([`LICENSE`](LICENSE)). Details in each edition's README and `LICENSE-DATA.md`.
+
+データと文書は CC BY 4.0、コードは MIT です。詳しくは各版の README と `LICENSE-DATA.md` を参照してください。
 
 Tableau is a trademark of Salesforce, Inc. This project is not affiliated with or endorsed by Salesforce.
