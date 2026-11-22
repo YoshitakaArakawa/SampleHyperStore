@@ -1,7 +1,7 @@
 {
   "products": {
     "datasource_name": "SampleHyperStore - products",
-    "datasource_description": "One row per SKU (Product Id), 202 SKUs: the current product master with merchandise hierarchy, attributes and current supplier. Launch Date 2018-02-02 to 2025-05-17.",
+    "datasource_description": "One row per SKU (Product Id): the current product master with merchandise hierarchy, attributes and current supplier.",
     "columns": {
       "Product Id": "SKU identifier (P-...).",
       "Style Code": "Style that groups the size variants of a SKU (ST-...). Apparel styles have 4 SKUs (one per size); every other SKU has a style of its own.",
@@ -28,7 +28,7 @@
   },
   "invoices": {
     "datasource_name": "SampleHyperStore - invoices",
-    "datasource_description": "One row per invoice (Invoice Id), one per shipment, so an order shipped in parts has several. Invoice Date 2023-01-02 to 2025-12-31 (Fiscal Month FY2022-P12 to FY2025-P11).",
+    "datasource_description": "One row per invoice (Invoice Id), one per shipment, so an order shipped in parts has several.",
     "columns": {
       "Invoice Id": "Invoice identifier (INV-...). One invoice per shipment, so an order shipped in parts has several invoices.",
       "Order Id": "Order billed by the invoice (O-...). Appears on more than one invoice when the order shipped in parts.",
@@ -49,7 +49,7 @@
   },
   "invoice_lines": {
     "datasource_name": "SampleHyperStore - invoice_lines",
-    "datasource_description": "One row per invoice line (Invoice Line Id): one order line on one invoice. Covers lines of invoices dated 2023-01-02 to 2025-12-31.",
+    "datasource_description": "One row per invoice line (Invoice Line Id): one order line on one invoice.",
     "columns": {
       "Invoice Line Id": "Invoice line identifier (IL-...): one order line on one invoice.",
       "Invoice Id": "Invoice the line belongs to (INV-...).",
@@ -69,7 +69,7 @@
   },
   "credit_memos": {
     "datasource_name": "SampleHyperStore - credit_memos",
-    "datasource_description": "One row per credit memo line (Credit Memo Id): one reversal of invoiced revenue for one customer refund. Credit Memo Date 2023-01-16 to 2025-12-29 (FY2022-P12 to FY2025-P11).",
+    "datasource_description": "One row per credit memo line (Credit Memo Id): one reversal of invoiced revenue for one customer refund.",
     "columns": {
       "Credit Memo Id": "Credit memo line identifier (CM-...): one reversal posted.",
       "Refund Id": "Customer refund the credit memo books (RF-...); every memo line has one.",
@@ -89,7 +89,7 @@
   },
   "orders": {
     "datasource_name": "SampleHyperStore - orders",
-    "datasource_description": "One row per order (Order Id): one checkout, marketplace order import, or b2b order entry, in all channels. Order Date 2023-01-01 to 2025-12-31.",
+    "datasource_description": "One row per order (Order Id): one checkout, marketplace order import, or b2b order entry, in all channels.",
     "columns": {
       "Order Id": "Order identifier (O-...): one per checkout, marketplace order import, or b2b order entry.",
       "Order At": "Timestamp the order was placed, in US Eastern time as stored by the order system.",
@@ -98,7 +98,7 @@
       "Session Id": "Web or app session in which the order was placed (S-...). Empty for marketplace and b2b orders.",
       "Channel": "Sales channel of the order: web, app, marketplace, b2b.",
       "State Code": "Ship-to US state of the order (2-letter code, incl. DC), not the customer's home state.",
-      "Sales Rep Id": "Account executive credited with the order (REP-001 to REP-010). Filled for b2b orders only; empty otherwise.",
+      "Sales Rep Id": "Account executive credited with the order (REP-...). Filled for b2b orders only; empty otherwise.",
       "Promotion Id": "Order-level promotion applied at checkout (coupon code or free-shipping offer), PRM-.... Empty if none.",
       "Shipping Method": "Delivery speed selected at checkout: standard, expedited, freight.",
       "Promised Delivery Date": "Latest delivery date shown to the customer at checkout (the customer promise).",
@@ -112,7 +112,7 @@
   },
   "order_lines": {
     "datasource_name": "SampleHyperStore - order_lines",
-    "datasource_description": "One row per order line (Order Line Id): one SKU in one order. Covers lines of orders placed 2023-01-01 to 2025-12-31.",
+    "datasource_description": "One row per order line (Order Line Id): one SKU in one order.",
     "columns": {
       "Order Line Id": "Order line identifier (OL-...): one SKU in one order.",
       "Order Id": "Order the line belongs to (O-...).",
@@ -140,7 +140,7 @@
   },
   "web_searches": {
     "datasource_name": "SampleHyperStore - web_searches",
-    "datasource_description": "One row per on-site search (Search Id) executed in a web or app session. Covers Searched Date 2023-01-01 to 2025-12-31.",
+    "datasource_description": "One row per on-site search (Search Id) executed in a web or app session.",
     "columns": {
       "Search Id": "Search identifier (SR-...): one search executed.",
       "Session Id": "Session in which the search ran (S-...).",
@@ -159,22 +159,22 @@
   },
   "shipments": {
     "datasource_name": "SampleHyperStore - shipments",
-    "datasource_description": "One row per shipment (Shipment Id): one parcel group leaving one warehouse with one carrier. Shipped Date 2023-01-02 to 2025-12-31; Delivery Status as of 2025-12-31.",
+    "datasource_description": "One row per shipment (Shipment Id): one parcel group leaving one warehouse with one carrier.",
     "columns": {
       "Shipment Id": "Shipment identifier (SH-...): one parcel group leaving one warehouse with one carrier.",
       "Order Id": "Order being fulfilled (O-...); an order shipped in parts has several shipments.",
       "Shipment Number": "Sequence of the shipment within its order, starting at 1.",
       "Warehouse Id": "Origin warehouse: WH-W, WH-C, WH-E.",
-      "Carrier Id": "Carrier code, CAR-01 to CAR-06.",
+      "Carrier Id": "Carrier code (CAR-...).",
       "Carrier Name": "Name of the carrier for Carrier Id (six carriers).",
       "Carrier Type": "Carrier network type: national_parcel, regional_parcel, ltl_freight.",
       "Service Level": "Carrier service purchased: ground, two_day, ltl_freight.",
       "Shipped At": "Carrier pickup scan time at the warehouse.",
       "Shipped Date": "Date part of Shipped At: the day the shipment left the warehouse.",
       "Carrier Estimated Delivery Date": "Delivery date estimated by the carrier at pickup.",
-      "Delivered At": "Carrier delivery scan time. Empty if not delivered: in transit on 2025-12-31, lost, or returned to sender.",
-      "Delivered Date": "Date part of Delivered At. Empty if not delivered: in transit on 2025-12-31, lost, or returned to sender.",
-      "Delivery Status": "Last carrier tracking status as of 2025-12-31: delivered, in_transit, lost, returned_to_sender.",
+      "Delivered At": "Carrier delivery scan time. Empty if not delivered: still in transit, lost, or returned to sender.",
+      "Delivered Date": "Date part of Delivered At. Empty if not delivered: still in transit, lost, or returned to sender.",
+      "Delivery Status": "Latest carrier tracking status (current value, not a history): delivered, in_transit, lost, returned_to_sender.",
       "Package Count": "Number of cartons in the shipment.",
       "Billed Weight Lbs": "Billable weight of the shipment in pounds reported by the carrier (greater of actual and dimensional weight).",
       "Freight Cost Amount": "Transportation cost billed by the carrier for this shipment in USD, incl. surcharges. Incurred even when the customer got free shipping.",
@@ -189,7 +189,7 @@
   },
   "shipment_lines": {
     "datasource_name": "SampleHyperStore - shipment_lines",
-    "datasource_description": "One row per shipment line (Shipment Line Id): one order line in one shipment. Covers Shipped Date 2023-01-02 to 2025-12-31.",
+    "datasource_description": "One row per shipment line (Shipment Line Id): one order line in one shipment.",
     "columns": {
       "Shipment Line Id": "Shipment line identifier (SL-...): one order line in one shipment.",
       "Shipment Id": "Shipment the line belongs to (SH-...).",
@@ -205,7 +205,7 @@
   },
   "returns": {
     "datasource_name": "SampleHyperStore - returns",
-    "datasource_description": "One row per return authorization line (Return Id); an order line can be returned in more than one authorization. Requested Date 2023-01-09 to 2025-12-31; Return Status as of 2025-12-31.",
+    "datasource_description": "One row per return authorization line (Return Id); an order line can be returned in more than one authorization.",
     "columns": {
       "Return Id": "Return authorization line identifier (RT-...): one order line returned once; a line can be returned in more than one authorization.",
       "Order Id": "Original order of the returned item (O-...).",
@@ -219,7 +219,7 @@
       "Return Window Days": "Return window in days under the policy in force when the item was delivered: 30 or 60.",
       "Return Reason": "Reason selected by the customer for the return.",
       "Return Method": "How the goods came back: prepaid_label, customer_shipped, freight_pickup, marketplace_return.",
-      "Return Status": "Return status as of 2025-12-31.",
+      "Return Status": "Latest status of the return (current value, not a history).",
       "Qty Requested": "Units the customer asked to return.",
       "Qty Received": "Units physically received at the warehouse; 0 if not received.",
       "Item Condition": "Inspection result of the received units: resellable, damaged, defective. Empty if not received.",
@@ -236,7 +236,7 @@
   },
   "refunds": {
     "datasource_name": "SampleHyperStore - refunds",
-    "datasource_description": "One row per refund payment to a customer (Refund Id), with or without a return. Covers Refunded Date 2023-01-10 to 2025-12-31.",
+    "datasource_description": "One row per refund payment to a customer (Refund Id), with or without a return.",
     "columns": {
       "Refund Id": "Refund identifier (RF-...): one refund payment to a customer.",
       "Return Id": "Return the refund relates to (RT-...). Empty for refunds without a return: goodwill, shipping refunds and price adjustments.",
@@ -254,7 +254,7 @@
   },
   "web_sessions": {
     "datasource_name": "SampleHyperStore - web_sessions",
-    "datasource_description": "One row per web or app session (Session Id) recorded by the analytics tool. Covers Session Start Date 2023-01-01 to 2025-12-31.",
+    "datasource_description": "One row per web or app session (Session Id) recorded by the analytics tool.",
     "columns": {
       "Session Id": "Session identifier issued by the analytics tool (S-...).",
       "Visitor Id": "Anonymous device or browser identifier (cookie or app install). One visitor can have many sessions; one person on two devices is two visitors.",

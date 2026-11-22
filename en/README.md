@@ -97,7 +97,7 @@ flowchart LR
         subgraph marts["Project marts (per department)"]
             M["6 data sources<br/>rpt_samplehyperstore__department<br/>with calculated fields and descriptions"]
         end
-        K["Tableau Knowledge (optional)<br/>a graph of the 18 data sources,<br/>21 Business Preferences"]
+        K["Tableau Knowledge (optional)<br/>a graph of the 18 data sources,<br/>22 Business Preferences"]
     end
     R -- "composed with relationships" --> M
     AI["AI agent"] -- "queries through Tableau MCP" --> M
