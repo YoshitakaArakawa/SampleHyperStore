@@ -31,7 +31,7 @@ The 12 tables are: products, orders, order_lines, shipments, shipment_lines, ret
 | Python 3.10+ on the user's machine | scripts |
 | Tableau MCP connected to this AI agent | checks, Business Preferences |
 | Tableau+ (Knowledge enabled) — optional | step 6 only |
-| A person (or a computer-use agent) who can use the Tableau web editor | steps 3 and 4; for a computer-use agent, the user checks in step 2 that it can be used |
+| A person (or a computer-use agent) who can use the Tableau web editor | steps 3 and 4; for a computer-use agent, the user confirms in step 2 that it can operate their site |
 
 ## Step 0. Prepare
 
@@ -93,7 +93,7 @@ If the user chooses a computer-use agent:
    - Computer use is available in the AI agent they will use for this work.
    - That agent can operate pages on their Tableau Cloud site, including the web editor.
 2. If either answer is no, the person does all of steps 3 and 4 by hand.
-3. If both are yes, the agent can still not do all of it. Drawing a relationship from the root's "+" worked in our runs. Dragging from the "+" of a table further down the tree did not register (step 3, item 3). For the data sources below, the person draws the lines that start from a non-root table:
+3. If both are yes, the agent still cannot do all of it. Drawing a relationship from the root's "+" worked in our runs. Dragging from the "+" of a table further down the tree did not register (step 3, item 3). For the data sources below, the person draws the lines that start from a non-root table:
 
    | rpt_ data source | Lines the person draws |
    |---|---|
@@ -103,7 +103,8 @@ If the user chooses a computer-use agent:
    | shipments | shipment_lines → shipments |
 
    returns_refunds and web_analytics need only lines from the root.
-4. Entering the calculated fields (step 3, item 5) with a computer-use agent is untested.
+4. In step 3, each line is drawn right after its table is added, so the agent and the person take turns within one data source. Tell the user the order: the agent stops after adding a table whose line starts from a non-root table, the person draws that line, then the agent continues.
+5. Two parts are untested with a computer-use agent: entering the calculated fields (step 3, item 5) and republishing in step 4, item 2.
 
 ## Step 3. Compose the six rpt_ data sources (web editor)
 

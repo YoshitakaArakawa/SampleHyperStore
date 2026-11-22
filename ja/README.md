@@ -115,7 +115,7 @@ Tableau MCP をつないだ AI エージェント（Claude Code など）でこ�
 
 > `en/setup/SETUP_FOR_AI.md` を読んで、SampleHyperStore の日本語版を私の Tableau Cloud サイトにセットアップして。
 
-手順書は英語です。AI は Tableau に書き込む前に、毎回あなたに確認します。AI だけでは終わらず、途中で Tableau の Web エディターを操作する手作業があります。AI エージェントが Tableau Cloud のサイトで computer use を使えるなら、この作業の一部を任せられます。ただし、関係の線の一部は人が引きます。サインインはブラウザでの OAuth で行います。`.env` に書くのはサーバーとサイト名だけで、トークンやパスワードをファイルに置く必要はありません。前提条件は [`SETUP_FOR_AI.md`](../en/setup/SETUP_FOR_AI.md) を参照してください。
+手順書は英語です。AI は Tableau に書き込む前に、毎回あなたに確認します。AI だけでは終わらず、途中で Tableau の Web エディターを操作する手作業があります。AI エージェントが computer use で Tableau Cloud のサイトを操作できるなら、この作業の一部を任せられます。ただし、関係の線の一部は人が引きます。サインインはブラウザでの OAuth で行います。`.env` に書くのはサーバーとサイト名だけで、トークンやパスワードをファイルに置く必要はありません。前提条件は [`SETUP_FOR_AI.md`](../en/setup/SETUP_FOR_AI.md) を参照してください。
 
 ### 手でセットアップする
 
