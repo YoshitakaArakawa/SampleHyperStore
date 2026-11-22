@@ -1,8 +1,22 @@
 """OAuth (PKCE) sign-in helper for the SampleHyperStore setup scripts.
 
-Adapted from tableau-datasource-steward (MIT). No token is stored in files you edit:
-the sign-in happens in your browser and the session is cached outside the repository
+No token is stored in files you edit: the sign-in happens in your browser and the
+session is cached outside the repository
 (%LOCALAPPDATA%/samplehyperstore on Windows, ~/.config/samplehyperstore elsewhere).
+
+Origin: forked from scripts/tableau_auth.py in tableau-datasource-steward (MIT,
+same author) at commit 3f98ef7 (20261122). This file is maintained independently
+and is the reference version for the SampleHyperStore setup; it is not kept in
+sync with the steward plugin, which has its own copy for its own use. Intended
+differences from the steward version:
+  - reads only setup/.env (the steward version searches the working directory
+    and its parents), with a small built-in reader instead of python-dotenv
+  - callback port 8799 and cache folder "samplehyperstore", so it does not share
+    a sign-in with the steward plugin
+  - runs with pip and requirements.txt; no Claude Code, plugin or uv needed
+  - the "state mismatch" error does not echo the state values
+When fixing a bug in the OAuth flow here, check whether the steward version has
+the same bug, and the other way round.
 
 Reads setup/.env, runs OAuth 2.0
 Authorization Code + PKCE flow against Tableau Cloud, injects the
@@ -184,6 +198,19 @@ def _probe_session(server_url: str, api_version: str, access_token: str) -> dict
         return None
 
 
+def _new_server(server_url: str) -> "TSC.Server":
+    """TSC.Server pinned to the highest REST API version the server supports.
+
+    Calls use_server_version() explicitly: from tableauserverclient 0.41 the
+    constructor flag no longer resolves the version up front, so `server.version`
+    would stay at the 2.4 default and every REST call built from it would 404.
+    The call fetches /api/<x>/serverinfo unauthenticated.
+    """
+    server = TSC.Server(server_url)
+    server.use_server_version()
+    return server
+
+
 # ----- Session cache (outside the repository, so it is never committed or synced with the repo) -----
 def _cache_path() -> Path:
     base = os.environ.get("LOCALAPPDATA") if os.name == "nt" else None
@@ -316,7 +343,7 @@ def _fetch_user_id(server_url: str, api_version: str, access_token: str) -> str:
 def signed_in_server():
     """Yield a TSC.Server bound to a Tableau Cloud access_token.
 
-    Reuses a cached token from setup/.auth-cache/session.json when one is alive;
+    Reuses a cached token from the session cache (see _cache_path) when one is alive;
     otherwise runs OAuth (PKCE) browser sign-in and caches the result. Does NOT
     sign out on exit — call `python scripts/tableau_auth.py logout` to invalidate.
     """
@@ -325,9 +352,7 @@ def signed_in_server():
     site_name = creds["site_name"]
     port = creds["port"]
 
-    # use_server_version=True fetches /api/3.0/serverinfo unauthenticated
-    # to resolve the highest supported REST API version.
-    server = TSC.Server(server_url, use_server_version=True)
+    server = _new_server(server_url)
     api_version = server.version
 
     cached = _load_cached_session(server_url, site_name, api_version)
@@ -365,8 +390,7 @@ def _cli_logout() -> int:
         access_token = cache.get("access_token")
         if server_url and access_token:
             try:
-                tmp_server = TSC.Server(server_url, use_server_version=True)
-                api_version = tmp_server.version
+                api_version = _new_server(server_url).version
                 req = urllib.request.Request(
                     url=f"{server_url}/api/{api_version}/auth/signout",
                     method="POST",
@@ -406,8 +430,7 @@ def _cli_status() -> int:
     if not (server_url and access_token):
         print("status: malformed cache")
         return 1
-    tmp_server = TSC.Server(server_url, use_server_version=True)
-    session = _probe_session(server_url, tmp_server.version, access_token)
+    session = _probe_session(server_url, _new_server(server_url).version, access_token)
     if session is None:
         print("status: expired or invalid (next signed_in_server() will re-auth)")
         return 1
