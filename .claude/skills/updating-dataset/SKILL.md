@@ -50,7 +50,7 @@ One request can be several kinds. Do them in the order B → A → C: A moves th
 3. Generate, check and copy the output into `en/csv/` as in `tools/README.md`. Only the intended tables should differ from `en/SHA256SUMS`. Rewrite `en/SHA256SUMS` as in A-2 and rebuild the Japanese edition.
 4. Confirm the questions still hold: compare `answer_key/` with `en/docs/questions.md`. A question whose event no longer shows in the data must be changed or removed, in both languages.
 5. If the first or last date of the data changed, update the Business Preference "Term: Relative dates mean relative to the end of the data" in both languages (descriptions do not state the period).
-6. Rebuild the showcase page (`analyze.py`, then `build.py`). Compare the fresh `numbers.json` by hand with the [hand-written figures of the page](references/touchpoints.md#the-showcase-page).
+6. Rebuild the showcase page (`analyze.py`, then `build.py`). Read its texts again: the figures update by themselves, but a sentence can stop being true ([the showcase page](references/touchpoints.md#the-showcase-page)).
 7. Run the [final check](#final-check). Row counts are checked by the script; the expected totals are not.
 8. On Tableau, after the user agrees: republish the raw layer (`SETUP_FOR_AI.md` step 1) and query the totals (step 3). Write the new totals into `SETUP_FOR_AI.md` and both `setup_manual.md`.
 
