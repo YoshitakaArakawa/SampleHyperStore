@@ -227,16 +227,16 @@ Order lines with list price copied from product_prices at order time, actual uni
 | `product_id` | string |  | → products.product_id | Ordered SKU. |
 | `promotion_id` | string | yes | → promotions.promotion_id | Line-level promotion (product markdown or bundle offer) that produced line_discount_amount. Null if none. |
 | `qty_ordered` | integer |  |  | Units requested by the customer. |
-| `qty_backordered` | integer |  |  | Units not in stock at any warehouse at order time and placed on backorder. Later shipped or cancelled. 0 if fully available. |
+| `qty_backordered` | integer |  |  | Units the order system could not allocate from any warehouse at order time and placed on backorder. Later shipped or cancelled; the value does not decrease. 0 if fully allocated or if the shortfall was cancelled at once as out_of_stock. b2b orders are never cancelled as out_of_stock; their shortfall is always backordered. |
 | `qty_cancelled` | integer |  |  | Units cancelled before shipment (immediately or later). 0 if none. |
-| `cancel_reason` | string | yes |  | Reason for the cancelled units. Null when qty_cancelled = 0. Values: out_of_stock, backorder_timeout, customer_request, payment_failed, fraud_review. backorder_timeout is recorded automatically when backordered units are still unfilled 21 days after the order. |
+| `cancel_reason` | string | yes |  | Reason for the cancelled units. Null when qty_cancelled = 0. Values: out_of_stock, backorder_timeout, customer_request, payment_failed, fraud_review. out_of_stock: units not allocatable at order time, cancelled at once instead of backordered. backorder_timeout is recorded automatically when backordered units are still unfilled 21 days after the order. |
 | `cancelled_date` | date | yes |  | Date the cancellation was recorded. Null when qty_cancelled = 0. |
 | `unit_list_price` | decimal(12,2) |  |  | List price per unit at order time, as recorded by the order system from the merchandising price list. |
 | `unit_price` | decimal(12,2) |  |  | Selling price per unit before line discount: list price for web/app, marketplace listing price for marketplace, contract price for b2b. |
 | `line_discount_amount` | decimal(12,2) |  |  | Line-level promotional discount for the whole line (all ordered units), USD. |
 | `tax_amount` | decimal(12,2) |  |  | Sales tax on the line at order time, for all ordered units. |
 | `unit_standard_cost` | decimal(12,2) |  |  | Standard cost per unit at order time, as recorded by the order system from the merchandising cost list. |
-| `allocated_warehouse_id` | string | yes |  | Warehouse the order system allocated the line to at order time (default warehouse for the ship-to state, or the nearest one with stock). Null for lines cancelled before allocation. Values: WH-W, WH-C, WH-E. |
+| `allocated_warehouse_id` | string | yes |  | Warehouse the order system allocated the line to at order time: the default for the ship-to state and product, or another with stock for the whole line. Backordered and out_of_stock lines keep the default even if nothing was allocated. Null for payment_failed lines. Values: WH-W, WH-C, WH-E. |
 
 ## orders
 
