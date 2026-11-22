@@ -120,16 +120,16 @@
       "Product Id": "Ordered SKU (P-...).",
       "Promotion Id": "Line-level promotion (product markdown or bundle offer) that produced Line Discount Amount (PRM-...). Empty if none.",
       "Qty Ordered": "Units requested by the customer, including units later cancelled or backordered.",
-      "Qty Backordered": "Units not in stock at any warehouse at order time and placed on backorder, later shipped or cancelled. 0 if fully available.",
+      "Qty Backordered": "Units not allocatable from any warehouse at order time and placed on backorder, later shipped or cancelled. Excludes units cancelled at once as out_of_stock. b2b orders are always backordered, never cancelled as out_of_stock.",
       "Qty Cancelled": "Units cancelled before shipment, at order time or later. 0 if none.",
-      "Cancel Reason": "Reason for the cancelled units (e.g. out_of_stock, backorder_timeout). Empty when no units were cancelled. backorder_timeout is recorded when backordered units are still unfilled 21 days after the order.",
+      "Cancel Reason": "out_of_stock: units that could not be allocated at order time, cancelled at once instead of backordered. backorder_timeout: backordered units still unfilled 21 days after the order. Empty if nothing was cancelled.",
       "Cancelled Date": "Date the cancellation was recorded. Empty when no units were cancelled.",
       "Unit List Price": "List price per unit at order time from the merchandising price list, in USD.",
       "Unit Price": "Selling price per unit before line discount, in USD: list for web/app, listing for marketplace (can exceed list), contract for b2b (below list).",
       "Line Discount Amount": "Line-level promotional discount for all ordered units on the line, in USD; not reduced when units are cancelled. Excludes the order-level coupon.",
       "Tax Amount": "Sales tax on the line at order time for all ordered units, in USD. For marketplace orders the marketplace collects and remits it.",
       "Unit Standard Cost": "Standard cost per unit at order time, in USD (standard cost, not actual cost).",
-      "Allocated Warehouse Id": "Warehouse allocated at order time: WH-W, WH-C, WH-E; not necessarily the one that shipped. Empty for lines cancelled before allocation."
+      "Allocated Warehouse Id": "Warehouse allocated at order time: WH-W, WH-C, WH-E; kept even when no units could be allocated, and not necessarily the one that shipped. Empty for payment_failed lines."
     },
     "default_aggregation": {
       "Qty Ordered": "SUM",
