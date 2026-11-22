@@ -15,6 +15,13 @@ differences from the steward version:
     a sign-in with the steward plugin
   - runs with pip and requirements.txt; no Claude Code, plugin or uv needed
   - the "state mismatch" error does not echo the state values
+  - the cache folder is fixed: no STEWARD_AUTH_CACHE_DIR or XDG_CONFIG_HOME
+    override, and ~/.config is used when LOCALAPPDATA is unset
+  - CLIENT_TYPE, USER_AGENT and device_name name this setup, not the plugin
+Fixes made here and not (yet) in the steward version:
+  - the session cache file is created owner-only with os.open(..., 0o600);
+    the steward version writes it first and chmods it afterwards
+  - the OAuth callback listener is closed with httpd.server_close()
 When fixing a bug in the OAuth flow here, check whether the steward version has
 the same bug, and the other way round.
 
