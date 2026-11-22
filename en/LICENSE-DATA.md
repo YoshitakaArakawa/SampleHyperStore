@@ -12,6 +12,6 @@ The data is synthetic. Every company, brand, person, customer and number in it i
 
 The code (`setup/scripts/`, and `../tools/`) is licensed under the MIT License in the repository root (`LICENSE`).
 
-`setup/scripts/tableau_auth.py` is adapted from tableau-datasource-steward by the same author (MIT License).
+`setup/scripts/tableau_auth.py` is adapted from tableau-datasource-steward by the same author (MIT License) and is maintained independently of it.
 
 Tableau is a trademark of Salesforce, Inc. This project is not affiliated with or endorsed by Salesforce.
