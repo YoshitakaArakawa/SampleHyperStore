@@ -171,11 +171,11 @@ N = r"(\d+|six|twelve)"
 # (file, pattern with one number group, count key). Every match must equal the actual count, and each
 # pattern must match at least once: when a sentence is rewritten, update its pattern here.
 COUNT_PATTERNS = [
-    ("README.md", rf"how the {N} tables connect", "in_use"),
-    ("README.md", rf"{N} 枚の表のつながり", "in_use"),
+    ("README.md", rf"besides the {N} tables", "in_use"),
+    ("README.md", rf"{N} のテーブルとメタデータ", "in_use"),
     ("en/README.md", rf"The {N} tables the Tableau setup uses", "in_use"),
     ("en/README.md", rf"{N} more tables, not used", "planned"),
-    ("en/README.md", rf"tour of how the {N} tables connect", "in_use"),
+    ("en/README.md", rf"besides the {N} tables", "in_use"),
     ("en/README.md", rf"The {N} tables in `csv/in_use/`", "in_use"),
     ("en/README.md", rf'"{N} data sources<br/>SampleHyperStore', "in_use"),
     ("en/README.md", rf'"{N} data sources<br/>rpt_', "rpt"),
@@ -185,7 +185,7 @@ COUNT_PATTERNS = [
     ("ja/README.md", rf"セットアップで使う {N} テーブル", "in_use"),
     ("ja/README.md", rf"使っていない {N} テーブル", "planned"),
     ("ja/README.md", rf"`csv/in_use/` の {N} テーブル", "in_use"),
-    ("ja/README.md", rf"{N} 枚の表のつながり", "in_use"),
+    ("ja/README.md", rf"{N} のテーブルとメタデータ", "in_use"),
     ("ja/README.md", rf'"{N} データソース<br/>SampleHyperStore', "in_use"),
     ("ja/README.md", rf'"{N} データソース<br/>rpt_', "rpt"),
     ("ja/README.md", rf"{N} データソースの<br/>", "datasources"),
@@ -248,10 +248,8 @@ COUNT_PATTERNS = [
     ("en/setup/scripts/describe_rpt.py", rf"# all {N}", "rpt"),
     ("tools/showcase/build.py", rf"span {N} tables", "in_use"),
     ("tools/showcase/build.py", rf"{N} 枚の表をまたいで", "in_use"),
-    ("tools/showcase/page.template.html", rf'class="count">{N}</span><span class="unit" id="hs-unit"', "in_use"),
-    ("tools/showcase/page.template.html", rf'class="count">{N}</span><span class="unit" id="pf-unit"', "prefs"),
-    ("tools/showcase/page.template.html", rf"{N} 枚の表をまたいで", "in_use"),
-    ("tools/showcase/page.template.html", rf"Webの{N}枚の表", "in_use"),
+    ("tools/showcase/page.template.html", rf"{N} のテーブルをまたいで", "in_use"),
+    ("tools/showcase/page.template.html", rf"Webの{N}のテーブル", "in_use"),
     ("tools/showcase/page.template.html", rf"(?:across|span|into) {N} tables", "in_use"),
 ]
 
@@ -284,11 +282,11 @@ def check_lists() -> None:
         rows = re.findall(r"^\| (\d+) \| (.+?) \| (.+) \|$", manual.split("\n## ")[-1], re.M)
         if [(r[1], r[2]) for r in rows] != [(i["title"], i["text"]) for i in items]:
             err(f"[lists] {ed}/docs/setup_manual.md: appendix differs from business_preferences.json")
-        # The showcase page lists every Business Preference by the part of its title after the category.
-        for t in titles:
-            short = re.split(r":\s*", t, maxsplit=1)[-1]
-            if f'"{short}"' not in template:
-                err(f"[lists] page.template.html: Business Preference not shown: {short!r} ({ed})")
+        # The showcase page restates every Business Preference in plain words (L.<ed>.prefs), so only the count is checked.
+        block = re.search(rf"\n  {ed}: {{.*?\n    prefs: \[(.*?)\n    \],", template, re.S)
+        shown = sum(len(re.findall(r'"[^"]*"', inner)) for inner in re.findall(r'\[\s*"[^"]*",\s*\[(.*?)\]\]', block.group(1), re.S)) if block else -1
+        if shown != len(items):
+            err(f"[lists] page.template.html: L.{ed}.prefs shows {shown} Business Preferences, business_preferences.json has {len(items)}")
         for name in re.findall(ref, read(readme)):
             if not any(name in t for t in titles):
                 err(f"[lists] {readme}: Business Preference {name!r} is not in business_preferences.json")

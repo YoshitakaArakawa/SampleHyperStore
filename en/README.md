@@ -2,7 +2,7 @@
 
 Sample data for testing whether an AI agent connected through Tableau MCP answers business questions with the right metric. It holds three years of transactions of a fictional US retailer, generated with Claude Code. Every company, person and number in it is fictional.
 
-**[See what you can analyze →](https://yoshitakaarakawa.github.io/SampleHyperStore/?lang=en)** A one-page tour of how the 12 tables connect, with six business questions answered across them.
+**[See what you can analyze →](https://yoshitakaarakawa.github.io/SampleHyperStore/?lang=en)** A one-page tour of what the dataset holds besides the 12 tables, an analysis that digs across them, how business rules change an AI agent's answer, and example questions for a demo.
 
 ## Why this dataset
 

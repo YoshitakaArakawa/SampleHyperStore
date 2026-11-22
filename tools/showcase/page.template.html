@@ -4,10 +4,13 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap">
 <style>
 /* Single light theme (white background in every viewer theme). One page, two languages: every text comes from L.ja / L.en and the page re-renders on switch.
-   Layout: hero → join diagrams (3 tables vs 12 tables) → business settings → one section per question: vertical table stack on the left, charts on the right */
+   Layout: hero → join diagrams (3 tables vs 12 tables) → business rules (Business Preferences) → then
+   type A (one case: business dashboard → question → five drill-down steps → answer), type B (two cases: who asks → agent reads data source and Knowledge → two answers),
+   catalog (two tables of further questions).
+   Every number in the case texts is a {path:format} placeholder filled from D.S (numbers.json), never typed in. */
 :root {
   --bg: #ffffff; --surface: #f4f6f5; --ink: #141b19; --muted: #56635f; --line: #d9e0dd; --grid: #e8ecea;
-  --accent: #1f7a5c; --accent-soft: #e4f2ec; --hot: #c8501f; --hot-soft: #fbeae1; --dim: #b3bcb9; --edge: #9aa6a2;
+  --accent: #1f7a5c; --accent-soft: #e4f2ec; --hot: #c8501f; --hot-soft: #fbeae1; --know: #6b4fb8; --know-soft: #efeafa; --data-soft: #e6eefa; --dim: #b3bcb9; --bar: #5a6662; --edge: #9aa6a2;
   --d-prod: #2e8a63; --d-web: #2f6fc0; --d-order: #7552c2; --d-ship: #d27a1c; --d-bill: #c23d4b; --d-ret: #a98515;
   --f-display: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
   --f-body: "IBM Plex Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
@@ -39,9 +42,30 @@ p { margin: 0; }
 .cta { display: flex; flex-wrap: wrap; gap: 12px; }
 .btn { display: inline-block; font-weight: 700; font-size: 16px; padding: 10px 20px; border-radius: 10px; background: var(--accent); color: var(--bg); text-decoration: none; border: 2px solid var(--accent); }
 .btn:hover, .btn:focus-visible { outline: 3px solid var(--hot-soft); }
+.lic { font-size: 14px; color: var(--muted); }
+.btn.ghost { background: var(--bg); color: var(--accent); }
 
 /* diagrams */
-.maps .in { padding-block: 24px 64px; display: grid; gap: 40px; }
+.maps .in { padding-block: 24px 64px; display: grid; gap: 28px; }
+.kit { border-radius: 18px; padding: 8px 22px 6px; display: grid; min-width: 0; }
+.kit.ss { background: var(--surface); }
+.kit.ss .map .frame { background: var(--bg); }
+.kit.hs { border: 2px solid var(--ink); }
+.khead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding: 14px 0 12px; }
+.khead .name { font-size: 18px; font-weight: 700; }
+.kitnote { font-size: 15px; color: var(--muted); }
+.layer { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 20px; padding: 20px 0; border-top: 1px solid var(--line); min-width: 0; }
+.lname { display: flex; gap: 10px; align-items: center; align-self: start; font-size: 16px; font-weight: 700; padding-top: 4px; }
+.lno { width: 26px; height: 26px; border-radius: 7px; background: var(--ink); color: var(--bg); display: grid; place-items: center; font-family: var(--f-num); font-weight: 800; font-size: 14px; flex: none; }
+.layer.none .lno { background: var(--dim); }
+.layer.none .lname { color: var(--muted); }
+.nothing { color: var(--muted); padding-top: 4px; }
+.nothing b { font-family: var(--f-display); font-size: 22px; color: var(--ink); margin-right: 10px; }
+.mstats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 6px; }
+.mstat { border-top: 3px solid var(--ink); padding-top: 6px; display: grid; gap: 2px; }
+.mstat b { font-family: var(--f-num); font-weight: 800; font-size: 34px; line-height: 1.1; }
+.mstat span { font-size: 14px; color: var(--muted); line-height: 1.5; }
+@media (max-width: 760px) { .layer { grid-template-columns: minmax(0, 1fr); gap: 10px; } .mstats { grid-template-columns: repeat(3, minmax(0, 1fr)); } .kit { padding-inline: 16px; } }
 .map.small .frame { max-width: 720px; }
 .map.small .frame svg { min-width: 520px; }
 .map { display: grid; gap: 10px; min-width: 0; }
@@ -60,80 +84,206 @@ p { margin: 0; }
 :lang(en) .edge-lb { font-family: var(--f-num) !important; font-size: 12px; }
 .domains { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; color: var(--muted); }
 .domains i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--c); margin-right: 6px; vertical-align: -1px; }
-.pgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.pgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.pcard.wide { grid-column: span 2; }
+.pcard.wide ul { columns: 2; column-gap: 28px; display: block; }
+.pcard.wide li { break-inside: avoid; margin-bottom: 2px; }
 .pcard { border: 1.5px dashed var(--ink); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
 .pcard h3 { font-size: 16px; font-family: var(--f-body); display: flex; justify-content: space-between; gap: 8px; }
 .pcard h3 span { font-family: var(--f-num); color: var(--muted); }
 .pcard ul { margin: 0; padding-left: 1.1em; font-size: 14px; line-height: 1.6; color: var(--muted); display: grid; gap: 2px; overflow-wrap: anywhere; }
 @media (max-width: 900px) { .pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 520px) { .pgrid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 520px) { .pgrid { grid-template-columns: minmax(0, 1fr); } .pcard.wide { grid-column: auto; } .pcard.wide ul { columns: 1; } }
 
-/* case */
-.case { border-top: 1px solid var(--line); scroll-margin-top: 8px; }
-.case > .in { padding-block: 64px; display: grid; gap: 20px; }
-.qa { display: grid; gap: 16px; }
-.q, .a { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 16px; align-items: start; }
-.mark { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-family: var(--f-num); font-weight: 800; font-size: 26px; line-height: 1; }
-.q { padding-inline: 20px 24px; }
-.q .mark { background: var(--ink); color: var(--bg); }
-.q h2 { font-size: clamp(24px, 3.4vw, 32px); font-weight: 900; padding-top: 2px; max-width: 30em; }
-:lang(en) .q h2 { line-height: 1.3; padding-top: 6px; }
-.a { background: var(--accent-soft); border-radius: 16px; padding: 20px 24px 22px 20px; }
-.a .mark { background: var(--accent); color: var(--bg); }
-.atext { font-size: 20px; font-weight: 700; line-height: 1.65; }
-.blbl { font-size: 13px; font-weight: 700; letter-spacing: .04em; color: var(--muted); margin-bottom: 8px; }
-.a .blbl { color: var(--accent); margin-bottom: 2px; }
-.cbody { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start; }
-.block { border-radius: 16px; padding: 22px 24px; min-width: 0; }
-.block.tables { background: var(--surface); align-self: start; }
-@media (min-width: 901px) { .block.tables { position: sticky; top: 16px; } }
-.block.evidence { background: var(--bg); border: 1.5px solid var(--line); display: grid; gap: 22px; }
-.block.evidence > .blbl { margin-bottom: -8px; }
-.block.trap { background: var(--hot-soft); padding-block: 16px 18px; }
-.block.trap .blbl { color: var(--hot); margin-bottom: 2px; }
-.block.trap p:last-child { font-size: 16px; }
-
-/* vertical table stack */
-.stack { display: grid; gap: 0; }
-.trow { background: var(--bg); border-left: 5px solid var(--c); border-radius: 8px; padding: 10px 14px; display: grid; gap: 2px; }
-.trow b { font-size: 16px; }
-.trow .csv { font-family: var(--f-num); font-size: 13px; color: var(--c); }
-.trow .cols { font-size: 13px; color: var(--muted); line-height: 1.55; }
-.trow.know { background: transparent; border: 1.5px dashed var(--ink); margin-top: 8px; }
-.trow.know b { font-size: 15px; }
-.plbl { font-size: 13px; font-weight: 700; color: var(--muted); margin-top: 18px; }
-.link { display: flex; align-items: center; gap: 8px; padding: 3px 0 3px 22px; font-size: 12px; color: var(--muted); }
-:lang(en) .link { font-family: var(--f-num); }
-.link::before { content: ""; width: 2px; height: 22px; background: var(--line); }
-
-.charts { display: grid; gap: 22px; min-width: 0; }
-.panel { display: grid; gap: 6px; min-width: 0; }
-.panel h3 { font-family: var(--f-body); font-size: 15px; font-weight: 700; }
-:lang(ja) .panel h3 { word-break: auto-phrase; }
-.panel .src { display: block; font-family: var(--f-num); font-size: 12px; color: var(--muted); font-weight: 400; }
-.multi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+/* parts: type A (one case, drill-down), type B (two cases, agent diagram), catalog (two tables) */
+.part { border-top: 1px solid var(--line); scroll-margin-top: 8px; }
+.part > .in { padding-block: 64px; display: grid; gap: 28px; }
+.phead { display: grid; gap: 8px; border-left: 6px solid var(--c); padding-left: 16px; }
+.phead .kind { font-size: 13px; font-weight: 500; letter-spacing: .05em; color: var(--c); }
+.phead h2 { font-size: clamp(24px, 3.4vw, 32px); font-weight: 700; }
+.phead p { color: var(--muted); max-width: 62em; }
+.phead p { text-wrap: pretty; }
+:lang(ja) .phead p { word-break: auto-phrase; line-break: strict; }
+.case { display: grid; gap: 22px; scroll-margin-top: 8px; }
+.case + .case { border-top: 1px dashed var(--line); padding-top: 36px; }
+.chead { display: grid; gap: 2px; }
+.chead .clbl { font-size: 12.5px; color: var(--muted); letter-spacing: .04em; }
+.chead h3 { font-size: 21px; font-weight: 700; }
+.toc { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.toc a { display: grid; gap: 2px; height: 100%; box-sizing: border-box; border: 1.5px solid var(--line); border-left: 5px solid var(--c); border-radius: 12px; padding: 12px 16px; color: var(--ink); text-decoration: none; }
+.toc a:hover, .toc a:focus-visible { border-color: var(--c); }
+.toc small { font-size: 12.5px; color: var(--c); }
+.toc span { font-size: 16px; font-weight: 700; }
+.toc em { font-style: normal; font-size: 14px; color: var(--muted); }
+.part.intro > .in { padding-block: 56px 8px; }
+.blbl { font-size: 13px; font-weight: 700; letter-spacing: .04em; color: var(--muted); }
+.num { font-family: var(--f-num); font-weight: 700; }
 svg { width: 100%; height: auto; display: block; overflow: visible; }
-.charts svg text { fill: var(--muted); font-family: var(--f-num); font-size: 12px; }
-.charts svg text.hot { fill: var(--hot); font-weight: 600; }
-.charts svg text.ink { fill: var(--ink); font-weight: 600; }
-.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; color: var(--muted); }
+.chart svg text, .board svg text { fill: var(--muted); font-family: var(--f-num); font-size: 12px; }
+.chart svg text.hot { fill: var(--hot); font-weight: 600; }
+.chart svg text.ink { fill: var(--ink); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--muted); }
 .legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
-.kpi { border-top: 3px solid var(--ink); padding-top: 8px; display: grid; gap: 2px; }
-.kpi .v { font-family: var(--f-num); font-weight: 800; font-size: 28px; line-height: 1.2; }
-.kpi .t { font-size: 14px; color: var(--muted); line-height: 1.55; }
+.legend i.dash { background: none !important; border-top: 2px dashed var(--edge); height: 0; }
+.qbig { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 14px; align-items: center; }
+.mark { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-family: var(--f-num); font-weight: 800; font-size: 26px; line-height: 1; }
+.qbig .mark { background: var(--ink); color: var(--bg); }
+.qbig h4 { margin: 0; font-family: var(--f-display); font-size: clamp(21px, 3vw, 28px); font-weight: 700; line-height: 1.45; text-wrap: balance; }
+:lang(ja) .qbig h4 { word-break: auto-phrase; }
+
+/* type A: dashboard */
+.board { border: 1.5px solid var(--line); border-radius: 16px; overflow: hidden; }
+.bhead { background: var(--surface); padding: 12px 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+.bhead b { font-size: 16px; }
+.bhead .asof { font-size: 14px; color: var(--muted); }
+.bhead .legend { margin-left: auto; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tile { padding: 14px 18px 12px; border-top: 1px solid var(--line); display: grid; gap: 2px; min-width: 0; align-content: start; }
+.tile:not(:nth-child(3n)) { border-right: 1px solid var(--line); }
+.tile.hl { background: var(--hot-soft); }
+.tile .tn { font-size: 14px; color: var(--muted); }
+.tile .tv { display: flex; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; }
+.tile .tv b { font-family: var(--f-num); font-size: 28px; font-weight: 800; line-height: 1.15; }
+.tile.hl .tv b { color: var(--hot); }
+.tile.pos { background: var(--data-soft); }
+.tile.pos .tv b, .tile.pos .yoy { color: var(--d-web); }
+.board + .qbig { margin-top: 18px; }
+.dchart .board .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dchart .board .tile { padding: 10px 12px; border-right: 1px solid var(--line); border-top: 0; }
+.dchart .board .tile:last-child { border-right: 0; }
+.dchart .board .tile .tv b { font-size: 22px; }
+@media (max-width: 520px) { .dchart .board .tiles { grid-template-columns: minmax(0, 1fr); } .dchart .board .tile { border-right: 0; border-top: 1px solid var(--line); } }
+.tile .yoy { font-family: var(--f-num); font-size: 14px; font-weight: 500; color: var(--muted); }
+.tile.hl .yoy { color: var(--hot); }
+.tile .spk { margin-top: 4px; }
+
+/* type A: drill-down, conclusion on the left, chart on the right */
+.drill { list-style: none; margin: 0; padding: 0; display: grid; }
+.dstep { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 32px; padding: 26px 0; border-top: 1px solid var(--line); align-items: start; }
+.dtext { display: grid; gap: 6px; align-content: start; }
+.dno { font-size: 13px; color: var(--muted); }
+.dno b { font-family: var(--f-num); font-weight: 700; color: var(--ink); margin-right: 8px; }
+.dtext .head { font-size: 17px; font-weight: 700; line-height: 1.55; }
+:lang(ja) .dtext .head { word-break: auto-phrase; }
+.dtext .big { font-family: var(--f-num); font-weight: 800; font-size: 40px; line-height: 1.05; color: var(--hot); }
+.dtext .sm { font-size: 14px; color: var(--muted); line-height: 1.6; }
+.tlist { display: grid; gap: 4px; margin-top: 8px; justify-items: start; }
+.tlist > span { font-size: 12px; color: var(--muted); }
+.tchips { display: grid; gap: 4px; justify-items: start; }
+.tchip { font-size: 13px; padding: 1px 10px 1px 8px; border-radius: 5px; border-left: 4px solid var(--c); background: var(--surface); white-space: nowrap; }
+.tchip.new { background: var(--bg); box-shadow: 0 0 0 1.5px var(--c) inset; }
+.dchart { display: grid; gap: 8px; min-width: 0; }
+.ctitle { font-size: 14px; color: var(--muted); line-height: 1.5; }
+.chart { min-width: 0; }
+.uses { border: 1.5px solid var(--line); border-radius: 16px; padding: 16px 20px 18px; display: grid; gap: 12px; }
+.utitle { font-size: 15px; font-weight: 700; }
+.ucols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.ucols > div { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.ucols .lname { padding: 0; font-size: 15px; }
+.ucols .lname small { font-size: 12.5px; font-weight: 400; color: var(--muted); }
+.uds { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+.uses .fields { justify-content: flex-start; }
+.uses .fields span { background: var(--surface); }
+.urules { margin: 0; padding-left: 1.1em; font-size: 14px; line-height: 1.6; display: grid; gap: 2px; }
+@media (max-width: 760px) { .ucols { grid-template-columns: minmax(0, 1fr); } }
+.answer { background: var(--accent-soft); border-radius: 16px; padding: 18px 20px; display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 14px; align-items: center; }
+.answer .mark { background: var(--accent); color: var(--bg); }
+.answer p { font-size: 19px; font-weight: 700; line-height: 1.6; }
+.trapline { display: flex; gap: 10px; align-items: flex-start; background: var(--hot-soft); border-radius: 12px; padding: 10px 14px; font-size: 15px; }
+.trapline svg { width: 20px; height: 20px; flex: none; margin-top: 3px; }
+
+/* type B: agent diagram */
+.actors { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); }
+.actors span { display: inline-flex; align-items: center; gap: 6px; }
+.actors svg { width: 22px; height: 22px; }
+.flow { display: grid; grid-template-columns: minmax(0, 1fr) 26px minmax(0, 1fr) 26px minmax(0, 1fr); align-items: center; }
+.arr { text-align: center; color: var(--edge); font-size: 24px; line-height: 1; }
+.actor { border-radius: 14px; padding: 14px; display: grid; justify-items: center; gap: 8px; text-align: center; min-width: 0; }
+.actor > svg { width: 44px; height: 44px; }
+.actor .nm { font-size: 14px; }
+.actor.person { background: var(--surface); }
+.actor.agent { border: 2px solid var(--ink); }
+.actor.src { background: var(--data-soft); border: 1.5px solid var(--d-web); padding: 10px; }
+.actor.src .nm { color: var(--d-web); }
+.actor.kn { background: var(--know-soft); border: 2px dashed var(--know); padding: 10px; }
+.actor.kn .nm { color: var(--know); }
+.inputs { display: grid; gap: 10px; width: 100%; }
+.inputs .actor > svg { width: 34px; height: 34px; }
+.fields { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+.fields span { font-family: var(--f-num); font-size: 12.5px; background: var(--bg); border-radius: 5px; padding: 0 6px; }
+.rule { font-size: 14px; line-height: 1.5; }
+.rule small { display: block; font-size: 12px; color: var(--know); }
+.bubble { background: var(--bg); border-radius: 12px; padding: 10px 12px; font-family: var(--f-display); font-weight: 700; font-size: 16px; line-height: 1.5; text-align: left; }
+:lang(ja) .bubble { word-break: auto-phrase; }
+.vs { display: grid; gap: 10px; }
+.res { border-radius: 14px; padding: 12px 14px; display: grid; gap: 2px; }
+.res.bare { border: 1.5px dashed var(--edge); }
+.res.set { border: 2px solid var(--know); background: var(--know-soft); }
+.res .lb { font-size: 12.5px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.res.set .lb { color: var(--know); }
+.res .lb svg { width: 16px; height: 16px; }
+.res .big { font-family: var(--f-num); font-weight: 800; font-size: 34px; line-height: 1.1; }
+.res.bare .big { color: var(--muted); }
+.res.set .big { color: var(--know); }
+.res .how { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.mind { display: grid; gap: 2px; width: 100%; text-align: left; background: var(--bg); border-radius: 12px; padding: 10px 12px; box-sizing: border-box; }
+.mind .lb { font-size: 12.5px; color: var(--muted); }
+.mind .big { font-family: var(--f-num); font-weight: 800; font-size: 28px; line-height: 1.1; color: var(--hot); }
+.mind .how, .res .how { font-size: 12.5px; }
+.mini { min-width: 0; }
+.mini svg text { fill: var(--muted); font-family: var(--f-num); font-size: 11px; }
+.diff { border-left: 4px solid var(--know); padding: 4px 0 4px 12px; font-size: 16px; }
+.evid { display: grid; gap: 8px; }
+.evid h5 { margin: 0; font-size: 15px; font-weight: 700; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips span { font-family: var(--f-num); font-size: 14px; font-weight: 600; padding: 2px 10px; border-radius: 6px; background: var(--surface); }
+.chips span.moved { background: var(--hot-soft); color: var(--hot); }
+
+/* catalog tables */
+.cat { display: grid; gap: 10px; }
+.cat + .cat { margin-top: 36px; }
+.cat h3 { font-size: 19px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.cat h3 svg { width: 24px; height: 24px; }
+.otypes { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); align-items: center; }
+table.qt { width: 100%; border-collapse: collapse; font-size: 14.5px; line-height: 1.55; }
+.qt th { text-align: left; font-size: 12.5px; font-weight: 500; color: var(--muted); letter-spacing: .03em; padding: 8px 10px; border-bottom: 2px solid var(--ink); }
+.qt td { padding: 12px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.qt td.q { font-weight: 500; width: 30%; }
+.qt td:not(.q) { color: var(--muted); }
+:lang(ja) .qt td { word-break: auto-phrase; }
+.otag { display: inline-block; font-size: 12px; padding: 0 8px; border-radius: 999px; margin-bottom: 4px; white-space: nowrap; }
+.otag.watch { background: var(--hot-soft); color: var(--hot); }
+.otag.act { background: var(--accent-soft); color: var(--accent); }
+.qt td.set { color: var(--know); }
+.qt .set small { display: block; font-size: 12px; color: var(--muted); }
 
 @media (max-width: 900px) {
-  .cbody { grid-template-columns: minmax(0, 1fr); }
+  .flow { grid-template-columns: minmax(0, 1fr); }
+  .flow .arr { transform: rotate(90deg); padding: 6px 0; }
+  .vs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tile:not(:nth-child(3n)) { border-right: 0; }
+  .tile:nth-child(odd) { border-right: 1px solid var(--line); }
 }
-@media (max-width: 640px) {
-  .multi, .duo { grid-template-columns: minmax(0, 1fr); }
-  .q, .a { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+@media (max-width: 760px) {
+  .dstep { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .toc { grid-template-columns: minmax(0, 1fr); }
+  .dtext .big { font-size: 36px; }
+  table.qt, .qt tbody, .qt tr, .qt td { display: block; width: auto; }
+  .qt thead { display: none; }
+  .qt tr { border-bottom: 1px solid var(--line); padding: 10px 0; display: grid; gap: 6px; }
+  .qt td { border: 0; padding: 0; }
+  .qt td.q { width: auto; font-size: 16px; }
+  .qt td[data-l]::before { content: attr(data-l); display: block; font-size: 12px; font-weight: 700; color: var(--muted); }
+}
+@media (max-width: 520px) {
+  .tiles { grid-template-columns: minmax(0, 1fr); }
+  .tile:nth-child(odd) { border-right: 0; }
+  .vs { grid-template-columns: minmax(0, 1fr); }
+  .qbig, .answer { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .mark { width: 36px; height: 36px; font-size: 20px; border-radius: 10px; }
-  .block { padding: 18px 16px; }
-  .a { padding: 16px; }
-  .q { padding-inline: 16px; }
+  .answer { padding: 16px; }
+  .answer p { font-size: 18px; }
 }
 </style>
 
@@ -146,32 +296,39 @@ svg { width: 100%; height: auto; display: block; overflow: visible; }
     <h1 id="h1"></h1>
     <p class="sub" id="sub"></p>
     <div class="cta"><a class="btn" id="cta" href="https://github.com/YoshitakaArakawa/SampleHyperStore" target="_blank" rel="noopener"></a></div>
+    <p class="lic" id="lic"></p>
   </div>
 </header>
 
 <section class="maps" id="maps">
   <div class="in">
-    <div class="map small">
-      <p class="name" id="ss-name"></p>
-      <div class="head"><span class="count">3</span><span class="unit" id="ss-unit"></span><span class="stat" id="ss-stat"></span></div>
-      <div class="frame" id="map-ss"></div>
+    <div class="kit ss">
+      <div class="khead"><p class="name" id="ss-name"></p></div>
+      <div class="layer"><div class="lname"><span class="lno">1</span><span class="ln1"></span></div>
+        <div class="map small"><div class="head"><span class="count" id="ss-count">3</span><span class="unit" id="ss-unit"></span></div><div class="frame" id="map-ss"></div></div></div>
+      <div class="layer none"><div class="lname"><span class="lno">2</span><span class="ln2"></span></div><p class="nothing" id="ss-nometa"></p></div>
+      <div class="layer none"><div class="lname"><span class="lno">3</span><span class="ln3"></span></div><p class="nothing" id="ss-norules"></p></div>
     </div>
-    <div class="map big">
-      <p class="name" id="hs-name"></p>
-      <div class="head"><span class="count">12</span><span class="unit" id="hs-unit"></span><span class="stat" id="hs-stat"></span></div>
-      <p class="stat" id="hs-note"></p>
-      <div class="frame" id="map-hs"></div>
-      <div class="domains" id="domains"></div>
-    </div>
-    <div class="map prefs">
-      <p class="name" id="pf-name"></p>
-      <div class="head"><span class="count">22</span><span class="unit" id="pf-unit"></span></div>
-      <p class="stat" id="pf-note"></p>
-      <div class="pgrid" id="pgrid"></div>
+    <div class="kit hs">
+      <div class="khead"><p class="name" id="hs-name"></p><p class="kitnote" id="hs-kit"></p></div>
+      <div class="layer"><div class="lname"><span class="lno">1</span><span class="ln1"></span></div>
+        <div class="map big"><div class="head"><span class="count" id="hs-count"></span><span class="unit" id="hs-unit"></span></div><div class="frame" id="map-hs"></div><div class="domains" id="domains"></div></div></div>
+      <div class="layer"><div class="lname"><span class="lno">2</span><span class="ln2"></span></div>
+        <div class="map"><p class="stat" id="md-note"></p><div class="mstats" id="mstats"></div></div></div>
+      <div class="layer"><div class="lname"><span class="lno">3</span><span class="ln3"></span></div>
+        <div class="map prefs"><div class="head"><span class="count" id="pf-count"></span><span class="unit" id="pf-unit"></span></div><p class="stat" id="pf-note"></p><div class="pgrid" id="pgrid"></div></div></div>
     </div>
   </div>
 </section>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-person" viewBox="0 0 40 40"><circle cx="20" cy="14" r="7" fill="#56635f"/><path d="M6 36c1-8 7-12 14-12s13 4 14 12z" fill="#56635f"/></symbol>
+  <symbol id="i-db" viewBox="0 0 40 40"><ellipse cx="20" cy="9" rx="13" ry="5" fill="#2f6fc0"/><path d="M7 9v22c0 3 6 5 13 5s13-2 13-5V9c0 3-6 5-13 5S7 12 7 9z" fill="#2f6fc0" opacity=".75"/><path d="M7 20c0 3 6 5 13 5s13-2 13-5" fill="none" stroke="#fff" stroke-width="1.5"/></symbol>
+  <symbol id="i-agent" viewBox="0 0 40 40"><rect x="7" y="11" width="26" height="21" rx="6" fill="#141b19"/><circle cx="15" cy="21" r="3" fill="#fff"/><circle cx="25" cy="21" r="3" fill="#fff"/><rect x="18.5" y="4" width="3" height="7" fill="#141b19"/><circle cx="20" cy="4" r="2.5" fill="#141b19"/><rect x="14" y="27" width="12" height="2" rx="1" fill="#fff"/></symbol>
+  <symbol id="i-book" viewBox="0 0 40 40"><path d="M6 8c5-2 10-2 14 1v25c-4-3-9-3-14-1z" fill="#6b4fb8"/><path d="M34 8c-5-2-10-2-14 1v25c4-3 9-3 14-1z" fill="#6b4fb8" opacity=".7"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 40 40"><rect x="6" y="22" width="6" height="12" rx="1" fill="#c8501f"/><rect x="17" y="14" width="6" height="20" rx="1" fill="#c8501f" opacity=".8"/><rect x="28" y="6" width="6" height="28" rx="1" fill="#c8501f" opacity=".6"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 20 20"><path d="M10 2l9 16H1z" fill="#c8501f"/><rect x="9" y="7" width="2" height="6" fill="#fff"/><rect x="9" y="14.5" width="2" height="2" fill="#fff"/></symbol>
+</defs></svg>
 <main id="cases"></main>
 
 <script>
@@ -180,6 +337,44 @@ const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).
 const pct = v => Math.round(v * 100) + "%";
 const pct1 = v => (v * 100).toFixed(1) + "%";
 const k$ = v => "$" + Math.round(v / 1000).toLocaleString("en-US") + "k";
+const sgn = v => (v > 0 ? "+" : v < 0 ? "−" : "±");
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+// formats for {path:format} placeholders in the case texts
+const FMT = {
+  p0: v => Math.round(v * 100) + "%", p1: v => (v * 100).toFixed(1) + "%", p2: v => (v * 100).toFixed(2) + "%",
+  sp0: v => sgn(Math.round(v * 100)) + Math.abs(Math.round(v * 100)) + "%", sp1: v => sgn(v) + Math.abs(v * 100).toFixed(1) + "%",
+  pt: v => sgn(v) + Math.abs(v * 100).toFixed(1) + "pt", susdk: v => sgn(Math.round(v / 1000)) + "$" + Math.abs(Math.round(v / 1000)).toLocaleString("en-US") + "k", apt: v => Math.abs(v * 100).toFixed(1) + "pt",
+  usd: v => "$" + Math.round(v).toLocaleString("en-US"), usdk: v => "$" + Math.round(v / 1000).toLocaleString("en-US") + "k",
+  n: v => String(v.length), reg: v => v.map(r => r.replace(/^R-/, "")).map(x => x[0] + x.slice(1).toLowerCase()).join(", "),
+  d: v => { const [y, m, d] = v.split("-").map(Number); return lang === "ja" ? `${y}年${m}月` + (d ? `${d}日` : "") : (d ? `${MON[m - 1]} ${d}, ${y}` : `${MON[m - 1]} ${y}`); },
+  x: v => String(v), subs: v => v.map(k => t.subs[k] || k).join(lang === "ja" ? "、" : ", "), approx: v => (lang === "ja" ? "約 " : "about ") + "$" + Math.round(v / 10000) * 10 + "k",
+};
+// numbers derived from D.S (ranges, lookups); still computed, never typed
+const X = (() => {
+  const so = D.S.stockout, bc = so.by_channel, g = so.groups_web, w = so.webapp, q = so.search, ch = k => bc.channels.indexOf(k);
+  return {
+    stockout: { conv: so.dash.conversion.cur[11], conv_ly: so.dash.conversion.ly[11], mk: bc.orders_cur[ch("marketplace")], mk_ly: bc.orders_ly[ch("marketplace")],
+      nh: g.heavy.length, hfOos: q.oos25[q.subs.indexOf("hiking_footwear")],
+      heavyPct: g.heavy_cur / g.heavy_ly - 1, heavyShare: g.heavy_ly / g.total_ly, restPct: g.rest_cur / g.rest_ly - 1,
+      // subcategories whose web/app sales fell by 30% or more, largest fall first
+      bigDrop: g.heavy.map(k => [k, w.sales25[w.subs.indexOf(k)] / w.sales24[w.subs.indexOf(k)] - 1]).filter(([, r]) => r <= -.3).sort((a, b) => a[1] - b[1]).map(([k]) => k) },
+    west: { nold: D.S.west.moved.length + D.S.west.kept.length },
+  };
+})();
+const TILE_HL = ["sales", "conversion"], TILE_POS = ["sessions"];   // the tiles that changed (an editorial choice, the values come from D)
+const TILE_FMT = { sales: FMT.usdk, sessions: v => Math.round(v).toLocaleString("en-US"), conversion: FMT.p2, orders: v => Math.round(v).toLocaleString("en-US"),
+  new_customers: v => Math.round(v).toLocaleString("en-US"), aov: FMT.usd };
+const STEP_TABLES = [[["orders", 1]], [["web_sessions", 1], ["orders", 0]], [["web_sessions", 0]], [["web_searches", 1], ["products", 1]], [["order_lines", 1], ["products", 0]]];   // [table, first used in this step]
+const USED_TABLES = [...new Set(STEP_TABLES.flat().map(([k]) => k))];   // the tables the five steps use
+function fill(s, id, plain) {
+  const ctx = { ...D.S[id], X: X[id] || {} };
+  return s.replace(/\{([\w.]+)(?::(\w+))?\}/g, (_, path, f) => {
+    const v = path.split(".").reduce((o, k) => (o == null ? o : o[k]), ctx);
+    if (v == null) { console.error("missing number", id, path); return "??"; }
+    const out = (FMT[f] || FMT.x)(v);
+    return plain ? out : `<span class="num">${out}</span>`;
+  });
+}
 
 // table colors (shared); names come from L[lang].tables
 const TC = {
@@ -199,76 +394,100 @@ const EDGES = [
 const L = {
   ja: {
     title: "SampleHyperStore の分析体験",
-    h1: ["12 枚の表をまたいで、", "AI と業務の問いを解く。"],
-    sub: "SampleHyperStore は、架空の小売企業の3年分の取引を、受注・出荷・請求・返品・Webの12枚の表に分けたデータセット。「遅配でお客さんは離れたか」「売上が部門で合わないのはなぜか」とAIに尋ねると、AIが表をつないで答えを組み立てる。売上も利益も1枚に入ったSuperstoreでは、こうした問いは立てられない。",
+    h1: ["12 のテーブルをまたいで、", "AI と業務の問いを解く。"],
+    sub: "SampleHyperStore は、架空の小売企業の3年分の取引を、受注・出荷・請求・返品・Webの12のテーブルに分けたデータセット。「遅配でお客さんは離れたか」「売上が部門で合わないのはなぜか」とAIに尋ねると、AIがテーブルをつないで答えを組み立てる。売上も利益も1つのテーブルに入ったSuperstoreでは、こうした問いは立てられない。",
     cta: "GitHub でデータを見る",
-    mapsLabel: "表のつながり",
-    ssName: "Tableau 定番のサンプル Superstore", tablesUnit: "枚の表", ssStat: "· つながり <b>2</b> 本",
-    hsName: "このデータセット SampleHyperStore", hsStat: "· つながり <b>14</b> 本 · つなぐ鍵 <b>8</b> 種類",
-    hsNote: "箱が 1 枚の表（CSV 1 ファイル）。線の上の文字は、表どうしをつなぐ列。",
-    pfName: "＋ 表の意味を決めるビジネス設定", pfUnit: "件の設定",
-    pfNote: "「売上」はどの売上か、「遅れ」は何日からか。表だけでは決まらない定義を、Tableau Knowledge に書いて AI に渡す。下の 6 つの答えは、すべてこのどれかに頼っている。",
+    mapsLabel: "テーブルのつながり",
+    ssName: "Tableau 定番のサンプル Superstore", tablesUnit: "テーブル", ssStat: "",
+    layers: ["テーブル", "メタデータ", "業務ルール"], none: "なし",
+    ssNoMeta: "列の説明も、テーブルどうしのつなぎ方も、計算の式もない。", ssNoRules: "「売上」が何を指すかは、見る人が決める。",
+    hsKit: "テーブル・メタデータ・業務ルールを、このリポジトリに一式入れてある。",
+    mdNote: "Tableau に公開するデータソースに書き込む説明とつながり。どの列が何か、テーブルをどうつなぐか、指標をどう計算するかを書いてある。",
+    mstats: ["列の説明", "テーブル間のリレーション", "計算フィールド"],
+    hsName: "このデータセット SampleHyperStore", hsStat: "",
+    hsNote: "",
+    pfName: "", pfUnit: "件のルール",
+    pfNote: "「売上」はどの売上か、「遅れ」はいつからか。データを見ても決まらない言葉の意味や集計のやり方を、文章で書いて AI に渡す。Tableau では、Tableau Knowledge の Business Preferences に登録する。",
     ss: { returns: ["Returns", "返品フラグ"], orders: ["Orders", "売上・利益まで全部"], people: ["People", "地域の担当者"], k1: "Order ID", k2: "Region" },
     tables: { web_sessions: "Web セッション", web_searches: "サイト内検索", products: "商品", orders: "受注", order_lines: "受注明細", shipments: "出荷", shipment_lines: "出荷明細",
       invoices: "請求書", invoice_lines: "請求明細", credit_memos: "クレジットメモ", returns: "返品", refunds: "返金" },
     keys: ["セッションID", "注文ID", "商品ID", "出荷ID", "注文明細ID", "請求書ID", "返品ID", "返金ID"],
     doms: ["Web", "商品", "受注", "出荷", "請求", "返品・返金"],
     prefs: [
-      ["使い方", ["使うデータソース", "どのデータソースの指標を使ったかを示す"]],
-      ["用語", ["売上の既定の意味", "経理の質問での会計期間", "配達遅れは約束日より後", "検索の結果なしと在庫なし", "相対的な日付はデータの終わりを基準にする"]],
-      ["方法", ["2025-01-01 の営業地域の再編"]],
-      ["既定の日付", ["rpt_samplehyperstore__billing", "rpt_samplehyperstore__sales_orders", "rpt_samplehyperstore__merchandising", "rpt_samplehyperstore__shipments", "rpt_samplehyperstore__returns_refunds", "rpt_samplehyperstore__web_analytics"]],
-      ["複数の表にまたがる指標", ["申請ベースの返品率", "注文コホートの返品率", "受領ベースの返品率", "返品明細の発生率", "純送料コスト", "セッションあたり注文数", "数量ベースのカート放棄率", "受注売上に対するマーケットプレイス手数料率"]],
+      ["使い方", ["分析には整備済みのデータソースを使う", "同じ名前の指標が複数あるので、どのデータソースの指標かを答えに書く"]],
+      ["言葉の意味", ["「売上」だけなら受注の売上。会計期間・純売上・返品・手数料の話なら請求の売上", "経理の質問の「今年」「月次」は、2 月始まりの会計年度と会計月",
+        "配達遅れは、約束日より後に届いたもの。配送業者の見込み日は業者の評価にだけ使う", "検索の「結果なし」は該当する商品がないこと。「在庫なし」は、結果はあるが在庫がないこと",
+        "「今年」「先月」は、今日ではなくデータの終わり（2025年12月31日）から数える"]],
+      ["比べ方", ["2025年1月1日に営業地域を再編した。年をまたいで地域を比べるときは州で比べる"]],
+      ["推移を見るときの日付", ["受注は注文日", "商品別の分析も注文日", "出荷は出荷日。完全な注文の率だけ注文日", "請求は請求日（会計月）。返品のクレジットはクレジットメモの日",
+        "返品は申請日。返金は返金日、受け取りは受領日", "Web はセッション開始日。検索の指標は検索日"]],
+      ["データソースをまたぐ指標の式", ["申請ベースの返品率 ＝ 申請された返品数 ÷ 注文数", "注文コホートの返品率 ＝ 返品数 ÷ 注文数（どちらも注文日で揃える）", "受領ベースの返品率 ＝ 受け取った返品数 ÷ 出荷数",
+        "返品明細の発生率 ＝ 返品された注文明細 ÷ 注文明細", "純送料コスト ＝ 運賃 − 顧客に請求した送料", "セッションあたり注文数 ＝ Web・アプリの注文 ÷ セッション",
+        "数量ベースのカート放棄率 ＝ 1 − 注文数量 ÷ カートに入れた数量", "モール手数料率 ＝ 手数料 ÷ モールの受注売上"]],
     ],
-    aLbl: "データから分かること", tLbl: (n, m) => `使う表 · ${n} 枚 ＋ 設定 ${m} 件`, pLbl: "＋ 頼るビジネス設定", eLbl: "根拠のグラフ", xLbl: "読み違えやすい所",
-    cases: {
-      tents: { ask: "2024年の夏、西部のテントの注文に何が起きたか。",
-        answer: "テントが足りなくなった。2024年5〜9月に、検索・キャンセル・分割出荷の 3 か所へ同時に跡が残っている。",
-        stack: [["web_searches", "検索語・結果のうち在庫ありの件数", "商品 ID"], ["products", "サブカテゴリ（テント）", "商品 ID"], ["order_lines", "注文数量・キャンセル数量・理由", "注文 ID"],
-          ["orders", "注文日・配送先の州", "注文 ID"], ["shipments", "出荷元の倉庫", "出荷 ID"], ["shipment_lines", "出荷した数量"]],
-        prefs: [["用語", "検索の結果なしと在庫なし"], ["方法", "2025-01-01 の営業地域の再編"]],
-        kpis: [["① 10.5%", "2024年8月、テントの検索のうち在庫ありの結果を出せなかった割合（全国）"], ["② 12.4%", "2024年6月、West のテント注文数量のうちキャンセルされた割合"], ["③ 41%", "2024年Q3、West のテント注文のうち別の倉庫から分割出荷になった割合"]],
-        trap: "地域で絞るときは、2025年1月の再編の前後で同じ州の集合を使う。" },
-      sales: { ask: "月の売上が、経理の報告と販売のダッシュボードで合わない。なぜか。",
-        answer: "「売上」が 3 通りあり、数える日が違う。11月は営業と経理で 9 万ドルずれた。どれも間違いではない。",
-        stack: [["web_sessions", "Web 計測の注文金額", "注文 ID"], ["orders", "注文日・販路", "注文 ID"], ["order_lines", "単価・数量・キャンセル", "注文明細 ID"],
-          ["invoice_lines", "請求した数量・単価", "請求書 ID"], ["invoices", "請求日・会計月", "出荷 ID"], ["shipments", "出荷日"]],
-        prefs: [["用語", "売上の既定の意味"], ["用語", "経理の質問での会計期間"]],
-        kpis: [["$550,658", "2025年11月・営業（注文日で数える）"], ["$460,644", "2025年11月・経理（出荷して請求した日で数える）"], ["$451,194", "2025年11月・デジタル（Web とアプリの計測のみ）"]],
-        trap: "11月末のセールの注文は、出荷と請求が 12 月にずれ込む。「売上は？」とだけ聞かれたら、どの定義で答えたかを添える。" },
-      marketplace: { ask: "モールに出店して以来、手数料を引いた後でも、伸びは本物か。",
-        answer: "本物。モール売上の 15% は手数料で消えるが、モールを除いても全社の売上は伸びている。",
-        stack: [["orders", "販路・注文日", "注文 ID"], ["order_lines", "単価・数量・キャンセル", "注文明細 ID"], ["invoice_lines", "請求金額", "請求書 ID"], ["invoices", "モール手数料"]],
-        prefs: [["指標", "受注売上に対するマーケットプレイス手数料率"]],
-        kpis: [["15.2%", "モールの請求売上に占める手数料"], ["$379,862", "2025年のモール受注売上。手数料は $57,539"], ["+12%", "モールを除いても、全社の売上は 2023 → 2025 で伸びている"]],
-        trap: "手数料は受注の表にはない。請求の表の列を、注文明細 ID でつないで持ってくる必要がある。" },
-      carrier: { ask: "配達が遅れた顧客は、遅れなかった顧客より再購入が少ないか。",
-        answer: "少ない。配送業者を替えた倉庫で遅配が 4 割を超え、遅配に遭った顧客ほど戻ってこなくなった。",
-        stack: [["shipments", "倉庫・配送業者・約束日・配達日", "注文 ID"], ["orders", "顧客 ID・注文日", "注文 ID"], ["returns", "返品理由（遅配）"]],
-        prefs: [["用語", "配達遅れは約束日より後"]],
-        kpis: [["1割 → 4割超", "WH-C の遅配率（2025年5月の業者切替の前後）"], ["29.3% → 25.4%", "90 日以内の再購入率。遅配なしと遅配ありの顧客"], ["約 4 倍", "WH-C の「届くのが遅かった」返品（月 2.2 件 → 8.8 件）"]],
-        trap: "遅配は「約束日」基準と「配送業者の見込み日」基準で数字が変わる。お客さんの体験を問うなら約束日。" },
-      window: { ask: "返品期限を 60 日に延ばしたら、返品は増えたのか。遅れて来るようになっただけか。",
-        answer: "両方起きた。遅い返品が新たに現れ、返品率そのものも約 8% から約 11% に上がった。",
-        stack: [["returns", "申請日・返品期限の日数・配達日", "注文明細 ID"], ["order_lines", "注文明細（分母）", "注文 ID"], ["orders", "注文日（注文月でまとめる）"]],
-        prefs: [["指標", "注文コホートの返品率"], ["指標", "申請ベース・受領ベースの返品率（比較用）"]],
-        kpis: [["8% → 11%", "注文月ごとに見た、最終的に返品された割合"], ["30〜60 日目", "期限変更後にだけ現れた、遅い返品"]],
-        trap: "返品率は「申請した月」「受け取った月」「注文した月」のどれで数えるかで答えが変わる。直近の月は返品が出揃っておらず、低く見える。" },
-      west: { ask: "1月以降、West 地域が前年割れしている。本当に業績が悪いのか。",
-        answer: "悪くない。営業地域の線引きが変わっただけで、同じ州で比べ直すと前年より伸びている。",
-        stack: [["invoices", "営業地域・州コード・請求日", "請求書 ID"], ["invoice_lines", "請求金額"]],
-        prefs: [["方法", "2025-01-01 の営業地域の再編", "6 州が West から新設の Mountain へ移った"]],
-        kpis: [["−19%", "営業地域 ID で集計した West（2024 → 2025）"], ["+6%", "再編前の West と同じ 11 州で集計し直すと"]],
-        trap: "再編の事実は表のどこにも書いていない。表が 2 枚の問いでも、ビジネス設定がないと答えを誤る。" },
-    },
-    ch: {
-      tents: ["① 検索で在庫なし（全国）", "② 注文のキャンセル", "③ 別倉庫からの分割出荷", "網掛けは 2024年5〜9月。①は全国のテント検索、②③は旧 West 11 州のテントを含む注文。③は四半期。"],
-      sales: ["3 つの「売上」の月次推移", "受注 / 請求 / Web 計測", "営業（受注・注文日）", "経理（請求・請求日）", "デジタル（Web 計測）", "営業 $551k", "経理 $580k"],
-      mk: ["販路別の月次売上（積み上げ）", ["法人", "Web", "アプリ", "モール"], "モール出店", "モールで払った手数料（月次）"],
-      carrier: ["倉庫別の遅配率", "WH-E・WH-W", "配送業者を切替", "90 日以内に再購入した顧客", ["遅配なし", "遅配あり"], "「届くのが遅い」返品（WH-C・月別件数）", "切替前", "切替後"],
-      window: ["注文月ごとの返品率", "返品期限を 60 日に", "まだ出揃っていない", "配達から返品申請までの日数", "変更前の注文", "変更後の注文", "30〜60 日目", "30〜60 日目：変更後だけに現れる", "日"],
-      west: ["West の請求売上を 2 つの方法で集計", "営業地域 ID = West", "再編前の West と同じ 11 州"],
-    },
+    uses: { title: "この分析に使うもの", of: (n, m) => `${m} のうち ${n}`, metaLbl: "集計指標", metaSub: "メタデータの計算フィールド",
+      meta: [["受注の整備済みデータ", "--d-order", ["売上", "注文数", "注文数量"]], ["Web 分析の整備済みデータ", "--d-web", ["セッション数", "在庫なし表示の閲覧比率", "検索結果の在庫なし率"]]],
+      rules: ["分析には整備済みのデータソースを使う", "「売上」だけなら受注の売上", "セッションあたり注文数 ＝ Web・アプリの注文 ÷ セッション", "推移は、受注は注文日、Web はセッション開始日で見る", "検索の「在庫なし」は、結果はあるが在庫がないこと"] },
+    start: { h: "使い始める", p: "データは無料で使える。データと文書は CC BY 4.0、コードは MIT ライセンス。", lead: "入手方法と、Tableau への載せ方は README にまとめてある。", readme: ["ja/README.md", "README を読む"] },
+    miniM: ["1月", "12月"], lyShort: "前年", caseLbl: "ケース", tUse: "使うテーブル",
+    intro: { kind: "", h: "このデータでできること", p: "テーブルをまたいで原因を掘る分析の例を 1 つ、業務ルールで AI の答えが変わる例を 2 つ見せる。最後に、デモに使える問いの例を並べる。",
+      toc: [["", "分析の例", "テーブルをまたいで原因を掘る", "part-a", "--hot"], ["", "AI の振る舞いの例", "業務ルールが答えを決める", "part-b", "--know"], ["", "デモに使える問いの例", "分析の問いと、AI の振る舞いの問い", "catalog", "--accent"]] },
+    cts: ["販路別の売上（{asof:d}と前年同月）", "経営ダッシュボードを Web とアプリに絞る（{asof:d}時点、前年同月比）", "商品ページの閲覧のうち「在庫なし」だった割合（月次）",
+      "サイト内検索の結果のうち、在庫なしと表示された割合（在庫なし表示の多い小分類と、その他）", "Web・アプリの売上（{asof:d}と前年同月）。登山靴は注文がすべてキャンセルされ、売上はほぼ $0"],
+    yoyLbl: "前年同月比", cur: "今年", ly: "前年同月", stepOf: n => `${n} / 5`,
+    partA: { kind: "分析の例", h: "テーブルをまたいで原因を掘る", p: "経営ダッシュボードの変化から問いを立て、テーブルを足しながら 5 段で絞り込む。答えは最後に出す。" },
+    partB: { kind: "AI の振る舞いの例", h: "業務ルールが AI の答えを決める", p: "同じデータでも、どの指標を使い、どう比べるかで答えが変わる。その決まりはデータには書いていない。AI エージェントは Tableau Knowledge に登録した業務ルールを読み、使う指標と比べ方を決める。",
+      actors: ["質問する人", "データソース", "AI エージェント", "ナレッジ（業務ルール）"], bare: "ナレッジなし", set: "ナレッジあり" },
+    stockout: {
+      title: "{asof:d}、人は来ているのに売上が落ちた",
+      dash: "月次の経営ダッシュボード",
+      tiles: { sales: "売上（受注）", sessions: "セッション数", conversion: "セッションあたり注文数", orders: "注文数（全販路）", new_customers: "新規客数", aov: "平均注文額" },
+      ask: "人は来ているのに、なぜ売上が落ちたのか。",
+      steps: [
+        { lens: "販路で分ける", head: "モール以外の販路は、どれも前年割れ", sm: "伸びたのは、前年 4 月に始めたモールだけ。ダッシュボードで全販路の注文数が増えていたのも、モールの注文が {X.mk_ly} 件から {X.mk} 件に増えたため。ここからは Web とアプリを見る" },
+        { lens: "Web とアプリに絞って、来訪と注文を並べる", head: "Web とアプリでは、来訪は増えたのに注文は減った", sm: "セッションあたり注文数（Web・アプリの注文 ÷ セッション）が {X.conv_ly:p2} から {X.conv:p2} に下がった。来た客が買わずに帰っている" },
+        { lens: "商品ページで何を見たか", head: "「在庫なし」の表示が急に増えた", sm: "商品ページの閲覧のうち在庫なしだった割合は、2023 年の平均 {oos_2023:p1} に対し、{asof:d}の 1 か月では {oos_apr25:p0}" },
+        { lens: "どの商品か", head: "検索で在庫なしと表示されたのは {X.nh} つの小分類", sm: "登山靴を探した検索では、結果の {X.hfOos:p0} が在庫なしだった。商品ページの閲覧記録には商品名がないので、サイト内検索の結果で見る" },
+        { lens: "その商品の売上", head: "在庫がなかった主力商品で、売上を大きく落とした", sm: "在庫なし表示の多い {X.nh} 小分類は、前年同月に Web・アプリ売上の {X.heavyShare:p0} を占める主力だった。合計で {X.heavyPct:sp0}、特に {X.bigDrop:subs} が大きく落ちた。他の {groups_web.n_rest} 小分類は {X.restPct:sp1}" },
+      ],
+      answer: "欠品が原因。在庫のあった商品は前年より売れていたが、売上の半分以上を占める主力商品が品切れだった。" },
+    west: {
+      title: "West 地域が前年割れしている",
+      who: "営業部長", ask: "1 月から West が前年割れしている。本当に業績が悪いのか？",
+      mind: "見ているグラフ", mindBig: "{region_yoy:sp0}", mindSm: "West の請求売上（営業地域 ID で集計）",
+      src: ["請求（invoices）", "sales_region_id", "state_code"], kn: ["比べ方", "2025年1月1日に営業地域を再編した。年をまたぐ比較は州で行う"],
+      bare: { big: "{region_yoy:sp0}", how: "営業地域 ID のまま集計。見ているグラフと同じものを返す" },
+      set: { big: "{states_yoy:sp0}", how: "再編前と同じ {X.nold} 州で集計し直す" } },
+    sales: {
+      title: "経理が 11 月度の売上を聞いた",
+      who: "経理", ask: "11 月度の純売上はいくら？",
+      mind: "だいたいの感覚", mindBig: "{billing.revenue:approx}", mindSm: "経理の月次報告で見ている、会計月ごとの純売上（返品と手数料を引いた請求の売上）",
+      src: ["受注 · Revenue（注文日）", "請求 · Revenue（会計月）"], kn: ["言葉の意味", "会計期間・純売上・返品・手数料の話なら請求の売上。経理の「月」は会計月"],
+      bare: { big: "{sales_orders:usd}", how: "受注の売上を暦の 11 月で集計。経理の数字と合わない" },
+      set: { big: "{billing.revenue:usd}", how: "請求の売上を会計月で集計し、返品 {billing.credits:usdk} と手数料 {billing.fees:usdk} を引く" } },
+    cat: {
+      kind: "一覧", h: "デモに使える問いの例",
+      p: "ここに挙げるのは例で、このデータは他にも多くの問いに答えられる。起点は、数字を定点観測していて気づく場合と、施策を打った結果を確かめる場合がある。",
+      aH: "分析の問い", aCols: ["問い", "起点", "手がかり", "使うテーブル"], otypes: { watch: "定点観測", act: "施策の結果" },
+      a: [
+        ["配達が遅れた新規客は、また買ってくれるか", "watch", "約束日どおりの配達率の低下", "ある倉庫で配送業者が替わった", ["shipments", "orders", "returns"]],
+        ["返品期限を 60 日に延ばした影響は何か", "act", "返品ポリシーの変更（2024年7月）", "期限が延びた分の返品の中身を見る", ["returns", "refunds", "shipment_lines", "shipments"]],
+        ["モール出店の伸びは、手数料を引いても本物か", "act", "マーケットプレイスへの出店（2024年4月）", "手数料は請求のテーブルにある", ["orders", "order_lines", "invoices", "invoice_lines"]],
+        ["西部の大型品の注文は、なぜ送料がかさむのか", "watch", "出荷 1 件あたりの送料負担", "どの倉庫から出荷しているか", ["order_lines", "products", "shipments", "shipment_lines"]],
+        ["アプリはカートに入るのに、なぜ注文で負けるのか", "watch", "販路別の注文転換率", "チェックアウトから注文までの段階", ["web_sessions", "orders"]],
+      ],
+      bH: "エージェントの振る舞いの問い", bCols: ["問い", "頼る業務ルール", "ナレッジがないと起きやすいこと", "ナレッジがあると"],
+      b: [
+        ["今年は配達の遅れが増えているか", ["用語", "配達遅れは約束日より後"], "配送業者の見込み日と比べてしまう", "顧客に約束した日と比べる"],
+        ["先月の返品率は？", ["指標", "申請ベース・注文コホート・受領ベースの返品率"], "分子と分母で違う日付を使う", "どの返品率かを選び、名前を添えて答える"],
+        ["在庫がなくて見せられなかった検索語は？", ["用語", "検索の結果なしと在庫なし"], "結果 0 件の検索と混ぜる", "結果はあるが在庫がない検索だけを数える"],
+        ["先月の売上は？", ["用語", "相対的な日付はデータの終わりを基準にする"], "今日の日付から見た先月を探す", "データの終わり（2025年12月31日）から数え、2025年11月として答える"],
+        ["モール手数料は売上をどれだけ削っているか", ["指標", "受注売上に対するマーケットプレイス手数料率"], "分母に請求額や手数料込みの額を使う", "受注売上を分母にした定義で答える"],
+      ] },
+    chs: ["Web", "アプリ", "モール", "法人"], funnelSteps: ["商品を見た", "カートに入れた", "購入手続き", "注文した"], visits: ["セッション数", "注文数（Web・アプリ）", "セッションあたり注文数"], rest: n => `その他 ${n} 小分類`,
+    subs: { hiking_footwear: "登山靴", garden_tools: "園芸用品", planters_irrigation: "プランター・散水", patio_furniture: "屋外家具", grills: "グリル", camp_kitchen: "キャンプ調理",
+      base_layers: "ベースレイヤー", fire_pits_patio_heaters: "ファイアピット・屋外ヒーター", insulated_jackets: "防寒ジャケット", sleeping_gear: "寝袋・マット", blankets_throws: "ブランケット",
+      space_heaters: "暖房器具", indoor_air: "空気清浄・加湿", rain_shells: "レインウェア", tents: "テント", backpacks: "リュック" },
   },
   en: {
     title: "SampleHyperStore: analyses across 12 tables",
@@ -276,75 +495,98 @@ const L = {
     sub: "SampleHyperStore splits three years of a fictional retailer's transactions into 12 tables: orders, shipments, invoices, returns and web. Ask an AI “Did late deliveries drive customers away?” or “Why don't the departments agree on revenue?”, and it joins the tables to build the answer. Superstore keeps sales and profit in one table, so these questions can't even be asked of it.",
     cta: "See the data on GitHub",
     mapsLabel: "How the tables connect",
-    ssName: "Superstore, Tableau's classic sample", tablesUnit: "tables", ssStat: "· <b>2</b> links",
-    hsName: "This dataset: SampleHyperStore", hsStat: "· <b>14</b> links · <b>8</b> kinds of key",
-    hsNote: "Each box is one table (one CSV). The text on a line is the column that joins the two tables.",
-    pfName: "+ Business settings that define what the tables mean", pfUnit: "settings",
-    pfNote: "Which “sales”? How many days count as “late”? Definitions the tables can't settle are written in Tableau Knowledge and handed to the AI. Every answer below relies on at least one of them.",
+    ssName: "Superstore, Tableau's classic sample", tablesUnit: "tables", ssStat: "",
+    layers: ["Tables", "Metadata", "Business rules"], none: "None",
+    ssNoMeta: "No column descriptions, no join definitions, no calculation formulas.", ssNoRules: "What “sales” means is left to whoever reads it.",
+    hsKit: "Tables, metadata and business rules, all in this repository.",
+    mdNote: "Descriptions and joins written into the data sources published to Tableau: what each column is, how the tables join, how each metric is calculated.",
+    mstats: ["Column descriptions", "Relationships between tables", "Calculated fields"],
+    hsName: "This dataset: SampleHyperStore", hsStat: "",
+    hsNote: "",
+    pfName: "", pfUnit: "rules",
+    pfNote: "Which “sales”? When is a delivery “late”? What words mean and how to count, where the tables can't tell, are written down in plain sentences and handed to the AI. In Tableau they go into Business Preferences in Tableau Knowledge.",
     ss: { returns: ["Returns", "Return flag"], orders: ["Orders", "Sales and profit, all in one"], people: ["People", "Regional manager"], k1: "Order ID", k2: "Region" },
     tables: { web_sessions: "Web sessions", web_searches: "Site searches", products: "Products", orders: "Orders", order_lines: "Order lines", shipments: "Shipments", shipment_lines: "Shipment lines",
       invoices: "Invoices", invoice_lines: "Invoice lines", credit_memos: "Credit memos", returns: "Returns", refunds: "Refunds" },
     keys: ["session_id", "order_id", "product_id", "shipment_id", "order_line_id", "invoice_id", "return_id", "refund_id"],
     doms: ["Web", "Products", "Orders", "Shipping", "Billing", "Returns & refunds"],
     prefs: [
-      ["Usage", ["Which data sources to use", "Say which data source's metric you used"]],
-      ["Term", ["Default meaning of sales and revenue", "Fiscal periods for Finance questions", "Late delivery means after the promised date", "No results vs nothing in stock in search", "Relative dates mean relative to the end of the data"]],
-      ["Method", ["Sales region realignment on 2025-01-01"]],
-      ["Default date", ["rpt_samplehyperstore__billing", "rpt_samplehyperstore__sales_orders", "rpt_samplehyperstore__merchandising", "rpt_samplehyperstore__shipments", "rpt_samplehyperstore__returns_refunds", "rpt_samplehyperstore__web_analytics"]],
-      ["Cross-source metric", ["Requested return rate", "Order-cohort return rate", "Received return rate", "Return line incidence", "Net shipping cost", "Orders per session", "Unit cart abandonment", "Marketplace fee rate on booked sales"]],
+      ["Usage", ["Use the prepared data sources", "Several metrics share a name, so say which data source's metric you used"]],
+      ["What words mean", ["“Sales” alone means booked sales; for fiscal periods, net revenue, returns or fees, use billed revenue", "In Finance questions, “this year” and “monthly” mean the fiscal year and fiscal months, starting in February",
+        "A delivery is late when it arrives after the promised date; the carrier's estimate is only for judging carriers", "In search, “no results” means no matching product; “nothing in stock” means results but none in stock",
+        "“This year” and “last month” count from the end of the data (2025-12-31), not from today"]],
+      ["How to compare", ["Sales regions were redrawn on 2025-01-01; compare regions across years by state"]],
+      ["Which date a trend uses", ["Orders: order date", "Merchandising: order date", "Shipments: ship date; the perfect order rate by order date", "Billing: invoice date (fiscal month); credits by credit memo date",
+        "Returns: request date; refunds by refund date, receipts by receipt date", "Web: session start date; search metrics by search date"]],
+      ["Formulas across data sources", ["Requested return rate = returns requested ÷ units ordered", "Order-cohort return rate = units returned ÷ units ordered, both by order date", "Received return rate = returns received ÷ units shipped",
+        "Return line incidence = order lines returned ÷ order lines", "Net shipping cost = freight cost − shipping billed to customers", "Orders per session = web and app orders ÷ sessions",
+        "Unit cart abandonment = 1 − units ordered ÷ units added to cart", "Marketplace fee rate = fees ÷ marketplace booked sales"]],
     ],
-    aLbl: "What the data shows", tLbl: (n, m) => `Tables used · ${n} + ${m} setting${m > 1 ? "s" : ""}`, pLbl: "+ Business settings it relies on", eLbl: "Evidence", xLbl: "Easy to misread",
-    cases: {
-      tents: { ask: "What happened to tent orders in the West in summer 2024?",
-        answer: "Tents ran short. From May to September 2024, the shortage left traces in three places at once: search, cancellations and split shipments.",
-        stack: [["web_searches", "Search term, in-stock result count", "product_id"], ["products", "Subcategory (tents)", "product_id"], ["order_lines", "Qty ordered, qty cancelled, reason", "order_id"],
-          ["orders", "Order date, ship-to state", "order_id"], ["shipments", "Shipping warehouse", "shipment_id"], ["shipment_lines", "Qty shipped"]],
-        prefs: [["Term", "No results vs nothing in stock in search"], ["Method", "Sales region realignment on 2025-01-01"]],
-        kpis: [["① 10.5%", "Aug 2024: tent searches that showed no in-stock result (nationwide)"], ["② 12.4%", "Jun 2024: West tent units ordered that were cancelled"], ["③ 41%", "2024 Q3: West tent orders split, with part shipped from another warehouse"]],
-        trap: "When you filter by region, use the same set of states before and after the January 2025 realignment." },
-      sales: { ask: "Finance's report and the sales dashboard disagree on monthly revenue. Why?",
-        answer: "There are three kinds of “revenue”, each counted on a different date. In November, Sales and Finance were $90k apart. None of them is wrong.",
-        stack: [["web_sessions", "Order amount tracked on the web", "order_id"], ["orders", "Order date, channel", "order_id"], ["order_lines", "Unit price, qty, cancellations", "order_line_id"],
-          ["invoice_lines", "Qty and unit price invoiced", "invoice_id"], ["invoices", "Invoice date, fiscal month", "shipment_id"], ["shipments", "Ship date"]],
-        prefs: [["Term", "Default meaning of sales and revenue"], ["Term", "Fiscal periods for Finance questions"]],
-        kpis: [["$550,658", "Nov 2025 · Sales (counted by order date)"], ["$460,644", "Nov 2025 · Finance (counted by invoice date, after shipping)"], ["$451,194", "Nov 2025 · Digital (web and app tracking only)"]],
-        trap: "Orders from the late-November sale are shipped and invoiced in December. When someone asks just for “revenue”, say which definition you used." },
-      marketplace: { ask: "Since we launched on the marketplace, how much of our growth is real after fees?",
-        answer: "It is real. Fees take 15% of marketplace revenue, but company sales grow even without the marketplace.",
-        stack: [["orders", "Channel, order date", "order_id"], ["order_lines", "Unit price, qty, cancellations", "order_line_id"], ["invoice_lines", "Invoiced amount", "invoice_id"], ["invoices", "Marketplace fee"]],
-        prefs: [["Metric", "Marketplace fee rate on booked sales"]],
-        kpis: [["15.2%", "Fees as a share of invoiced marketplace revenue"], ["$379,862", "Marketplace booked sales in 2025; fees were $57,539"], ["+12%", "Company sales grew from 2023 to 2025 even without the marketplace"]],
-        trap: "The fee is not in the order tables. You have to bring it over from the invoice tables, joined on order_line_id." },
-      carrier: { ask: "Do customers who got a late delivery buy again less often than those who didn't?",
-        answer: "Yes. At the warehouse that switched carriers, more than 40% of deliveries arrived late, and customers hit by a late delivery came back less.",
-        stack: [["shipments", "Warehouse, carrier, promised and delivered dates", "order_id"], ["orders", "Customer ID, order date", "order_id"], ["returns", "Return reason (arrived late)"]],
-        prefs: [["Term", "Late delivery means after the promised date"]],
-        kpis: [["10% → 40%+", "WH-C late-delivery rate, before and after the May 2025 carrier switch"], ["29.3% → 25.4%", "Repeat purchase within 90 days: on-time vs late customers"], ["About 4×", "WH-C returns for “arrived too late” (2.2 → 8.8 a month)"]],
-        trap: "Late counts change depending on whether you use the promised date or the carrier's estimated date. For the customer's experience, use the promised date." },
-      window: { ask: "Did extending the return window to 60 days raise returns, or just delay them?",
-        answer: "Both. Late returns appeared, and the return rate itself rose from about 8% to about 11%.",
-        stack: [["returns", "Request date, return window days, delivery date", "order_line_id"], ["order_lines", "Order lines (the denominator)", "order_id"], ["orders", "Order date (grouped by order month)"]],
-        prefs: [["Metric", "Order-cohort return rate"], ["Metric", "Requested and received return rates (for comparison)"]],
-        kpis: [["8% → 11%", "Share eventually returned, by order month"], ["Days 30–60", "Late returns that appear only after the change"]],
-        trap: "The return rate depends on whether you count by request month, receipt month or order month. Recent months look low because their returns are not all in yet." },
-      west: { ask: "Our West region is down year over year since January. Is business actually worse there?",
-        answer: "No. Only the region lines moved. Compared on the same states, the West grew over last year.",
-        stack: [["invoices", "Sales region, state code, invoice date", "invoice_id"], ["invoice_lines", "Invoiced amount"]],
-        prefs: [["Method", "Sales region realignment on 2025-01-01", "6 states moved from West to the new Mountain region"]],
-        kpis: [["−19%", "West by sales region ID (2024 → 2025)"], ["+6%", "Recounted on the same 11 states as the old West"]],
-        trap: "The realignment is not written anywhere in the tables. Even a two-table question goes wrong without the business setting." },
-    },
-    ch: {
-      tents: ["① Searches with nothing in stock (nationwide)", "② Cancelled units", "③ Split shipments from another warehouse", "Shaded: May–Sep 2024. ① is all tent searches nationwide; ② and ③ are orders with tents in the 11 old-West states. ③ is quarterly."],
-      sales: ["Three kinds of “revenue”, by month", "orders / invoices / web tracking", "Sales (orders, by order date)", "Finance (invoices, by invoice date)", "Digital (web tracking)", "Sales $551k", "Finance $580k"],
-      mk: ["Monthly sales by channel (stacked)", ["B2B", "Web", "App", "Marketplace"], "Marketplace launch", "Marketplace fees paid (monthly)"],
-      carrier: ["Late-delivery rate by warehouse", "WH-E and WH-W", "Carrier switched", "Customers who bought again within 90 days", ["On time", "Late"], "“Arrived too late” returns (WH-C, per month)", "Before switch", "After switch"],
-      window: ["Return rate by order month", "Return window to 60 days", "Not all in yet", "Days from delivery to return request", "Orders before the change", "Orders after the change", "Days 30–60", "Days 30–60: only after the change", "d"],
-      west: ["West invoiced sales, counted two ways", "Sales region ID = West", "Same 11 states as the old West"],
-    },
+    uses: { title: "What this analysis uses", of: (n, m) => `${n} of ${m}`, metaLbl: "Metrics", metaSub: "calculated fields in the metadata",
+      meta: [["Prepared order data", "--d-order", ["Revenue", "Orders", "Units"]], ["Prepared web analytics data", "--d-web", ["Sessions", "Out-of-stock view share", "Out-of-stock results rate"]]],
+      rules: ["Use the prepared data sources", "“Sales” alone means booked sales", "Orders per session = web and app orders ÷ sessions", "Trends: orders by order date, web by session start date", "In search, “nothing in stock” means results but none in stock"] },
+    start: { h: "Get started", p: "The data is free to use. Data and documents are under CC BY 4.0, code under the MIT License.", lead: "How to get the data and put it on Tableau is in the README.", readme: ["en/README.md", "Read the README"] },
+    miniM: ["Jan", "Dec"], lyShort: "Last yr", caseLbl: "Case", tUse: "Tables",
+    intro: { kind: "", h: "What this data can do", p: "One analysis that digs across tables for a cause, and two cases where business rules change the AI's answer. Then example questions for a demo.",
+      toc: [["", "Analysis example", "Dig across tables for the cause", "part-a", "--hot"], ["", "AI behaviour examples", "Business rules decide the answer", "part-b", "--know"], ["", "Example questions for a demo", "Analysis and AI behaviour questions", "catalog", "--accent"]] },
+    cts: ["Sales by channel ({asof:d} and a year earlier)", "The business dashboard narrowed to web and app (as of {asof:d}, vs a year earlier)", "Product page views that showed “out of stock” (monthly)",
+      "Share of site search results shown out of stock (the subcategories with the most, and the rest)", "Web and app sales ({asof:d} and a year earlier). Every hiking footwear order was cancelled, so its sales are about $0"],
+    yoyLbl: "vs same month last year", cur: "This year", ly: "Same month last year", stepOf: n => `${n} / 5`,
+    partA: { kind: "Analysis example", h: "Dig across tables for the cause", p: "A change on the business dashboard raises a question. Five steps narrow it down, adding tables on the way. The answer comes last." },
+    partB: { kind: "AI behaviour examples", h: "Business rules decide the AI's answer", p: "The same data gives different answers depending on which metric you use and how you compare. Those rules are not written in the data. The AI agent reads the business rules in Tableau Knowledge and decides which metric to use and how to compare.",
+      actors: ["Person asking", "Data source", "AI agent", "Knowledge (business rules)"], bare: "Without Knowledge", set: "With Knowledge" },
+    stockout: {
+      title: "{asof:d}: visitors came, sales fell",
+      dash: "Monthly business dashboard",
+      tiles: { sales: "Sales (booked)", sessions: "Sessions", conversion: "Orders per session", orders: "Orders (all channels)", new_customers: "New customers", aov: "Average order value" },
+      ask: "Visitors keep coming. Why did sales fall?",
+      steps: [
+        { lens: "Split by channel", head: "Every channel but the marketplace is below last year", sm: "Only the marketplace, launched a year earlier, grew. Orders across all channels rose on the dashboard only because marketplace orders went from {X.mk_ly} to {X.mk}. From here on, web and app" },
+        { lens: "Focus on web and app: visits next to orders", head: "On web and app, visits rose but orders fell", sm: "Orders per session (web and app orders ÷ sessions) fell from {X.conv_ly:p2} to {X.conv:p2}. Visitors came and left without buying" },
+        { lens: "What the product pages showed", head: "“Out of stock” suddenly everywhere", sm: "Product page views showing out of stock: {oos_2023:p1} on average in 2023, {oos_apr25:p0} in the single month of {asof:d}" },
+        { lens: "Which products", head: "Search showed {X.nh} subcategories out of stock", sm: "In searches for hiking footwear, {X.hfOos:p0} of results were out of stock. Product page views don't record the product, so site searches are used instead" },
+        { lens: "Their sales", head: "Sales fell sharply in best-selling products that were out of stock", sm: "The {X.nh} subcategories shown out of stock were best sellers, {X.heavyShare:p0} of web and app sales a year earlier. Together {X.heavyPct:sp0}, with the steepest falls in {X.bigDrop:subs}. The other {groups_web.n_rest}: {X.restPct:sp1}" },
+      ],
+      answer: "Stock-outs. Products in stock sold more than a year earlier, but the best sellers, over half of sales, were out of stock." },
+    west: {
+      title: "The West is below last year",
+      who: "Sales director", ask: "The West has been below last year since January. Is business really worse?",
+      mind: "The chart they are looking at", mindBig: "{region_yoy:sp0}", mindSm: "West invoiced sales (by sales region ID)",
+      src: ["Invoices", "sales_region_id", "state_code"], kn: ["How to compare", "Sales regions were redrawn on 2025-01-01; compare regions across years by state"],
+      bare: { big: "{region_yoy:sp0}", how: "Summed by sales region ID as it is. Returns the same chart they are looking at" },
+      set: { big: "{states_yoy:sp0}", how: "Summed again on the same {X.nold} states as before" } },
+    sales: {
+      title: "Finance asks for November sales",
+      who: "Finance", ask: "What was net revenue for fiscal November?",
+      mind: "The rough figure they expect", mindBig: "{billing.revenue:approx}", mindSm: "Net revenue by fiscal month, as in Finance's monthly report (billed sales after returns and fees)",
+      src: ["Orders · Revenue (order date)", "Billing · Revenue (fiscal month)"], kn: ["What words mean", "For fiscal periods, net revenue, returns or fees, use billed revenue; Finance's “month” is the fiscal month"],
+      bare: { big: "{sales_orders:usd}", how: "Booked sales for calendar November. Doesn't match Finance's number" },
+      set: { big: "{billing.revenue:usd}", how: "Billed sales by fiscal month, after {billing.credits:usdk} of returns and {billing.fees:usdk} of fees" } },
+    cat: {
+      kind: "List", h: "Example questions for a demo",
+      p: "These are examples; the data answers many more. A question starts either from watching a number over time, or from checking the result of something the business did.",
+      aH: "Analysis questions", aCols: ["Question", "Starting point", "Where to look", "Tables"], otypes: { watch: "Watching a metric", act: "After a decision" },
+      a: [
+        ["Do new customers whose delivery was late buy again?", "watch", "On-time delivery fell", "A warehouse changed carriers", ["shipments", "orders", "returns"]],
+        ["What did extending the return window to 60 days change?", "act", "Return policy change (July 2024)", "Look at the returns the longer window let in", ["returns", "refunds", "shipment_lines", "shipments"]],
+        ["Is the marketplace growth real after fees?", "act", "Marketplace launch (April 2024)", "The fees are in the invoice tables", ["orders", "order_lines", "invoices", "invoice_lines"]],
+        ["Why do bulky orders in the West cost so much to ship?", "watch", "Shipping cost per shipment", "Which warehouse ships them", ["order_lines", "products", "shipments", "shipment_lines"]],
+        ["The app gets more carts. Why does it lose at the order?", "watch", "Conversion by channel", "The steps from checkout to order", ["web_sessions", "orders"]],
+      ],
+      bH: "Agent behaviour questions", bCols: ["Question", "Business rule it relies on", "Easy mistake without Knowledge", "With Knowledge"],
+      b: [
+        ["Are deliveries late more often this year?", ["Term", "Late delivery means after the promised date"], "Compares with the carrier's estimated date", "Compares with the date promised to the customer"],
+        ["What was last month's return rate?", ["Metric", "Requested, order-cohort and received return rates"], "Uses different dates for the numerator and denominator", "Picks one return rate and names it in the answer"],
+        ["Which searches could we not show in stock?", ["Term", "No results vs nothing in stock in search"], "Mixes in searches with zero results", "Counts only searches with results but none in stock"],
+        ["What were sales last month?", ["Term", "Relative dates mean relative to the end of the data"], "Looks for the month before today", "Counts from the end of the data (2025-12-31) and answers for November 2025"],
+        ["How much do marketplace fees eat into sales?", ["Metric", "Marketplace fee rate on booked sales"], "Divides by invoiced amounts or totals with fees", "Answers with booked sales as the denominator"],
+      ] },
+    chs: ["Web", "App", "Marketplace", "B2B"], funnelSteps: ["Viewed", "Added to cart", "Checkout", "Ordered"], visits: ["Sessions", "Orders (web and app)", "Orders per session"], rest: n => `Other ${n}`,
+    subs: { hiking_footwear: "Hiking footwear", garden_tools: "Garden tools", planters_irrigation: "Planters & irrigation", patio_furniture: "Patio furniture", grills: "Grills", camp_kitchen: "Camp kitchen",
+      base_layers: "Base layers", fire_pits_patio_heaters: "Fire pits & heaters", insulated_jackets: "Insulated jackets", sleeping_gear: "Sleeping gear", blankets_throws: "Blankets & throws",
+      space_heaters: "Space heaters", indoor_air: "Indoor air", rain_shells: "Rain shells", tents: "Tents", backpacks: "Backpacks" },
   },
 };
-const ORDER = ["tents", "sales", "marketplace", "carrier", "window", "west"];
 let lang = "ja", t = L.ja;
 
 const NS = "http://www.w3.org/2000/svg";
@@ -394,40 +636,101 @@ function renderText() {
   document.getElementById("h1").innerHTML = t.h1.map(s => `<span class="ln">${s}</span>`).join("");
   document.getElementById("sub").textContent = t.sub;
   document.getElementById("cta").textContent = t.cta;
+  document.getElementById("lic").textContent = t.start.p;
   document.getElementById("maps").setAttribute("aria-label", t.mapsLabel);
   const set = (id, h) => document.getElementById(id).innerHTML = h;
-  set("ss-name", t.ssName); set("ss-unit", t.tablesUnit); set("ss-stat", t.ssStat);
-  set("hs-name", t.hsName); set("hs-unit", t.tablesUnit); set("hs-stat", t.hsStat); set("hs-note", t.hsNote);
-  set("pf-name", t.pfName); set("pf-unit", t.pfUnit); set("pf-note", t.pfNote);
-  set("pgrid", t.prefs.map(([g, xs]) => `<div class="pcard"><h3>${g}<span>${xs.length}</span></h3><ul>${xs.map(x => `<li>${x}</li>`).join("")}</ul></div>`).join(""));
+  const M = D.S.meta;
+  set("ss-name", t.ssName); set("ss-unit", t.tablesUnit); set("hs-name", t.hsName); set("hs-unit", t.tablesUnit); set("hs-kit", t.hsKit);
+  set("hs-count", M.raw_sources); set("pf-count", M.rules); set("pf-unit", t.pfUnit); set("pf-note", t.pfNote); set("md-note", t.mdNote);
+  set("ss-nometa", `<b>${t.none}</b>${t.ssNoMeta}`); set("ss-norules", `<b>${t.none}</b>${t.ssNoRules}`);
+  document.querySelectorAll(".ln1, .ln2, .ln3").forEach(e => e.textContent = t.layers[+e.className.slice(2) - 1]);
+  set("mstats", [M.columns, M.relationships, M.calcs].map((v, i) => `<div class="mstat"><b>${v}</b><span>${fill(t.mstats[i], "meta", true)}</span></div>`).join(""));
+  set("pgrid", t.prefs.map(([g, xs], i) => `<div class="pcard${i === t.prefs.length - 1 ? " wide" : ""}"><h3>${g}<span>${xs.length}</span></h3><ul>${xs.map(x => `<li>${x}</li>`).join("")}</ul></div>`).join(""));
   set("domains", t.doms.map((n, i) => `<span style="--c:var(${DOMC[i]})"><i></i>${n}</span>`).join(""));
   document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
 
   const main = document.getElementById("cases");
   main.innerHTML = "";
-  ORDER.forEach(id => {
-    const c = t.cases[id];
-    const title = lang === "ja" ? c.ask.split(/(?<=。)/).map(s => `<span class="ln">${s}</span>`).join("") : c.ask;
-    const st = c.stack.map(([k, cols, link]) => `<div class="trow" style="--c:var(${TC[k]})"><b>${t.tables[k]}</b><span class="csv">${k}.csv</span><span class="cols">${cols}</span></div>${link ? `<div class="link">${link}</div>` : ""}`).join("")
-      + `<p class="plbl">${t.pLbl}</p>` + c.prefs.map(([g, n, note]) => `<div class="trow know"><span class="cols">${g}</span><b>${n}</b>${note ? `<span class="cols">${note}</span>` : ""}</div>`).join("");
-    main.insertAdjacentHTML("beforeend", `
-    <section class="case" id="${id}"><div class="in">
-      <div class="qa">
-        <div class="q"><span class="mark" aria-hidden="true">Q</span><h2>${title}</h2></div>
-        <div class="a"><span class="mark" aria-hidden="true">A</span><div><p class="blbl">${t.aLbl}</p><p class="atext">${c.answer}</p></div></div>
+  const S = D.S, A = t.stockout, B = t.partB, C = t.cat;
+  const icon = k => `<svg aria-hidden="true"><use href="#i-${k}"/></svg>`;
+  const tchip = (k, isNew) => `<span class="tchip${isNew ? " new" : ""}" style="--c:var(${TC[k]})">${t.tables[k]}</span>`;
+
+  // type A: one case, dashboard -> question -> five drill-down steps -> answer
+  const tiles = Object.keys(A.tiles).map(k => {
+    const d = S.stockout.dash[k], c = d.cur[d.cur.length - 1], l = d.ly[d.ly.length - 1], hl = TILE_HL.includes(k);
+    return `<div class="tile${hl ? " hl" : TILE_POS.includes(k) ? " pos" : ""}" data-k="${k}"><span class="tn">${A.tiles[k]}</span><span class="tv"><b>${TILE_FMT[k](c)}</b><span class="yoy">${FMT.sp1(c / l - 1)}</span></span><div class="spk"></div></div>`;
+  }).join("");
+  const steps = A.steps.map((s, i) => `<li class="dstep"><div class="dtext"><span class="dno"><b>${t.stepOf(i + 1)}</b>${s.lens}</span>
+      <p class="head">${fill(s.head, "stockout", true)}</p><span class="sm">${fill(s.sm, "stockout")}</span>
+      <div class="tlist"><span>${t.tUse}</span><div class="tchips">${STEP_TABLES[i].map(([k, n]) => tchip(k, n)).join("")}</div></div></div>
+      <div class="dchart"><p class="ctitle">${fill(t.cts[i], "stockout", true)}</p><div class="chart" data-step="${i}"></div></div></li>`).join("");
+  main.insertAdjacentHTML("beforeend", `<section class="part intro" id="examples"><div class="in">
+    <div class="phead" style="--c:var(--ink)">${t.intro.kind ? `<p class="kind">${t.intro.kind}</p>` : ""}<h2>${t.intro.h}</h2><p>${t.intro.p}</p></div>
+    <ol class="toc">${t.intro.toc.map(([k, a, b, href, c]) => `<li><a href="#${href}" style="--c:var(${c})">${k ? `<small>${k}</small>` : ""}<span>${a}</span><em>${b}</em></a></li>`).join("")}</ol>
+  </div></section>`);
+  main.insertAdjacentHTML("beforeend", `<section class="part" id="part-a"><div class="in">
+    <div class="phead" style="--c:var(--hot)"><p class="kind">${t.partA.kind}</p><h2>${t.partA.h}</h2><p>${t.partA.p}</p></div>
+    <article class="case" id="stockout"><div class="chead"><span class="clbl">${t.caseLbl}</span><h3>${fill(A.title, "stockout", true)}</h3></div>
+      <div class="board"><div class="bhead"><b>${A.dash}</b><span class="asof">${FMT.d(S.stockout.asof)} · ${t.yoyLbl}</span>
+        <div class="legend"><span><i style="background:var(--ink)"></i>${t.cur}</span><span><i class="dash"></i>${t.ly}</span></div></div>
+        <div class="tiles">${tiles}</div></div>
+      <div class="qbig"><span class="mark" aria-hidden="true">Q</span><h4>${A.ask}</h4></div>
+      <ol class="drill">${steps}</ol>
+      <div class="uses"><p class="utitle">${t.uses.title}</p><div class="ucols">
+        <div><p class="lname"><span class="lno">1</span>${t.layers[0]}<small>${t.uses.of(USED_TABLES.length, S.meta.raw_sources)}</small></p><div class="tchips">${USED_TABLES.map(k => tchip(k)).join("")}</div></div>
+        <div><p class="lname"><span class="lno">2</span>${t.uses.metaLbl}<small>${t.uses.metaSub}</small></p>${t.uses.meta.map(([ds, c, fs]) => `<p class="uds">${ds}</p><div class="tchips">${fs.map(f => `<span class="tchip" style="--c:var(${c})">${f}</span>`).join("")}</div>`).join("")}</div>
+        <div><p class="lname"><span class="lno">3</span>${t.layers[2]}<small>${t.uses.of(t.uses.rules.length, S.meta.rules)}</small></p><ul class="urules">${t.uses.rules.map(r => `<li>${r}</li>`).join("")}</ul></div>
+      </div></div>
+      <div class="answer"><span class="mark" aria-hidden="true">A</span><p>${A.answer}</p></div>
+    </article></div></section>`);
+
+  // type B: who asks -> agent reads the data source and the Knowledge -> two answers
+  const flow = id => {
+    const c = t[id];
+    return `<article class="case" id="${id}"><div class="chead"><span class="clbl">${t.caseLbl} ${id === "west" ? 1 : 2} / 2</span><h3>${c.title}</h3></div>
+      <div class="flow">
+        <div class="actor person">${icon("person")}<span class="nm">${c.who}</span><p class="bubble">${c.ask}</p>
+          <div class="mind"><span class="lb">${c.mind}</span><span class="big">${fill(c.mindBig, id, true)}</span><div class="mini" data-mini="${id}:mind"></div><span class="how">${c.mindSm}</span></div></div>
+        <div class="arr" aria-hidden="true">→</div>
+        <div class="actor agent">${icon("agent")}<span class="nm">${B.actors[2]}</span>
+          <div class="inputs">
+            <div class="actor src">${icon("db")}<span class="nm">${B.actors[1]}</span><div class="fields">${c.src.map(f => `<span>${f}</span>`).join("")}</div></div>
+            <div class="actor kn">${icon("book")}<span class="nm">${B.actors[3]}</span><p class="rule"><small>${c.kn[0]}</small>${c.kn[1]}</p></div>
+          </div></div>
+        <div class="arr" aria-hidden="true">→</div>
+        <div class="vs">
+          <div class="res bare"><span class="lb">${B.bare}</span><span class="big">${fill(c.bare.big, id, true)}</span><div class="mini" data-mini="${id}:bare"></div><span class="how">${fill(c.bare.how, id)}</span></div>
+          <div class="res set"><span class="lb">${icon("book")}${B.set}</span><span class="big">${fill(c.set.big, id, true)}</span><div class="mini" data-mini="${id}:set"></div><span class="how">${fill(c.set.how, id)}</span></div>
+        </div>
       </div>
-      <div class="cbody">
-        <aside class="block tables"><p class="blbl">${t.tLbl(c.stack.length, c.prefs.length)}</p><div class="stack">${st}</div></aside>
-        <div class="block evidence"><p class="blbl">${t.eLbl}</p><div class="charts"></div>
-          <div class="kpis">${c.kpis.map(([v, d]) => `<div class="kpi"><span class="v">${v}</span><span class="t">${d}</span></div>`).join("")}</div></div>
-      </div>
-      <div class="block trap"><p class="blbl">${t.xLbl}</p><p>${c.trap}</p></div>
-    </div></section>`);
-  });
+    </article>`;
+  };
+  main.insertAdjacentHTML("beforeend", `<section class="part" id="part-b"><div class="in">
+    <div class="phead" style="--c:var(--know)"><p class="kind">${B.kind}</p><h2>${B.h}</h2><p>${B.p}</p></div>
+    <div class="actors">${["person", "db", "agent", "book"].map((k, i) => `<span>${icon(k)}${B.actors[i]}</span>`).join("")}</div>
+    ${flow("west")}${flow("sales")}</div></section>`);
+
+  // catalog: two tables
+  const head = cols => `<thead><tr>${cols.map(h => `<th scope="col">${h}</th>`).join("")}</tr></thead>`;
+  main.insertAdjacentHTML("beforeend", `<section class="part" id="catalog"><div class="in">
+    <div class="phead" style="--c:var(--accent)"><p class="kind">${C.kind}</p><h2>${C.h}</h2><p>${C.p}</p></div>
+    <div class="cat"><h3>${icon("chart")}${C.aH}</h3>
+      <table class="qt">${head(C.aCols)}<tbody>${C.a.map(([q, ot, o, h, tb]) => `<tr><td class="q">${q}</td>
+        <td data-l="${C.aCols[1]}"><span class="otag ${ot}">${C.otypes[ot]}</span><br>${o}</td><td data-l="${C.aCols[2]}">${h}</td>
+        <td data-l="${C.aCols[3]}"><div class="tchips">${tb.map(k => tchip(k)).join("")}</div></td></tr>`).join("")}</tbody></table></div>
+    <div class="cat"><h3>${icon("agent")}${C.bH}</h3>
+      <table class="qt">${head(C.bCols)}<tbody>${C.b.map(([q, [g, n], x, y]) => `<tr><td class="q">${q}</td>
+        <td data-l="${C.bCols[1]}" class="set"><small>${g}</small>${n}</td><td data-l="${C.bCols[2]}">${x}</td><td data-l="${C.bCols[3]}">${y}</td></tr>`).join("")}</tbody></table></div>
+  </div></section>`);
+  const R = "https://github.com/YoshitakaArakawa/SampleHyperStore";
+  main.insertAdjacentHTML("beforeend", `<section class="part" id="start"><div class="in">
+    <div class="phead" style="--c:var(--ink)"><h2>${t.start.h}</h2><p>${t.start.lead}</p></div>
+    
+    <div class="cta"><a class="btn" href="${R}" target="_blank" rel="noopener">${t.cta}</a><a class="btn ghost" href="${R}/blob/main/${t.start.readme[0]}" target="_blank" rel="noopener">${t.start.readme[1]}</a></div>
+  </div></section>`);
 }
 
 // chart helpers
-function panel(host, title, src) { const d = document.createElement("div"); d.className = "panel"; d.innerHTML = `<h3>${title}${src ? `<span class="src">${src}</span>` : ""}</h3>`; host.appendChild(d); return d; }
 function legend(host, items) { host.insertAdjacentHTML("beforeend", `<div class="legend">${items.map(([n, c]) => `<span><i style="background:${c}"></i>${n}</span>`).join("")}</div>`); }
 
 function lines(host, xs, series, o) {
@@ -444,92 +747,114 @@ function lines(host, xs, series, o) {
   });
   (o.notes || []).forEach(([m, v, lb, anchor, dy = -8]) => { const i = xs.indexOf(m); el("circle", { cx: x(i), cy: y(v), r: 5, fill: "none", stroke: css("--hot"), "stroke-width": 2 }, s); tx(s, x(i) + (anchor === "end" ? -9 : 9), y(v) + dy, lb, { "text-anchor": anchor || "start" }, "hot"); });
 }
-function vbars(host, labels, vals, o) {
-  const W = fit(host, o.W || 640), H = o.H || 220, L = o.L ?? 44, R = 10, Tp = 18, B = 26, s = svg(host, W, H), bw = (W - L - R) / labels.length;
-  const y = v => Tp + (1 - v / o.max) * (H - Tp - B);
-  o.ticks.forEach(v => { el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: css("--grid") }, s); tx(s, L - 6, y(v) + 4, o.fmt(v), { "text-anchor": "end" }); });
-  labels.forEach((lb, i) => {
-    const hot = o.hot && o.hot(lb, i), v = vals[i];
-    el("rect", { x: L + i * bw + bw * .15, y: y(v), width: bw * .7, height: H - B - y(v), rx: 2, fill: hot ? css("--hot") : (o.color || css("--dim")) }, s);
-    const xl = o.xl && o.xl(lb, i); if (xl) tx(s, L + i * bw + bw / 2, H - 6, xl, { "text-anchor": "middle" });
-    if (o.vlabel && o.vlabel(lb, i)) tx(s, L + i * bw + bw / 2, y(v) - 5, o.fmt(v), { "text-anchor": "middle" }, hot ? "hot" : "ink");
-  });
-}
 function groups(host, cats, series, o) {
   const W = fit(host, o.W || 640), H = o.H || 240, L = o.L ?? 56, R = 10, Tp = 22, B = 28, s = svg(host, W, H), gw = (W - L - R) / cats.length, bw = gw * .7 / series.length;
   const y = v => Tp + (1 - v / o.max) * (H - Tp - B);
   o.ticks.forEach(v => { el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: css("--grid") }, s); tx(s, L - 6, y(v) + 4, o.fmt(v), { "text-anchor": "end" }); });
   cats.forEach((c, i) => {
-    series.forEach((se, j) => { const v = se.v[i], xx = L + i * gw + gw * .15 + j * bw; el("rect", { x: xx, y: y(v), width: bw - 4, height: H - B - y(v), rx: 2, fill: se.c }, s); tx(s, xx + (bw - 4) / 2, y(v) - 6, o.fmt(v), { "text-anchor": "middle" }, "ink"); });
+    series.forEach((se, j) => { const v = se.v[i], xx = L + i * gw + gw * .15 + j * bw; el("rect", { x: xx, y: y(v), width: bw - 4, height: H - B - y(v), rx: 2, fill: se.c }, s); if (!o.lab || o.lab(i)) tx(s, xx + (bw - 4) / 2, y(v) - 6, o.fmt(v), { "text-anchor": "middle" }, "ink"); });
     tx(s, L + i * gw + gw / 2, H - 6, c, { "text-anchor": "middle" });
   });
 }
-const win = (obj, a, b) => { const i = obj.months.indexOf(a), j = obj.months.indexOf(b); return { months: obj.months.slice(i, j + 1), rate: obj.rate.slice(i, j + 1) }; };
 
-const DRAW = {
-  tents(h) {
-    const g = t.ch.tents, m = document.createElement("div"); m.className = "multi"; h.appendChild(m);
-    const s1 = win(D.tent_search_oos_monthly, "2023-07", "2025-06");
-    lines(panel(m, g[0], "web_searches"), s1.months, [{ v: s1.rate, c: css("--d-web"), w: 2.5, end: false }], { W: 300, H: 190, L: 38, max: .12, ticks: [0, .04, .08, .12], fmt: pct, bands: [["2024-05", "2024-09"]] });
-    const s2 = win(D.west_tent_cancel_monthly, "2023-07", "2025-06");
-    lines(panel(m, g[1], "order_lines"), s2.months, [{ v: s2.rate, c: css("--d-order"), w: 2.5, end: false }], { W: 300, H: 190, L: 38, max: .15, ticks: [0, .05, .1, .15], fmt: pct, bands: [["2024-05", "2024-09"]] });
-    const q = D.west_tent_split, qi = q.q.indexOf("2023Q3"), qq = q.q.slice(qi, qi + 8), qv = q.rate.slice(qi, qi + 8);
-    vbars(panel(m, g[2], "shipments"), qq, qv, { W: 300, H: 190, L: 38, max: .5, ticks: [0, .25, .5], fmt: pct, hot: l => l === "2024Q3", vlabel: l => l === "2024Q3", xl: l => l.endsWith("Q1") ? l.slice(0, 4) : "", color: css("--d-ship") });
-    h.insertAdjacentHTML("beforeend", `<p class="legend">${g[3]}</p>`);
-  },
-  sales(h) {
-    const g = t.ch.sales, d = D.three_monthly, p = panel(h, g[0], g[1]);
-    legend(p, [[g[2], css("--d-order")], [g[3], css("--d-bill")], [g[4], css("--d-web")]]);
-    lines(p, d.months, [{ v: d.web, c: css("--d-web"), w: 2 }, { v: d.invoice, c: css("--d-bill"), w: 2.5 }, { v: d.order, c: css("--d-order"), w: 2.5 }],
-      { max: 600000, ticks: [0, 200000, 400000, 600000], fmt: k$, L: 52, notes: [["2025-11", 550658, g[5], "end", 22], ["2025-12", 580064, g[6], "end"]] });
-  },
-  marketplace(h) {
-    const g = t.ch.mk, mc = D.monthly_channel, keys = [["b2b", css("--d-prod")], ["web", css("--d-web")], ["app", css("--d-order")], ["marketplace", css("--d-ship")]];
-    const p = panel(h, g[0], "orders + order_lines");
-    legend(p, keys.map(([, c], i) => [g[1][i], c]));
-    const W = fit(p, 640), H = 300, Lm = 52, R = 16, Tp = 14, B = 26, s = svg(p, W, H), n = mc.months.length, x = i => Lm + i * (W - Lm - R) / (n - 1);
-    const max = 700000, y = v => Tp + (1 - v / max) * (H - Tp - B);
-    [0, 200000, 400000, 600000].forEach(v => { el("line", { x1: Lm, x2: W - R, y1: y(v), y2: y(v), stroke: css("--grid") }, s); tx(s, Lm - 8, y(v) + 4, k$(v), { "text-anchor": "end" }); });
-    let base = Array(n).fill(0);
-    keys.forEach(([k, c]) => { const top = base.map((b, i) => b + mc[k][i]);
-      const d = "M" + top.map((v, i) => `${x(i)},${y(v)}`).join(" L") + " L" + base.map((v, i) => `${x(i)},${y(v)}`).reverse().join(" L") + " Z";
-      el("path", { d, fill: c, opacity: .88 }, s); base = top; });
-    mc.months.forEach((m, i) => { if (m.endsWith("-01")) tx(s, x(i), H - 6, m.slice(0, 4), { "text-anchor": "middle" }); });
-    const i0 = mc.months.indexOf("2024-04"); el("line", { x1: x(i0), x2: x(i0), y1: Tp, y2: H - B, stroke: css("--hot"), "stroke-dasharray": "4 3", "stroke-width": 1.5 }, s); tx(s, x(i0) + 5, Tp + 10, g[2], {}, "hot");
-    const fm = mc.months.map((m, i) => ({ m, fee: D.mk_fee_monthly[i] })).filter(r => r.m >= "2024-04");
-    vbars(panel(h, g[3], "invoices"), fm.map(r => r.m), fm.map(r => r.fee), { H: 170, max: 8000, ticks: [0, 4000, 8000], fmt: v => "$" + (v / 1000).toFixed(0) + "k", color: css("--hot"), xl: m => m.endsWith("-01") ? m.slice(0, 4) : "" });
-  },
-  carrier(h) {
-    const g = t.ch.carrier, l = D.late_by_wh_month, p = panel(h, g[0], "shipments");
-    legend(p, [["WH-C", css("--d-ship")], [g[1], css("--dim")]]);
-    lines(p, l.months, [{ v: l["WH-E"], c: css("--dim"), w: 1.5 }, { v: l["WH-W"], c: css("--dim"), w: 1.5 }, { v: l["WH-C"], c: css("--d-ship"), w: 3 }], { max: .6, ticks: [0, .2, .4, .6], fmt: pct, marks: [["2025-05", g[2]]] });
-    const d = document.createElement("div"); d.className = "duo"; h.appendChild(d);
-    const r = D.repeat_90d;
-    groups(panel(d, g[3], "shipments + orders"), g[4], [{ v: [r.on_time.rate, r.late.rate], c: css("--d-order") }], { W: 300, H: 200, L: 38, max: .35, ticks: [0, .1, .2, .3], fmt: pct1 });
-    const al = D.arrived_late_returns_by_wh["WH-C"] || {}, ms = l.months.filter(m => m >= "2024-05"), av = ms.map(m => al[m] || 0);
-    const pr = panel(d, g[5], "returns"); legend(pr, [[g[6], css("--dim")], [g[7], css("--hot")]]); vbars(pr, ms, av, { W: 300, H: 200, L: 30, max: 20, ticks: [0, 10, 20], fmt: v => v, hot: m => m >= "2025-05", xl: m => m.endsWith("-01") ? m.slice(0, 4) : "", color: css("--dim") });
-  },
-  window(h) {
-    const g = t.ch.window, c = D.return_cohort, p = panel(h, g[0], "returns + order_lines + orders");
-    lines(p, c.months, [{ v: c.rate, c: css("--d-ret"), w: 3 }], { max: .14, ticks: [0, .04, .08, .12], fmt: pct, marks: [["2024-07", g[1]]], notes: [["2025-12", c.rate[c.rate.length - 1], g[2], "end"]] });
-    const lag = D.return_lag_hist, n = 12, nb = lag.before.slice(0, n), na = lag.after.slice(0, n), sb = nb.reduce((a, b) => a + b), sa = na.reduce((a, b) => a + b);
-    const q = panel(h, g[3], "returns");
-    legend(q, [[g[4], css("--dim")], [g[5], css("--d-ret")]]);
-    const W = fit(q, 640), H = 200, Lm = 44, R = 10, Tp = 10, B = 24, s = svg(q, W, H), bw = (W - Lm - R) / n, y = v => Tp + (1 - v / .45) * (H - Tp - B);
-    [0, .2, .4].forEach(v => { el("line", { x1: Lm, x2: W - R, y1: y(v), y2: y(v), stroke: css("--grid") }, s); tx(s, Lm - 6, y(v) + 4, pct(v), { "text-anchor": "end" }); });
-    el("rect", { x: Lm + 6 * bw, y: Tp, width: 6 * bw, height: H - Tp - B, fill: css("--hot-soft") }, s); tx(s, Lm + 6 * bw + 6, Tp + 14, (W < 520 ? g[6] : g[7]), {}, "hot");
-    for (let i = 0; i < n; i++) { const a = nb[i] / sb, b = na[i] / sa;
-      el("rect", { x: Lm + i * bw + bw * .1, y: y(a), width: bw * .38, height: H - B - y(a), fill: css("--dim") }, s);
-      el("rect", { x: Lm + i * bw + bw * .52, y: y(b), width: bw * .38, height: H - B - y(b), fill: css("--d-ret") }, s);
-      if (i % 2 === 0) tx(s, Lm + i * bw + bw / 2, H - 6, i * 5 + g[8], { "text-anchor": "middle" }); }
-  },
-  west(h) {
-    const g = t.ch.west, rb = D.region_by_year, ow = D.old_west_states_by_year, p = panel(h, g[0], "invoices + invoice_lines");
-    legend(p, [[g[1], css("--hot")], [g[2], css("--d-bill")]]);
-    groups(p, ["2023", "2024", "2025"], [{ v: ["2023", "2024", "2025"].map(yr => rb[yr]["R-WEST"]), c: css("--hot") }, { v: ["2023", "2024", "2025"].map(yr => ow[yr]), c: css("--d-bill") }], { max: 1200000, ticks: [0, 400000, 800000, 1200000], fmt: k$, H: 260 });
-  },
+function hbars(host, labels, vals, o) {
+  const W = fit(host, o.W || 640), rh = 30, L = BASE_L(W), R = 52, s = svg(host, W, labels.length * rh + 4), x = v => L + v / o.max * (W - L - R);
+  labels.forEach((lb, i) => {
+    const yy = i * rh + 2, hot = o.hot && o.hot(i);
+    tx(s, L - 8, yy + 18, lb, { "text-anchor": "end" }, "ink");
+    el("rect", { x: L, y: yy + 5, width: Math.max(1, x(vals[i]) - L), height: rh - 12, rx: 2, fill: hot ? css("--hot") : (o.color || css("--dim")) }, s);
+    tx(s, x(vals[i]) + 6, yy + 18, o.fmt(vals[i]), {}, hot ? "hot" : "ink");
+  });
+}
+const BASE_L = W => Math.min(Math.round(W * .38), 176);   // shared left edge of the horizontal bars, so the bars of every step start at the same x
+let hatchN = 0;
+function hgroups(host, cats, series, o) {   // one row per category, one bar per series
+  const W = fit(host, o.W || 640), bh = 13, gp = 3, rh = series.length * (bh + gp) + 12, L = BASE_L(W), R = 58;
+  const s = svg(host, W, cats.length * rh), x = v => L + v / o.max * (W - L - R);
+  if (o.band != null) {   // light grey hatching marks a summary row such as "the other subcategories"
+    const pt = el("pattern", { id: "hatch-" + (++hatchN), width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, el("defs", {}, s));
+    el("rect", { width: 6, height: 6, fill: css("--surface") }, pt); el("line", { x1: 0, y1: 0, x2: 0, y2: 6, stroke: css("--line"), "stroke-width": 3 }, pt);
+    el("rect", { x: 0, y: o.band * rh, width: W, height: rh - 2, rx: 6, fill: `url(#hatch-${hatchN})` }, s);
+  }
+  cats.forEach((c, i) => {
+    const y0 = i * rh + 4;
+    tx(s, L - 8, y0 + series.length * (bh + gp) / 2 + 3, c, { "text-anchor": "end" }, "ink");
+    series.forEach((se, j) => { const v = se.v[i], yy = y0 + j * (bh + gp);
+      el("rect", { x: L, y: yy, width: Math.max(1, x(v) - L), height: bh, rx: 2, fill: se.c }, s);
+      tx(s, x(v) + 5, yy + bh - 2, o.fmt(v), {}, j === 0 ? "ink" : ""); });
+  });
+}
+function sparkTile(host, cur, ly, col) {
+  const W = Math.max(200, Math.round(host.clientWidth) || 300), H = 46, s = svg(host, W, H), n = cur.length;
+  const vs = [...cur, ...ly], lo = Math.min(...vs), hi = Math.max(...vs), pad = (hi - lo) * .1 || 1;
+  const x = i => 3 + i * (W - 10) / (n - 1), y = v => 4 + (1 - (v - lo + pad) / (hi - lo + 2 * pad)) * (H - 8);
+  const path = a => "M" + a.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" L");
+  el("path", { d: path(ly), fill: "none", stroke: css("--edge"), "stroke-width": 1.5, "stroke-dasharray": "4 3" }, s);
+  el("path", { d: path(cur), fill: "none", stroke: col, "stroke-width": 2.5, "stroke-linejoin": "round" }, s);
+  el("circle", { cx: x(n - 1), cy: y(cur[n - 1]), r: 4, fill: col }, s);
+}
+const nice = v => { const p = Math.pow(10, Math.floor(Math.log10(v)) - 1); return Math.ceil(v * 1.05 / p) * p; };   // round up to 2 significant digits
+
+// charts of the five drill-down steps
+const STEPS_A = [
+  h => { const b = D.S.stockout.by_channel, mx = nice(Math.max(...b.sales_cur, ...b.sales_ly));
+    legend(h, [[t.cur, css("--bar")], [t.ly, css("--dim")]]);
+    hgroups(h, t.chs, [{ v: b.sales_cur, c: css("--bar") }, { v: b.sales_ly, c: css("--dim") }], { max: mx, fmt: k$ }); },
+  h => {
+    
+    const d = D.S.stockout.dash, n = v => Math.round(v).toLocaleString("en-US"), ses = d.sessions, cv = d.conversion;
+    // web and app orders = sessions with an order (sessions x conversion); web_sessions holds web and app sessions only
+    const ord = { cur: ses.cur.map((v, i) => Math.round(v * cv.cur[i])), ly: ses.ly.map((v, i) => Math.round(v * cv.ly[i])) };
+    const rows = [[t.visits[0], ses, n, "pos"], [t.visits[1], ord, n, "hl"], [t.visits[2], cv, FMT.p2, "hl"]];
+    h.insertAdjacentHTML("beforeend", `<div class="legend"><span><i style="background:var(--ink)"></i>${t.cur}</span><span><i class="dash"></i>${t.ly}</span></div>
+      <div class="board"><div class="tiles">${rows.map(([lb, v, f, cls]) => { const c = v.cur[v.cur.length - 1], l = v.ly[v.ly.length - 1];
+        return `<div class="tile ${cls}"><span class="tn">${lb}</span><span class="tv"><b>${f(c)}</b><span class="yoy">${FMT.sp1(c / l - 1)}</span></span><div class="spk"></div></div>`; }).join("")}</div></div>`);
+    h.querySelectorAll(".spk").forEach((e, i) => sparkTile(e, rows[i][1].cur, rows[i][1].ly, css(rows[i][3] === "pos" ? "--d-web" : "--hot"))); },
+  h => { const s = D.S.stockout, o = s.oos_monthly;
+    lines(h, o.months, [{ v: o.rate, c: css("--d-web"), w: 2.5, end: false }], { H: 210, max: .45, ticks: [0, .2, .4], fmt: pct, notes: [[s.asof, s.oos_apr25, FMT.p0(s.oos_apr25), "end", 4]] }); },
+  h => { const q = D.S.stockout.search, g = D.S.stockout.groups_web, ix = g.heavy.map(k => q.subs.indexOf(k));
+    legend(h, [[t.cur, css("--bar")], [t.ly, css("--dim")]]);
+    hgroups(h, [...g.heavy.map(k => t.subs[k] || k), t.rest(g.n_rest)], [{ v: [...ix.map(i => q.oos25[i]), g.rest_oos25], c: css("--bar") }, { v: [...ix.map(i => q.oos24[i]), g.rest_oos24], c: css("--dim") }],
+      { max: 1, fmt: pct, band: g.heavy.length }); },
+  h => { const w = D.S.stockout.webapp, g = D.S.stockout.groups_web, ix = g.heavy.map(k => w.subs.indexOf(k)), z = v => Math.max(0, v);
+    const cur = [...ix.map(i => z(w.sales25[i])), g.rest_cur], ly = [...ix.map(i => w.sales24[i]), g.rest_ly];
+    legend(h, [[t.cur, css("--bar")], [t.ly, css("--dim")]]);
+    hgroups(h, [...g.heavy.map(k => t.subs[k] || k), t.rest(g.n_rest)], [{ v: cur, c: css("--bar") }, { v: ly, c: css("--dim") }], { max: nice(Math.max(...cur, ...ly)), fmt: k$, band: g.heavy.length }); },
+];
+// mini charts of the type B cases: what the asker has in mind, and what the agent returns
+function miniLines(host, cur, ly, color) {
+  const W = Math.max(200, Math.round(host.clientWidth) || 260), H = 78, s = svg(host, W, H), n = cur.length;
+  const vs = [...cur, ...ly], lo = 0, hi = Math.max(...vs) * 1.1, x = i => 4 + i * (W - 44) / (n - 1), y = v => 6 + (1 - (v - lo) / (hi - lo)) * (H - 22);
+  const path = a => "M" + a.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" L");
+  el("path", { d: path(ly), fill: "none", stroke: css("--edge"), "stroke-width": 1.5, "stroke-dasharray": "4 3" }, s);
+  el("path", { d: path(cur), fill: "none", stroke: color, "stroke-width": 2.5, "stroke-linejoin": "round" }, s);
+  tx(s, x(n - 1) + 5, y(cur[n - 1]) + 4, t.cur, { fill: color });
+  tx(s, x(n - 1) + 5, y(ly[n - 1]) + 4, t.lyShort);
+  tx(s, 4, H - 2, t.miniM[0]); tx(s, x(n - 1), H - 2, t.miniM[1], { "text-anchor": "middle" });
+}
+function miniBars(host, months, vals, color, noLabel) {
+  const W = Math.max(200, Math.round(host.clientWidth) || 260), H = 78, s = svg(host, W, H), n = vals.length, bw = (W - 4) / n, mx = Math.max(...vals) * 1.15;
+  const y = v => 14 + (1 - v / mx) * (H - 30);
+  vals.forEach((v, i) => el("rect", { x: 2 + i * bw + bw * .15, y: y(v), width: bw * .7, height: H - 16 - y(v), rx: 1.5, fill: i === n - 1 ? color : css("--dim") }, s));
+  if (!noLabel) tx(s, 2 + (n - .5) * bw, y(vals[n - 1]) - 4, k$(vals[n - 1]), { "text-anchor": "end", fill: color, "font-weight": 600 });
+  tx(s, 2 + bw / 2, H - 2, FMT.d(months[0]), { "text-anchor": "start" }); tx(s, W - 2, H - 2, FMT.d(months[n - 1]), { "text-anchor": "end" });
+}
+const MINI_M = ["1", "12"];   // month labels at the ends of the West mini charts (replaced per language below)
+const MINI = {
+  "west:mind": h => miniLines(h, D.S.west.monthly.region_cur, D.S.west.monthly.region_ly, css("--hot")),
+  "west:bare": h => miniLines(h, D.S.west.monthly.region_cur, D.S.west.monthly.region_ly, css("--muted")),
+  "west:set": h => miniLines(h, D.S.west.monthly.states_cur, D.S.west.monthly.states_ly, css("--know")),
+  "sales:mind": h => miniBars(h, D.S.sales.billing_fm.months, D.S.sales.billing_fm.revenue, css("--hot"), true),   // a rough sense, so no exact label
+  "sales:bare": h => miniBars(h, D.S.sales.order_monthly.months, D.S.sales.order_monthly.revenue, css("--muted")),
+  "sales:set": h => miniBars(h, D.S.sales.billing_fm.months, D.S.sales.billing_fm.revenue, css("--know")),
 };
-function drawCharts() { drawMaps(); ORDER.forEach(id => { const h = document.querySelector(`#${id} .charts`); h.innerHTML = ""; DRAW[id](h); }); }
+function drawCharts() {
+  drawMaps();
+  const so = D.S.stockout;
+  document.querySelectorAll("#stockout .tile[data-k]").forEach(e => { const k = e.dataset.k, d = so.dash[k], h = e.querySelector(".spk"); h.innerHTML = ""; sparkTile(h, d.cur, d.ly, TILE_HL.includes(k) ? css("--hot") : TILE_POS.includes(k) ? css("--d-web") : css("--ink")); });
+  document.querySelectorAll("#stockout .chart[data-step]").forEach(h => { h.innerHTML = ""; STEPS_A[+h.dataset.step](h); });
+  document.querySelectorAll(".mini[data-mini]").forEach(h => { h.innerHTML = ""; MINI[h.dataset.mini](h); });
+}
 
 // language: ?lang= in the URL, else the browser's language (Japanese → ja, anything else → en)
 function pickLang() {

@@ -6,7 +6,7 @@
 
 Sample data for testing whether an AI agent connected through Tableau MCP answers business questions with the right metric. It holds three years of transactions of a fictional US retailer, generated with Claude Code.
 
-**[See what you can analyze →](https://yoshitakaarakawa.github.io/SampleHyperStore/?lang=en)** A one-page tour: how the 12 tables connect, and six business questions answered across them.
+**[See what you can analyze →](https://yoshitakaarakawa.github.io/SampleHyperStore/?lang=en)** A one-page tour: what the dataset holds besides the 12 tables, an analysis that digs across them, how business rules change an AI agent's answer, and example questions for a demo.
 
 **[Read the English README →](en/README.md)** It covers what you can test, what is inside, and how to set it up.
 
@@ -27,7 +27,7 @@ Tableau is a trademark of Salesforce, Inc. This project is not affiliated with o
 
 Tableau MCP でつないだ AI エージェントが、業務の問いに正しい指標で答えられるかを試すためのサンプルデータです。架空の米国小売企業の3年分の取引を、Claude Code で生成しました。
 
-**[どんな分析ができるかを見る →](https://yoshitakaarakawa.github.io/SampleHyperStore/?lang=ja)** 12 枚の表のつながりと、表をまたいで答える 6 つの業務の問いを 1 ページで紹介しています。
+**[どんな分析ができるかを見る →](https://yoshitakaarakawa.github.io/SampleHyperStore/?lang=ja)** 12 のテーブルとメタデータ・業務ルールの中身、テーブルをまたぐ分析の例、業務ルールで AI の答えが変わる例、デモに使える問いの例を 1 ページで紹介しています。
 
 **[日本語版の README を読む →](ja/README.md)** 何が試せるか、データの中身、セットアップの方法を説明しています。
 

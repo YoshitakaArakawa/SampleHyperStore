@@ -43,15 +43,17 @@ note: Kinds are A (tables in the setup), B (the data itself), C (metadata only),
 
 ## The showcase page
 
-`tools/showcase/page.template.html` mixes figures injected from `numbers.json` (`__DATA__`, the keys listed in `build.py`) with figures written by hand. After any B change, compare the hand-written ones with a fresh `numbers.json`. Both languages are in one file, in the `L` object (`L.ja` and `L.en`).
+`tools/showcase/page.template.html` takes every figure from `S` in `numbers.json` (`__DATA__`; `build.py` injects only `S`). Texts hold `{path:format}` placeholders filled from `S`, and the charts read `S` directly, so a B change only needs `analyze.py` and `build.py` re-run. Still read the texts after a B change: a sentence such as "sales fell in the subcategories shown out of stock" can stop being true even though its numbers update. Both languages are in one file, in the `L` object (`L.ja` and `L.en`).
 
 | Where | Holds | Kind | Script |
 |---|---|---|---|
-| `L.*.cases.*`: `answer`, `kpis`, `trap`, `prefs` | Answer sentences, KPI values, Business Preference names per case | B, C | — |
-| `L.*.ch` (chart labels) | Values and periods written into labels and notes | B | — |
-| `DRAW` (chart code) | Periods to shade or mark, axis ranges, the window each chart shows | B | — |
-| `L.*.h1`, `sub`, `title`, `hsStat`; `class="count"` spans | Count of tables and Business Preferences; count of joins and key kinds | A, C | counts (not joins or key kinds) |
-| `L.*.prefs` | All Business Preference names, by category | C | pref names |
+| `L.*.stockout`, `L.*.west`, `L.*.sales`, `L.*.uses`, `L.*.cat` | The analysis example (steps, answer), the two AI behaviour examples, what the analysis uses, the example questions; sentences with `{path:format}` placeholders and Business Preference names | B, C | — |
+| `STEPS_A`, `MINI` (chart code) | The charts of the analysis steps and of the AI behaviour examples: axis ranges, the months shown | B | — |
+| `const X` | Numbers derived from `S` in the browser (ranges, shares, which subcategories to name) | B | — |
+| `analyze.py` section "case stories" (`S`) | The as-of month of the analysis example, the comparison months, the subcategory grouping rules | B | — |
+| `L.*.h1`, `sub`, `title`; `class="count"` spans | Count of tables | A | counts |
+| `S.meta` (from the metadata JSON) | Counts of column descriptions, relationships, calculated fields and Business Preferences shown at the top | A, C | — |
+| `L.*.prefs` | All Business Preferences, by category, in plain words (not their titles) | C | — |
 | `EDGES`, node positions, `L.*.tables`, `keys`, `doms` | The join diagram of the in-use tables | A | — |
 | `tools/showcase/build.py` | Meta description with the count of tables | A | counts |
-| `tools/showcase/analyze.py` | The calculations behind `numbers.json`; reads in-use and planned CSVs | B | — |
+| `tools/showcase/analyze.py` | The calculations behind `numbers.json`; reads the in-use CSVs and the metadata JSON | B | — |
