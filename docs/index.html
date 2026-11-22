@@ -171,7 +171,7 @@ svg { width: 100%; height: auto; display: block; overflow: visible; }
     </div>
     <div class="map prefs">
       <p class="name" id="pf-name"></p>
-      <div class="head"><span class="count">21</span><span class="unit" id="pf-unit"></span></div>
+      <div class="head"><span class="count">22</span><span class="unit" id="pf-unit"></span></div>
       <p class="stat" id="pf-note"></p>
       <div class="pgrid" id="pgrid"></div>
     </div>
@@ -221,7 +221,7 @@ const L = {
     doms: ["Web", "商品", "受注", "出荷", "請求", "返品・返金"],
     prefs: [
       ["使い方", ["使うデータソース", "どのデータソースの指標を使ったかを示す"]],
-      ["用語", ["売上の既定の意味", "経理の質問での会計期間", "配達遅れは約束日より後", "検索の結果なしと在庫なし"]],
+      ["用語", ["売上の既定の意味", "経理の質問での会計期間", "配達遅れは約束日より後", "検索の結果なしと在庫なし", "相対的な日付はデータの終わりを基準にする"]],
       ["方法", ["2025-01-01 の営業地域の再編"]],
       ["既定の日付", ["rpt_samplehyperstore__billing", "rpt_samplehyperstore__sales_orders", "rpt_samplehyperstore__merchandising", "rpt_samplehyperstore__shipments", "rpt_samplehyperstore__returns_refunds", "rpt_samplehyperstore__web_analytics"]],
       ["複数の表にまたがる指標", ["申請ベースの返品率", "注文コホートの返品率", "受領ベースの返品率", "返品明細の発生率", "純送料コスト", "セッションあたり注文数", "数量ベースのカート放棄率", "受注売上に対するマーケットプレイス手数料率"]],
@@ -294,7 +294,7 @@ const L = {
     doms: ["Web", "Products", "Orders", "Shipping", "Billing", "Returns & refunds"],
     prefs: [
       ["Usage", ["Which data sources to use", "Say which data source's metric you used"]],
-      ["Term", ["Default meaning of sales and revenue", "Fiscal periods for Finance questions", "Late delivery means after the promised date", "No results vs nothing in stock in search"]],
+      ["Term", ["Default meaning of sales and revenue", "Fiscal periods for Finance questions", "Late delivery means after the promised date", "No results vs nothing in stock in search", "Relative dates mean relative to the end of the data"]],
       ["Method", ["Sales region realignment on 2025-01-01"]],
       ["Default date", ["rpt_samplehyperstore__billing", "rpt_samplehyperstore__sales_orders", "rpt_samplehyperstore__merchandising", "rpt_samplehyperstore__shipments", "rpt_samplehyperstore__returns_refunds", "rpt_samplehyperstore__web_analytics"]],
       ["Cross-source metric", ["Requested return rate", "Order-cohort return rate", "Received return rate", "Return line incidence", "Net shipping cost", "Orders per session", "Unit cart abandonment", "Marketplace fee rate on booked sales"]],

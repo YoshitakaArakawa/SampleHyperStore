@@ -11,7 +11,7 @@ note: Kinds are A (tables in the setup), B (the data itself), C (metadata only),
 |---|---|---|---|
 | `en/setup/metadata/raw_layer.json` | The tables Tableau uses; data source and column descriptions; default aggregations of numeric columns | `generate.py` (`folder_of`), `publish_raw.py`, `check_metadata.py` | A, C |
 | `en/setup/metadata/rpt_layer.json` | The six rpt_ data sources: `parent_tables`, `root`, `relationships`, `calculated_fields` | `describe_rpt.py`, `check_metadata.py`, the person at the web editor | A, C |
-| `en/setup/metadata/business_preferences.json` | Business Preferences for Tableau Knowledge | `SETUP_FOR_AI.md` step 6 | C |
+| `en/setup/metadata/business_preferences.json` | Business Preferences for Tableau Knowledge. "Term: Relative dates mean relative to the end of the data" states the period of the data, the only place that does | `SETUP_FOR_AI.md` step 6 | B (period changed), C |
 | `ja/setup/metadata/*.json` | Hand translation of the three files above. Same keys and structure; column names are the Japanese ones | the same scripts with `--data ../../ja` | A, C |
 | `en/columns.yaml` | Column order and type of all tables | generator, `publish_raw.py`, `build_jp.py` | B |
 | `tools/build_ja/translation/columns.yaml`, `values.yaml` | English → Japanese column names and values | `build_jp.py` | B (new column or value) |

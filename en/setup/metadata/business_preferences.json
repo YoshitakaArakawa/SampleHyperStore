@@ -26,6 +26,10 @@
       "text": "In search questions, \"no results\" means `No-results Rate` (no matching product) and \"nothing in stock\" means `Out-of-stock Results Rate`."
     },
     {
+      "title": "Term: Relative dates mean relative to the end of the data",
+      "text": "This sample's data covers 2023-01-01 to 2025-12-31 (fiscal months FY2022-P12 to FY2025-P11) and does not grow; read \"this year\", \"last month\" and \"recent\" relative to 2025-12-31, not today's date. Statuses such as `Delivery Status` and `Return Status` are as of 2025-12-31."
+    },
+    {
       "title": "Method: Sales region realignment on 2025-01-01",
       "text": "To compare sales regions across years spanning 2025-01-01, compare by `State Code`, not by `Sales Region Id`."
     },

@@ -44,7 +44,7 @@
         ]
       }
     ],
-    "datasource_description": "One row per invoice line (Invoice Line Id): one order line on one invoice, with its invoice (one per shipment), the credit memo lines posted against that invoice, and product attributes. Invoices dated 2023-01-02 to 2025-12-31 (FY2022-P12 to FY2025-P11).",
+    "datasource_description": "One row per invoice line (Invoice Line Id): one order line on one invoice, with its invoice (one per shipment), the credit memo lines posted against that invoice, and product attributes.",
     "calculated_fields": [
       {
         "name": "Revenue",
@@ -142,7 +142,7 @@
         ]
       }
     ],
-    "datasource_description": "One row per order line (Order Line Id): one SKU in one order, with its order (Order Id) and product attributes. Orders placed 2023-01-01 to 2025-12-31, all channels.",
+    "datasource_description": "One row per order line (Order Line Id): one SKU in one order, with its order (Order Id) and product attributes, in all channels.",
     "calculated_fields": [
       {
         "name": "Revenue",
@@ -220,7 +220,7 @@
         ]
       }
     ],
-    "datasource_description": "One row per order line (Order Line Id): one SKU in one order, with its order (Order Id) and product attributes. Orders placed 2023-01-01 to 2025-12-31, all channels.",
+    "datasource_description": "One row per order line (Order Line Id): one SKU in one order, with its order (Order Id) and product attributes, in all channels.",
     "calculated_fields": [
       {
         "name": "Demand",
@@ -288,7 +288,7 @@
         ]
       }
     ],
-    "datasource_description": "One row per shipment line (Shipment Line Id): one order line in one shipment, with its shipment (Shipment Id: one parcel group from one warehouse with one carrier) and product attributes. Shipped 2023-01-02 to 2025-12-31; delivery status as of 2025-12-31.",
+    "datasource_description": "One row per shipment line (Shipment Line Id): one order line in one shipment, with its shipment (Shipment Id: one parcel group from one warehouse with one carrier) and product attributes.",
     "calculated_fields": [
       {
         "name": "Units",
@@ -308,7 +308,7 @@
       {
         "name": "Carrier On-time Rate, All Shipments",
         "formula": "SUM(IIF([Delivered Date] <= [Carrier Estimated Delivery Date], 1, 0)) / COUNTD([Shipment Id])",
-        "description": "Share of all shipments delivered by Carrier Estimated Delivery Date. Undelivered ones count as late: lost, returned, and in transit on 2025-12-31."
+        "description": "Share of all shipments delivered by Carrier Estimated Delivery Date. Undelivered ones count as late: lost, returned, and still in transit."
       },
       {
         "name": "Perfect Order Rate",
@@ -351,7 +351,7 @@
         ]
       }
     ],
-    "datasource_description": "One row per return authorization line (Return Id) and per refund payment (Refund Id), related by Return Id, with attributes of the returned SKU. Returns requested 2023-01-09 to 2025-12-31; refunds issued 2023-01-10 to 2025-12-31.",
+    "datasource_description": "One row per return authorization line (Return Id) and per refund payment (Refund Id), related by Return Id, with attributes of the returned SKU.",
     "calculated_fields": [
       {
         "name": "Refunds",
@@ -418,7 +418,7 @@
         ]
       }
     ],
-    "datasource_description": "One row per web or app session (Session Id), related to the on-site searches run in it (Search Id, one row per search). Sessions started 2023-01-01 to 2025-12-31.",
+    "datasource_description": "One row per web or app session (Session Id), related to the on-site searches run in it (Search Id, one row per search).",
     "calculated_fields": [
       {
         "name": "Revenue",
