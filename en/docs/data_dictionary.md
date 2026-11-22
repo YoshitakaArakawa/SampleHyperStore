@@ -77,7 +77,7 @@ Sessions recorded by the web/app analytics tool: when, from where, on which devi
 | `state_code` | string |  |  | US state estimated from the visitor IP by the analytics tool (2-letter code, incl. DC). |
 | `traffic_source` | string |  |  | Acquisition source of the session (last non-direct click rule of the analytics tool). Values: direct, organic_search, paid_search, paid_social, organic_social, display, email, affiliate, referral, push_notification. |
 | `campaign_id` | string | yes | → campaigns.campaign_id | Campaign attributed to the session from tracking parameters. Null for organic, direct, referral. |
-| `landing_page_type` | string |  |  | Type of the first page of the session. Values: home, category, product, search, promotion, content, cart. |
+| `landing_page_type` | string |  |  | Type of the first page of the session. Values: home, category, product, search, promotion, content. |
 | `page_views` | integer |  |  | Number of pageviews / app screen views recorded in the session. |
 | `product_views` | integer |  |  | Product detail pages viewed in the session. |
 | `oos_product_views` | integer |  |  | Product detail pages viewed while the product was shown as out of stock for the visitor's fulfillment warehouse. |
@@ -229,7 +229,7 @@ Order lines with list price copied from product_prices at order time, actual uni
 | `qty_ordered` | integer |  |  | Units requested by the customer. |
 | `qty_backordered` | integer |  |  | Units not in stock at any warehouse at order time and placed on backorder. Later shipped or cancelled. 0 if fully available. |
 | `qty_cancelled` | integer |  |  | Units cancelled before shipment (immediately or later). 0 if none. |
-| `cancel_reason` | string | yes |  | Reason for the cancelled units. Null when qty_cancelled = 0. Values: out_of_stock, backorder_timeout, customer_request, payment_failed, fraud_review. |
+| `cancel_reason` | string | yes |  | Reason for the cancelled units. Null when qty_cancelled = 0. Values: out_of_stock, backorder_timeout, customer_request, payment_failed, fraud_review. backorder_timeout is recorded automatically when backordered units are still unfilled 21 days after the order. |
 | `cancelled_date` | date | yes |  | Date the cancellation was recorded. Null when qty_cancelled = 0. |
 | `unit_list_price` | decimal(12,2) |  |  | List price per unit at order time, as recorded by the order system from the merchandising price list. |
 | `unit_price` | decimal(12,2) |  |  | Selling price per unit before line discount: list price for web/app, marketplace listing price for marketplace, contract price for b2b. |
@@ -287,7 +287,7 @@ Product master. One SKU per sellable variant (apparel and footwear sizes are sep
 | `brand_type` | string |  |  | Whether the brand is the retailer's own label or a third-party brand. Values: private_label, national_brand. |
 | `color` | string | yes |  | Color code for variant items; null when not applicable. |
 | `size` | string | yes |  | Size for apparel (XS-XXL) and footwear (7-13, half sizes). Null for non-sized items. |
-| `seasonality_profile` | string |  |  | Merchandising's seasonality classification used for buying and policy planning. Values: summer, spring, spring_summer, shoulder, fall, winter, holiday, year_round. |
+| `seasonality_profile` | string |  |  | Merchandising's seasonality classification used for buying and policy planning. Values: summer, spring, spring_summer, shoulder, fall, winter, holiday. |
 | `weight_lb` | decimal(9,4) |  |  | Shipping weight of one unit in pounds, including packaging. |
 | `is_oversize` | boolean |  |  | True when the item ships as a bulky/oversize parcel or freight (patio furniture, large grills, fire pits). Drives freight-in and outbound shipping cost and delivery delays. |
 | `is_hazmat` | boolean |  |  | True for items with shipping restrictions (fuel canisters, propane heaters). |
@@ -365,7 +365,7 @@ Money returned to customers: for returns, for late or damaged deliveries (shippi
 | `order_line_id` | string | yes | → order_lines.order_line_id | Order line refunded. Null for order-level refunds (e.g. shipping fee). |
 | `ticket_id` | string | yes | → support_tickets.ticket_id | Support ticket that triggered the refund, if any. |
 | `refund_type` | string |  |  | Why money was returned. Values: return, returnless, shipping_refund, goodwill, price_adjustment. |
-| `refund_method` | string |  |  | Where the money went. Values: original_payment, store_credit, marketplace. |
+| `refund_method` | string |  |  | Where the money went. Values: original_payment, store_credit, marketplace. A refund split between store credit and the original payment is two rows, each for half of the amounts. |
 | `refunded_at` | datetime |  |  | Time the refund was issued. |
 | `refunded_date` | date |  |  | Date part of refunded_at. Support's time point for refunds. |
 | `merchandise_refund_amount` | decimal(12,2) |  |  | Merchandise value refunded (after the discount originally given). |
