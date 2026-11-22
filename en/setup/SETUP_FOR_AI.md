@@ -31,7 +31,7 @@ The 12 tables are: products, orders, order_lines, shipments, shipment_lines, ret
 | Python 3.10+ on the user's machine | scripts |
 | Tableau MCP connected to this AI agent | checks, Business Preferences |
 | Tableau+ (Knowledge enabled) — optional | step 6 only |
-| A person (or a computer-use agent) who can use the Tableau web editor | steps 3 and 4 |
+| A person (or a computer-use agent) who can use the Tableau web editor | steps 3 and 4; for a computer-use agent, the user checks in step 2 that it can be used |
 
 ## Step 0. Prepare
 
@@ -87,6 +87,24 @@ Check without spending query quota: `python scripts/check_metadata.py --project 
 
 Steps 3 and 4 need the Tableau web editor: composing published data sources is not available through the REST API in a form these scripts can rely on. Ask the user whether they will do it by hand or have a computer-use agent do it. Either way, give them the procedure below for one data source at a time, and wait for them to say it is published.
 
+If the user chooses a computer-use agent:
+
+1. Ask the user to check two things on their side before starting. You cannot check them from here.
+   - Computer use is available in the AI agent they will use for this work.
+   - That agent can operate pages on their Tableau Cloud site, including the web editor.
+2. If either answer is no, the person does all of steps 3 and 4 by hand.
+3. If both are yes, the agent can still not do all of it. Drawing a relationship from the root's "+" worked in our runs. Dragging from the "+" of a table further down the tree did not register (step 3, item 3). For the data sources below, the person draws the lines that start from a non-root table:
+
+   | rpt_ data source | Lines the person draws |
+   |---|---|
+   | billing | invoice_lines → products, invoice_lines → credit_memos |
+   | sales_orders | order_lines → orders |
+   | merchandising | order_lines → orders |
+   | shipments | shipment_lines → shipments |
+
+   returns_refunds and web_analytics need only lines from the root.
+4. Entering the calculated fields (step 3, item 5) with a computer-use agent is untested.
+
 ## Step 3. Compose the six rpt_ data sources (web editor)
 
 Read `metadata/rpt_layer.json`. For each data source:
@@ -105,7 +123,7 @@ Procedure for the person at the web editor:
 1. New published data source → "On this site" → connect to the root's raw data source (`SampleHyperStore - <root>`). Open the Data Source tab.
 2. Add the other raw data sources with "Add published data source", in the order they appear in `parent_tables` in the JSON, skipping the root. The order decides which copy of a duplicated column name gets the " (<table>.csv)" suffix, and some formulas use that suffix (for example `[Order Id (order_lines.csv)]` in sales_orders: connect products, then add orders, then order_lines).
 3. **Keep exactly one base table.** Draw each relationship from the "+" at the right edge of a table that is already in the tree to the new table. Never draw from the new table into the tree: that makes it a second base table, and its measures then repeat the grand total when split by the other tables' dimensions.
-   - A computer-use agent can draw from the root's "+", but dragging from the "+" of a table further down the tree did not register in our runs. Ask the person to draw those lines by hand.
+   - A computer-use agent can draw from the root's "+", but dragging from the "+" of a table further down the tree did not register in our runs. Ask the person to draw those lines by hand. This affects billing, sales_orders, merchandising and shipments; the lines are listed in step 2.
 4. Pick the key fields for each relationship as in the table above. No dashed line or "!" may remain.
 5. Add each calculated field from `calculated_fields` in the Scratchpad: data pane menu (▾) → Create Calculated Field → name and formula exactly as written → it must say "The calculation is valid." → OK. **Create them here, in the web editor.** Calculated fields written into the .tds through the REST API are dropped the next time the data source is published from the web editor.
 6. Publish → name `rpt_samplehyperstore__<dept>`. **Choose the rpt_ project in the dialog**: it defaults to the root data source's project (the raw one). Leave "embed credentials" off. The data source description defaults to the root's; `describe_rpt.py` in step 4 replaces it with `datasource_description`.
