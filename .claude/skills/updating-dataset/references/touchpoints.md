@@ -9,7 +9,7 @@ note: Kinds are A (tables in the setup), B (the data itself), C (metadata only),
 
 | File | Holds | Read by | Kind |
 |---|---|---|---|
-| `en/setup/metadata/raw_layer.json` | The tables Tableau uses; data source and column descriptions | `generate.py` (`folder_of`), `publish_raw.py`, `check_metadata.py` | A, C |
+| `en/setup/metadata/raw_layer.json` | The tables Tableau uses; data source and column descriptions; default aggregations of numeric columns | `generate.py` (`folder_of`), `publish_raw.py`, `check_metadata.py` | A, C |
 | `en/setup/metadata/rpt_layer.json` | The six rpt_ data sources: `parent_tables`, `root`, `relationships`, `calculated_fields` | `describe_rpt.py`, `check_metadata.py`, the person at the web editor | A, C |
 | `en/setup/metadata/business_preferences.json` | Business Preferences for Tableau Knowledge | `SETUP_FOR_AI.md` step 6 | C |
 | `ja/setup/metadata/*.json` | Hand translation of the three files above. Same keys and structure; column names are the Japanese ones | the same scripts with `--data ../../ja` | A, C |

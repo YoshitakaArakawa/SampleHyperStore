@@ -19,7 +19,7 @@ description: Guides a maintainer through changing the SampleHyperStore dataset a
 |---|---|---|
 | A. Tables in the setup | Which tables Tableau uses (`csv/in_use/` vs `csv/planned/`), or a new rpt_ data source | [A](#a-change-which-tables-the-setup-uses) |
 | B. The data itself | `world_spec.yaml`, generator code, the seed, `columns.yaml` | [B](#b-regenerate-the-data) |
-| C. Metadata only | Descriptions, relationships, calculated fields, Business Preferences | [C](#c-change-metadata-only) |
+| C. Metadata only | Descriptions, default aggregations, relationships, calculated fields, Business Preferences | [C](#c-change-metadata-only) |
 
 One request can be several kinds. Do them in the order B → A → C: A moves the CSVs that B writes, and C describes the tables A selects. Run the final check once at the end.
 
@@ -63,7 +63,7 @@ One request can be several kinds. Do them in the order B → A → C: A moves th
    - the Business Preference names in the READMEs and on the showcase page.
 3. Run the [final check](#final-check).
 4. On Tableau, after the user agrees:
-   - Raw column or data source descriptions: `publish_raw.py --tables <table>`.
+   - Raw column or data source descriptions, or default aggregations: `publish_raw.py --tables <table> --update` (rewrites the existing data sources in place; their ids stay, so the rpt_ data sources keep working).
    - rpt_ data source descriptions and calculated-field descriptions: `describe_rpt.py`, then the republish (`SETUP_FOR_AI.md` step 4).
    - Relationships or calculated fields: rebuild or edit the data source in the web editor (step 3), then step 4.
    - Business Preferences: change or delete the item in the knowledge graph's web UI; new items as in step 6. Wait about 15 minutes after the last publish.
