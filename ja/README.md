@@ -100,7 +100,7 @@ flowchart LR
         subgraph marts["プロジェクト marts（部門ごと）"]
             M["6 データソース<br/>rpt_samplehyperstore__部門名<br/>計算フィールドと<br/>説明つき"]
         end
-        K["Tableau Knowledge（任意）<br/>18 データソースの<br/>グラフ、<br/>ビジネス設定 16 件"]
+        K["Tableau Knowledge（任意）<br/>18 データソースの<br/>グラフ、<br/>ビジネス設定 21 件"]
     end
     R -- "関係でつないで組む" --> M
     AI["AI エージェント"] -- "Tableau MCP で問い合わせ" --> M
