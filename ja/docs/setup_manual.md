@@ -12,7 +12,7 @@ AI エージェントや Tableau MCP を使わずに、SampleHyperStore の日�
 | 1 | 生の層をパブリッシュする | スクリプト | 12 データソース `SampleHyperStore - <テーブル名>` |
 | 2 | 部門の層を組む | あなた（Web エディター） | 6 データソース `rpt_samplehyperstore__<部門名>` |
 | 3 | 計算フィールドに説明を付ける | スクリプト・あなた | 部門の層の計算フィールドの説明 |
-| 4 | Tableau Knowledge を設定する（任意） | あなた（Web の画面） | ナレッジグラフとビジネス設定 16 件 |
+| 4 | Tableau Knowledge を設定する（任意） | あなた（Web の画面） | ナレッジグラフとビジネス設定 21 件 |
 | 5 | 試す | あなた | — |
 
 手順2と3は、最初は billing の1本で通し、うまくいったら残りの5本に進むと安全です。
@@ -190,7 +190,7 @@ Tableau Knowledge は、AI エージェントに「何をいつ使うべきか�
 1. Tableau Cloud の左のメニューから「Tableau Knowledge」を開き、「Manage Graphs」を選びます。
 2. 「New knowledge graph」でグラフを作ります。データソースには、生の層と部門の層の 18 本（`samplehyperstore` で検索して出るもの）をすべて選びます。
 3. 作ったグラフを開き、右上の「Actions」→「Add Business Preferences」→「Add Preference」を選びます。
-4. [付録](#付録-ビジネス設定の一覧)の16件を1件ずつ、次のように入力して「Save」を押します。
+4. [付録](#付録-ビジネス設定の一覧)の21件を1件ずつ、次のように入力して「Save」を押します。
    - Name: 付録の「名前」
    - Scope: 「Global (all entities)」のまま
    - Preference Rules: 付録の「本文」（上限は 1,000 文字。どの本文も収まります）
@@ -198,7 +198,7 @@ Tableau Knowledge は、AI エージェントに「何をいつ使うべきか�
 
 ### 確かめ方
 
-- グラフにビジネス設定が 16 件あることを確かめます。
+- グラフにビジネス設定が 21 件あることを確かめます。
 - 最後にデータソースをパブリッシュしてから 15 分ほど待ってから使います。Knowledge は、パブリッシュの時に列の説明を読み込みます。
 
 ---
@@ -230,6 +230,7 @@ python scripts/tableau_auth.py logout
 ## 気をつけること
 
 - **部門の層の列の説明**: 部門の層の列には、生の層の列の説明がそのまま付いて見えます（Metadata API で確認）。部門の層で自分で付けるのは、計算フィールドの説明だけです。
+- **部門の層の既定の集計**: 部門の層の列は、生の層の既定の集計を引き継ぎません。数値の列は SUM が既定になります。Tableau MCP で問い合わせるエージェントには影響しません。集計はクエリごとに指定するためです。
 - **Tableau MCP で説明が見えない時**: Tableau MCP の `get-datasource-metadata` は、説明を返さないことがあります。MCP は説明を Metadata API から取りますが、Metadata API を使わない設定（`DISABLE_METADATA_API_REQUESTS`）の時や、その呼び出しが失敗した時は、エラーを出さずに説明なしで返します。データソースの設定の問題ではありません。説明が付いているかは `check_metadata.py` で確かめてください。
 - **データソースのページの URL**: 上書きするたびに変わります。データソースは名前で検索して開いてください。
 
@@ -237,23 +238,28 @@ python scripts/tableau_auth.py logout
 
 ## 付録: ビジネス設定の一覧
 
-手順4で入力する16件です。内容は `ja/setup/metadata/business_preferences.json` と同じです。
+手順4で入力する21件です。内容は `ja/setup/metadata/business_preferences.json` と同じです。
 
 | # | 名前 | 本文 |
 |---|---|---|
 | 1 | 使い方: 使うデータソース | 分析には {{RPT_PROJECT_PATH}} にある `rpt_samplehyperstore__` のデータソースを使う。`SampleHyperStore - <table>` のデータソースはリネージのための元テーブルにすぎない。 |
 | 2 | 使い方: どのデータソースの指標を使ったかを示す | 同じ名前の指標を持つデータソースが複数ある。どのデータソースの指標を使ったかを必ず示す。 |
-| 3 | 用語: 売上の既定の意味 | 修飾のない「売上」は rpt_samplehyperstore__sales_orders の 売上（受注ベース、注文日基準）を指す。質問が会計期間、純売上、返品、マーケットプレイス手数料に触れているときは rpt_samplehyperstore__billing の 売上 を使う。 |
-| 4 | 用語: 経理の質問での会計期間 | 経理の質問では、「今年」「昨年」「月次」は会計期間を指す: 会計月 でまとめる（会計年度は2月1日に始まる）。 |
-| 5 | 用語: 配達遅れは約束日より後 | 配達日 が 約束配達日 より後なら配達遅れとする。配送業者予定配達日 は配送業者の実績を見るときにだけ使う。 |
-| 6 | 用語: 検索の結果なしと在庫なし | 検索の質問では、「結果なし」は 検索結果ゼロ率（一致する商品がない）、「在庫なし」は 在庫あり結果ゼロ率 を指す。 |
-| 7 | 方法: 2025-01-01 の営業地域の再編 | 営業地域は 2025-01-01 に再編された。この日をまたいで年を比べるときは、営業地域ID ではなく 州コード で比べる。 |
-| 8 | 方法: 経理の計上ベースで見るクレジット | 経理の計上ベースでは、クレジットメモの金額を元の請求書の月ではなく 会計月 (credit_memos.csv) でまとめる。 |
-| 9 | 複数ソースの指標: 申請ベースの返品率 | 申請ベースの返品率（カスタマーサポート）= rpt_samplehyperstore__returns_refunds の 返品申請数量（申請日の月別） ÷ rpt_samplehyperstore__sales_orders の 数量（注文日の月別）。 |
-| 10 | 複数ソースの指標: 注文コホートの返品率 | 注文コホートの返品率（マーチャンダイジング）= rpt_samplehyperstore__returns_refunds の 返品申請数量 ÷ rpt_samplehyperstore__merchandising の 純注文数量。どちらも注文日の月別で、両方に同じフィルターをかける。 |
-| 11 | 複数ソースの指標: 受領ベースの返品率 | 受領ベースの返品率（物流）= rpt_samplehyperstore__returns_refunds の 返品受領数量（受領日の月別） ÷ rpt_samplehyperstore__shipments の 数量（出荷日の月別）。 |
-| 12 | 複数ソースの指標: 返品明細の発生率 | 返品明細の発生率（マーチャンダイジング）= rpt_samplehyperstore__returns_refunds の 返品注文明細数 ÷ rpt_samplehyperstore__merchandising の 注文明細数。商品別、注文日の月別。 |
-| 13 | 複数ソースの指標: 純送料コスト | 純送料コスト（経理）= rpt_samplehyperstore__shipments の 運賃（出荷日の月別） − rpt_samplehyperstore__billing の 請求送料（請求日の月別）。 |
-| 14 | 複数ソースの指標: セッションあたり注文数 | セッションあたり注文数（営業）= rpt_samplehyperstore__sales_orders の 注文数（Webとアプリのチャネル、注文日基準） ÷ rpt_samplehyperstore__web_analytics の セッション数（セッション開始日基準）。 |
-| 15 | 複数ソースの指標: 数量ベースのカート放棄率 | 数量ベースのカート放棄率（マーチャンダイジング）= 1 − rpt_samplehyperstore__merchandising の 数量（Webとアプリの注文） ÷ rpt_samplehyperstore__web_analytics の カート投入数量。どちらも週別（注文日とカート追加日）。 |
-| 16 | 複数ソースの指標: 受注売上に対するマーケットプレイス手数料率 | 受注売上に対するマーケットプレイス手数料率（営業）= rpt_samplehyperstore__billing の マーケットプレイス手数料（請求日の月別） ÷ rpt_samplehyperstore__sales_orders の 売上（マーケットプレイスチャネル、注文日の月別）。 |
+| 3 | 用語: 売上の既定の意味 | 修飾のない「売上」は `rpt_samplehyperstore__sales_orders` の `売上` を指す。質問が会計期間、純売上、返品、マーケットプレイス手数料に触れているときは `rpt_samplehyperstore__billing` の `売上` を使う。 |
+| 4 | 用語: 経理の質問での会計期間 | 経理の質問では、「今年」「昨年」「月次」は会計期間を指す: `会計月` でまとめる。 |
+| 5 | 用語: 配達遅れは約束日より後 | `配達日` が `約束配達日` より後なら配達遅れとする。`配送業者予定配達日` は配送業者の実績を見るときにだけ使う。 |
+| 6 | 用語: 検索の結果なしと在庫なし | 検索の質問では、「結果なし」は `検索結果ゼロ率`（一致する商品がない）、「在庫なし」は `在庫あり結果ゼロ率` を指す。 |
+| 7 | 方法: 2025-01-01 の営業地域の再編 | 2025-01-01 をまたいで年ごとに営業地域を比べるときは、`営業地域ID` ではなく `州コード` で比べる。 |
+| 8 | 既定の日付: rpt_samplehyperstore__billing | `rpt_samplehyperstore__billing` の指標は `請求日`（または `会計月`）で推移を見る。例外: `クレジット` と `純返金コスト` は `クレジットメモ日`（または `会計月 (credit_memos.csv)`）。経理の計上ベースでは、クレジットメモの金額もすべて、元の請求書の月ではなく `会計月 (credit_memos.csv)` でまとめる。 |
+| 9 | 既定の日付: rpt_samplehyperstore__sales_orders | `rpt_samplehyperstore__sales_orders` の指標はすべて `注文日` の暦月で推移を見る。 |
+| 10 | 既定の日付: rpt_samplehyperstore__merchandising | `rpt_samplehyperstore__merchandising` の指標はすべて `注文日` の暦月で推移を見る。 |
+| 11 | 既定の日付: rpt_samplehyperstore__shipments | `rpt_samplehyperstore__shipments` の指標は `出荷日` の暦月で推移を見る。例外: `パーフェクトオーダー率` は `注文日`。 |
+| 12 | 既定の日付: rpt_samplehyperstore__returns_refunds | `rpt_samplehyperstore__returns_refunds` の指標は `申請日` の暦月で推移を見る。例外: `返金額` と `現金返金額` は `返金日`、`返品受領数量` は `受領日`、`注文から返品申請までの日数` と `返品注文明細数` は `注文日`（注文コホート）。 |
+| 13 | 既定の日付: rpt_samplehyperstore__web_analytics | `rpt_samplehyperstore__web_analytics` の指標は `セッション開始日` の暦月で推移を見る。例外: `検索結果ゼロ率`、`在庫あり結果ゼロ率`、`ノークリック率` は `検索日`、`カート投入数量` は `カート追加日`。 |
+| 14 | 複数ソースの指標: 申請ベースの返品率 | 申請ベースの返品率（カスタマーサポート）= `rpt_samplehyperstore__returns_refunds` の `返品申請数量`（`申請日` の月別） ÷ `rpt_samplehyperstore__sales_orders` の `数量`（`注文日` の月別）。 |
+| 15 | 複数ソースの指標: 注文コホートの返品率 | 注文コホートの返品率（マーチャンダイジング）= `rpt_samplehyperstore__returns_refunds` の `返品申請数量` ÷ `rpt_samplehyperstore__merchandising` の `純注文数量`。どちらも `注文日` の月別で、両方に同じフィルターをかける。 |
+| 16 | 複数ソースの指標: 受領ベースの返品率 | 受領ベースの返品率（物流）= `rpt_samplehyperstore__returns_refunds` の `返品受領数量`（`受領日` の月別） ÷ `rpt_samplehyperstore__shipments` の `数量`（`出荷日` の月別）。 |
+| 17 | 複数ソースの指標: 返品明細の発生率 | 返品明細の発生率（マーチャンダイジング）= `rpt_samplehyperstore__returns_refunds` の `返品注文明細数` ÷ `rpt_samplehyperstore__merchandising` の `注文明細数`。商品別、`注文日` の月別。 |
+| 18 | 複数ソースの指標: 純送料コスト | 純送料コスト（経理）= `rpt_samplehyperstore__shipments` の `運賃`（`出荷日` の月別） − `rpt_samplehyperstore__billing` の `請求送料`（`請求日` の月別）。 |
+| 19 | 複数ソースの指標: セッションあたり注文数 | セッションあたり注文数（営業）= `rpt_samplehyperstore__sales_orders` の `注文数`（Webとアプリのチャネル、`注文日` 基準） ÷ `rpt_samplehyperstore__web_analytics` の `セッション数`（`セッション開始日` 基準）。 |
+| 20 | 複数ソースの指標: 数量ベースのカート放棄率 | 数量ベースのカート放棄率（マーチャンダイジング）= 1 − `rpt_samplehyperstore__merchandising` の `数量`（Webとアプリの注文） ÷ `rpt_samplehyperstore__web_analytics` の `カート投入数量`。どちらも週別（`注文日` と `カート追加日`）。 |
+| 21 | 複数ソースの指標: 受注売上に対するマーケットプレイス手数料率 | 受注売上に対するマーケットプレイス手数料率（営業）= `rpt_samplehyperstore__billing` の `マーケットプレイス手数料`（`請求日` の月別） ÷ `rpt_samplehyperstore__sales_orders` の `売上`（マーケットプレイスチャネル、`注文日` の月別）。 |

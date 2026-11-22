@@ -11,59 +11,79 @@
     },
     {
       "title": "Term: Default meaning of sales and revenue",
-      "text": "\"Sales\" or \"revenue\" without a qualifier means Revenue in rpt_samplehyperstore__sales_orders (booked, by Order Date); use Revenue in rpt_samplehyperstore__billing when the question mentions fiscal periods, net revenue, returns or marketplace fees."
+      "text": "\"Sales\" or \"revenue\" without a qualifier means `Revenue` in `rpt_samplehyperstore__sales_orders`; use `Revenue` in `rpt_samplehyperstore__billing` when the question mentions fiscal periods, net revenue, returns or marketplace fees."
     },
     {
       "title": "Term: Fiscal periods for Finance questions",
-      "text": "For Finance questions, \"this year\", \"last year\" and \"monthly\" mean fiscal periods: group by Fiscal Month (the fiscal year starts on February 1)."
+      "text": "For Finance questions, \"this year\", \"last year\" and \"monthly\" mean fiscal periods: group by `Fiscal Month`."
     },
     {
       "title": "Term: Late delivery means after the promised date",
-      "text": "A delivery is late when Delivered Date is after Promised Delivery Date; use Carrier Estimated Delivery Date only for carrier performance."
+      "text": "A delivery is late when `Delivered Date` is after `Promised Delivery Date`; use `Carrier Estimated Delivery Date` only for carrier performance."
     },
     {
       "title": "Term: No results vs nothing in stock in search",
-      "text": "In search questions, \"no results\" means No-results Rate (no matching product) and \"nothing in stock\" means Out-of-stock Results Rate."
+      "text": "In search questions, \"no results\" means `No-results Rate` (no matching product) and \"nothing in stock\" means `Out-of-stock Results Rate`."
     },
     {
       "title": "Method: Sales region realignment on 2025-01-01",
-      "text": "Sales regions were realigned on 2025-01-01; compare years across that date by State Code, not by Sales Region Id."
+      "text": "To compare sales regions across years spanning 2025-01-01, compare by `State Code`, not by `Sales Region Id`."
     },
     {
-      "title": "Method: Finance posting view of credits",
-      "text": "For Finance's posting view, group credit memo amounts by Fiscal Month (credit_memos.csv), not by the original invoice's month."
+      "title": "Default date: rpt_samplehyperstore__billing",
+      "text": "In `rpt_samplehyperstore__billing`, trend metrics by `Invoice Date` (or `Fiscal Month`); exceptions: `Credits` and `Net Refund Cost` by `Credit Memo Date` (or `Fiscal Month (credit_memos.csv)`), and in Finance's posting view, all credit memo amounts by `Fiscal Month (credit_memos.csv)`, not by the original invoice's month."
+    },
+    {
+      "title": "Default date: rpt_samplehyperstore__sales_orders",
+      "text": "In `rpt_samplehyperstore__sales_orders`, trend all metrics by `Order Date`, in calendar months."
+    },
+    {
+      "title": "Default date: rpt_samplehyperstore__merchandising",
+      "text": "In `rpt_samplehyperstore__merchandising`, trend all metrics by `Order Date`, in calendar months."
+    },
+    {
+      "title": "Default date: rpt_samplehyperstore__shipments",
+      "text": "In `rpt_samplehyperstore__shipments`, trend metrics by `Shipped Date` in calendar months; exception: `Perfect Order Rate` by `Order Date`."
+    },
+    {
+      "title": "Default date: rpt_samplehyperstore__returns_refunds",
+      "text": "In `rpt_samplehyperstore__returns_refunds`, trend metrics by `Requested Date` in calendar months; exceptions: `Refunds` and `Cash Refunds` by `Refunded Date`, `Received Units` by `Received Date`, `Days from Order to Return Request` and `Returned Order Lines` by `Order Date` (order cohort)."
+    },
+    {
+      "title": "Default date: rpt_samplehyperstore__web_analytics",
+      "text": "In `rpt_samplehyperstore__web_analytics`, trend metrics by `Session Start Date` in calendar months; exceptions: `No-results Rate`, `Out-of-stock Results Rate` and `No-click Rate` by `Searched Date`, `Units Added to Cart` by `Cart Added Date`."
     },
     {
       "title": "Cross-source metric: Requested return rate",
-      "text": "Requested return rate (Customer Support) = Requested Units in rpt_samplehyperstore__returns_refunds by month of Requested Date ÷ Units in rpt_samplehyperstore__sales_orders by month of Order Date."
+      "text": "Requested return rate (Customer Support) = `Requested Units` in `rpt_samplehyperstore__returns_refunds` by month of `Requested Date` ÷ `Units` in `rpt_samplehyperstore__sales_orders` by month of `Order Date`."
     },
     {
       "title": "Cross-source metric: Order-cohort return rate",
-      "text": "Order-cohort return rate (Merchandising) = Requested Units in rpt_samplehyperstore__returns_refunds ÷ Net Ordered Units in rpt_samplehyperstore__merchandising, both by month of Order Date, with the same filters on both."
+      "text": "Order-cohort return rate (Merchandising) = `Requested Units` in `rpt_samplehyperstore__returns_refunds` ÷ `Net Ordered Units` in `rpt_samplehyperstore__merchandising`, both by month of `Order Date`, with the same filters on both."
     },
     {
       "title": "Cross-source metric: Received return rate",
-      "text": "Received return rate (Logistics) = Received Units in rpt_samplehyperstore__returns_refunds by month of Received Date ÷ Units in rpt_samplehyperstore__shipments by month of Shipped Date."
+      "text": "Received return rate (Logistics) = `Received Units` in `rpt_samplehyperstore__returns_refunds` by month of `Received Date` ÷ `Units` in `rpt_samplehyperstore__shipments` by month of `Shipped Date`."
     },
     {
       "title": "Cross-source metric: Return line incidence",
-      "text": "Return line incidence (Merchandising) = Returned Order Lines in rpt_samplehyperstore__returns_refunds ÷ Order Lines in rpt_samplehyperstore__merchandising, by product and month of Order Date."
+      "text": "Return line incidence (Merchandising) = `Returned Order Lines` in `rpt_samplehyperstore__returns_refunds` ÷ `Order Lines` in `rpt_samplehyperstore__merchandising`, by product and month of `Order Date`."
     },
     {
       "title": "Cross-source metric: Net shipping cost",
-      "text": "Net shipping cost (Finance) = Freight Cost in rpt_samplehyperstore__shipments by month of Shipped Date − Shipping Billed in rpt_samplehyperstore__billing by month of Invoice Date."
+      "text": "Net shipping cost (Finance) = `Freight Cost` in `rpt_samplehyperstore__shipments` by month of `Shipped Date` − `Shipping Billed` in `rpt_samplehyperstore__billing` by month of `Invoice Date`."
     },
     {
       "title": "Cross-source metric: Orders per session",
-      "text": "Orders per session (Sales) = Orders in rpt_samplehyperstore__sales_orders for the web and app channels by Order Date ÷ Sessions in rpt_samplehyperstore__web_analytics by Session Start Date."
+      "text": "Orders per session (Sales) = `Orders` in `rpt_samplehyperstore__sales_orders` for the web and app channels by `Order Date` ÷ `Sessions` in `rpt_samplehyperstore__web_analytics` by `Session Start Date`."
     },
     {
       "title": "Cross-source metric: Unit cart abandonment",
-      "text": "Unit cart abandonment (Merchandising) = 1 − Units in rpt_samplehyperstore__merchandising for web and app orders ÷ Units Added to Cart in rpt_samplehyperstore__web_analytics, both by week (Order Date and Cart Added Date)."
+      "text": "Unit cart abandonment (Merchandising) = 1 − `Units` in `rpt_samplehyperstore__merchandising` for web and app orders ÷ `Units Added to Cart` in `rpt_samplehyperstore__web_analytics`, both by week (`Order Date` and `Cart Added Date`)."
     },
     {
       "title": "Cross-source metric: Marketplace fee rate on booked sales",
-      "text": "Marketplace fee rate on booked sales (Sales) = Marketplace Fees in rpt_samplehyperstore__billing by month of Invoice Date ÷ Revenue in rpt_samplehyperstore__sales_orders for the marketplace channel by month of Order Date."
+      "text": "Marketplace fee rate on booked sales (Sales) = `Marketplace Fees` in `rpt_samplehyperstore__billing` by month of `Invoice Date` ÷ `Revenue` in `rpt_samplehyperstore__sales_orders` for the marketplace channel by month of `Order Date`."
     }
   ]
 }

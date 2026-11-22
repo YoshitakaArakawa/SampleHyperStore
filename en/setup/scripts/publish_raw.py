@@ -5,12 +5,18 @@ For each table in setup/metadata/raw_layer.json (12 tables):
   2. Publish it as "SampleHyperStore - <table>" with the data source description (REST, CreateNew).
   3. Download the published .tdsx, write the column display names and descriptions into its .tds,
      and publish it again over the same data source (Overwrite). The data source keeps its id.
-  4. Download it once more and check that every column has its display name and description.
+  4. Download it once more and check that every column has its display name, description and
+     default aggregation (the "default_aggregation" of the table in raw_layer.json, if any).
+
+With --update, the data sources already exist: each one is downloaded with its extract, given the
+display names, descriptions and default aggregations again, and overwritten (steps 3-4 only). Its id
+stays the same, so the rpt_ data sources composed from it keep working.
 
 Usage (from en/setup):
     python scripts/publish_raw.py --project "SampleHyperStore/raw" --dry-run
     python scripts/publish_raw.py --project "SampleHyperStore/raw"
     python scripts/publish_raw.py --project "SampleHyperStore/raw" --tables orders order_lines
+    python scripts/publish_raw.py --project "SampleHyperStore/raw" --tables orders --update
 
 --project is the path of an existing project, levels separated by "/".
 Sign-in: scripts/tableau_auth.py (browser sign-in; .env holds SERVER and SITE_NAME only).
@@ -138,8 +144,16 @@ def name_logical_table(txt: str, table: str) -> str:
     return txt.replace(objs[0], new)
 
 
-def annotate_tds(txt: str, columns: list[str], descriptions: dict) -> str:
-    """Give every column its display name (caption) and description at the data-source level."""
+AGG = {"SUM": "Sum", "AVG": "Avg"}
+
+
+def _agg_attr(cap: str, aggregations: dict) -> str:
+    return f" aggregation='{AGG[aggregations[cap]]}'" if cap in aggregations else ""
+
+
+def annotate_tds(txt: str, columns: list[str], descriptions: dict, aggregations: dict | None = None) -> str:
+    """Give every column its display name (caption), description and default aggregation at the data-source level."""
+    aggregations = aggregations or {}
     meta = _metadata(txt)
     for col in columns:
         cap = caption(col)
@@ -152,8 +166,8 @@ def annotate_tds(txt: str, columns: list[str], descriptions: dict) -> str:
         m = re.search(r"<column\b[^>]*" + re.escape(name_attr) + r"[^>]*?(/?)>", txt)
         if m:
             tag = m.group(0)
-            new_tag = re.sub(r"\s+caption='[^']*'", "", tag)
-            new_tag = new_tag.replace("<column", f"<column caption='{_esc(cap)}'", 1)
+            new_tag = re.sub(r"\s+(caption|aggregation)='[^']*'", "", tag)
+            new_tag = new_tag.replace("<column", f"<column{_agg_attr(cap, aggregations)} caption='{_esc(cap)}'", 1)
             if tag.endswith("/>"):
                 new = new_tag[:-2].rstrip() + ">" + desc + "</column>"
                 txt = txt[:m.start()] + new + txt[m.end():]
@@ -164,7 +178,7 @@ def annotate_tds(txt: str, columns: list[str], descriptions: dict) -> str:
         else:
             role, typ = (("measure", "quantitative") if dtype in ("integer", "real")
                          else ("dimension", "nominal" if dtype in ("string", "boolean") else "ordinal"))
-            block = (f"  <column caption='{_esc(cap)}' datatype='{dtype}' {name_attr} "
+            block = (f"  <column{_agg_attr(cap, aggregations)} caption='{_esc(cap)}' datatype='{dtype}' {name_attr} "
                      f"role='{role}' type='{typ}'>{desc}</column>\n")
             anchor = "<aliases enabled='yes' />"
             if anchor in txt:
@@ -188,7 +202,8 @@ def write_tdsx(z: zipfile.ZipFile, tds_name: str, txt: str, out: Path):
             zo.writestr(item, data)
 
 
-def check_tds(txt: str, columns: list[str], descriptions: dict) -> list[str]:
+def check_tds(txt: str, columns: list[str], descriptions: dict, aggregations: dict | None = None) -> list[str]:
+    aggregations = aggregations or {}
     meta = _metadata(txt)
     missing = []
     for col in columns:
@@ -197,6 +212,8 @@ def check_tds(txt: str, columns: list[str], descriptions: dict) -> list[str]:
         cap = caption(col)
         if not m or f"caption='{_esc(cap)}'" not in m.group(0) or _esc(descriptions[cap]) not in m.group(1):
             missing.append(cap)
+        elif _agg_attr(cap, aggregations) and _agg_attr(cap, aggregations).strip() not in m.group(0):
+            missing.append(f"{cap} (aggregation)")
     return missing
 
 
@@ -219,6 +236,8 @@ def main():
     ap.add_argument("--project", required=True, help='existing project path, e.g. "SampleHyperStore/raw"')
     ap.add_argument("--tables", nargs="*", help="subset of tables (default: all 12)")
     ap.add_argument("--dry-run", action="store_true", help="build the .hyper files only; do not sign in")
+    ap.add_argument("--update", action="store_true",
+                    help="the data sources exist: rewrite names, descriptions and aggregations, and overwrite them")
     ap.add_argument("--name-format", default="SampleHyperStore - {table}", help=argparse.SUPPRESS)  # test runs only
     ap.add_argument("--data", help="dataset folder (default: en; the Japanese edition: ../../ja)")
     a = ap.parse_args()
@@ -231,7 +250,7 @@ def main():
         raise SystemExit(f"not in raw_layer.json: {unknown}")
 
     hyper = {}
-    for t in tables:
+    for t in ([] if a.update else tables):
         hyper[t] = WORK / t / f"{t}.hyper"
         n = build_hyper(t, cols[t], hyper[t], data)
         print(f"[hyper] {t}: {n:,} rows")
@@ -249,16 +268,27 @@ def main():
             spec = raw[t]
             ds_name = a.name_format.format(table=t)
             colnames = [c[0] for c in cols[t]]
+            aggs = spec.get("default_aggregation", {})
             d = WORK / t
-            item = TSC.DatasourceItem(project.id, name=ds_name)
-            item.description = spec["datasource_description"]
-            ds = server.datasources.publish(item, str(hyper[t]), TSC.Server.PublishMode.CreateNew)
-            print(f"[publish] {ds_name} -> {ds.id}")
+            d.mkdir(parents=True, exist_ok=True)
+            if a.update:
+                opts = TSC.RequestOptions()
+                opts.filter.add(TSC.Filter(TSC.RequestOptions.Field.Name, TSC.RequestOptions.Operator.Equals, ds_name))
+                hits = [x for x in TSC.Pager(server.datasources, opts) if x.project_id == project.id]
+                if len(hits) != 1:
+                    raise SystemExit(f"{ds_name}: expected one data source in the project, found {len(hits)}")
+                ds = hits[0]
+                print(f"[update] {ds_name} ({ds.id})")
+            else:
+                item = TSC.DatasourceItem(project.id, name=ds_name)
+                item.description = spec["datasource_description"]
+                ds = server.datasources.publish(item, str(hyper[t]), TSC.Server.PublishMode.CreateNew)
+                print(f"[publish] {ds_name} -> {ds.id}")
 
             first = Path(server.datasources.download(ds.id, filepath=str(d / "published")))
             z, tds_name, txt = read_tdsx(first)
             (d / "published.tds").write_text(txt, encoding="utf-8")
-            edited = annotate_tds(name_logical_table(txt, t), colnames, spec["columns"])
+            edited = annotate_tds(name_logical_table(txt, t), colnames, spec["columns"], aggs)
             (d / "edited.tds").write_text(edited, encoding="utf-8")
             write_tdsx(z, tds_name, edited, d / "edited.tdsx")
             z.close()
@@ -270,7 +300,7 @@ def main():
             back = Path(server.datasources.download(ds2.id, filepath=str(d / "verified"), include_extract=False))
             z3, _, txt3 = read_tdsx(back)
             z3.close()
-            missing = check_tds(txt3, colnames, spec["columns"])
+            missing = check_tds(txt3, colnames, spec["columns"], aggs)
             report[t] = {"luid": ds2.id, "same_id": ds2.id == ds.id, "columns": len(colnames),
                          "missing_caption_or_description": missing}
             print(f"[verify] {t}: id kept={ds2.id == ds.id}, columns={len(colnames)}, missing={missing}")
