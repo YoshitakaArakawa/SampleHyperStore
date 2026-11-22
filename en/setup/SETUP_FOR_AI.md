@@ -154,5 +154,6 @@ Tell the user they can remove the saved sign-in with `python scripts/tableau_aut
 ## Known limits
 
 - The rpt_ data sources show the raw layer's column descriptions on their columns (confirmed through the Metadata API, 2026-11). The rpt_ layer adds only calculated-field descriptions.
+- The rpt_ data sources do not take the raw layer's default aggregations: their numeric columns default to SUM (confirmed with `get-datasource-metadata`, 2026-11). This does not affect agents that query through Tableau MCP: `query-datasource` aggregates only with the function named in the query, and a field without one returns row-level values.
 - `get-datasource-metadata` in Tableau MCP takes descriptions from the Metadata API; when Metadata API requests are turned off (`DISABLE_METADATA_API_REQUESTS`) or the call fails, it returns the fields without descriptions, roles or data categories, and without an error. If the result has no `role` or `dataCategory` on any field, this has happened. This is MCP behaviour, not a problem with the data sources. Check descriptions with `scripts/check_metadata.py`.
 - The address of a data source page (`.../datasources/<number>`) changes on every overwrite. Open data sources by searching for their name.
