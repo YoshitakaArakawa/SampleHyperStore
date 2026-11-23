@@ -47,7 +47,7 @@ The data contains situations that AI agents tend to get wrong, on purpose. Each 
 | Mixing up metrics with the same name | "Revenue" exists in three versions, one per department | Each department's `Revenue` calculated field, and the Business Preference "Default meaning of sales and revenue" |
 | Not choosing among several definitions | Return rate has several definitions by department: requested, received, order cohort | Business Preferences with the formula of each definition |
 | Confusing calendar and fiscal years | The fiscal year starts in February | The description of `Fiscal Month`, and the Business Preference "Fiscal periods for Finance questions" |
-| Missing a change over time | Sales regions were realigned in January 2025 | The Business Preference "Sales region realignment on 2025-01-01" (compare by state) |
+| Missing a change over time | Sales regions were realigned in January 2025 | The `Sales Region (Current Map)` calculated field, and the Business Preference "Sales region realignment on 2025-01-01" that says when to use it |
 | Failing to build a metric across data sources | Return rate and net shipping cost take their numerator and denominator from different data sources | Business Preferences that name where each part comes from |
 
 The questions are in [`docs/questions.md`](docs/questions.md). There are two ways to compare. One is to show the agent only the raw-table data sources and ask. The other is to add the data sources with defined metrics and the Tableau Knowledge settings, and ask the same questions again.
