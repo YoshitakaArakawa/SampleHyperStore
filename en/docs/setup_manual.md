@@ -91,6 +91,8 @@ python scripts/publish_raw.py --project "<raw path>"
 
 Each of the 12 tables is published with column display names and descriptions.
 
+To load regenerated CSVs into raw data sources that already exist, do not publish them again: follow "Data sources that already exist" in step 1 of [`setup/SETUP_FOR_AI.md`](../setup/SETUP_FOR_AI.md).
+
 ### How to check
 
 - `publish_raw.py` ends with `done`.
@@ -221,7 +223,7 @@ python scripts/tableau_auth.py logout
 
 | Symptom | What to do |
 |---|---|
-| `publish_raw.py` ends with `check these tables: [...]` instead of `done` | Run again with `--tables` for those tables (for example `--tables orders`). If a data source for that table already exists in raw, delete it in the web UI first. |
+| `publish_raw.py` ends with `check these tables: [...]` instead of `done` | On the first publish: run again with `--tables` for those tables (for example `--tables orders`); if a data source for that table already exists in raw, delete it in the web UI first. When the rpt_ data sources are already built on it, do not delete it (a new data source gets a new id and the rpt_ data sources lose the table): look up the table in `work/raw/report.json` and follow "Data sources that already exist" in step 1 of [`setup/SETUP_FOR_AI.md`](../setup/SETUP_FOR_AI.md). |
 | `check_metadata.py` shows `[missing]` | Right after publishing, wait a few minutes and run it again. Also check that the last level of the project path (raw or marts) is right. |
 | Totals do not match | Review 2-1 items 2 (direction of the line) and 3 (column names with ` (<table>.csv)`). |
 | Step 3 fails with an error saying the data source is connected only to published data sources | Item 2 of step 3 (the overwrite) has not been done yet. |

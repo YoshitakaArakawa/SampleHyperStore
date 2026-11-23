@@ -19,7 +19,7 @@ The 12 tables are: products, orders, order_lines, shipments, shipment_lines, ret
 
 - **Ask the user before every step that writes to Tableau** (publish, overwrite, Knowledge writes). Say which project and which data sources.
 - **Never ask for, or accept, a password or token in chat.** Sign-in happens in the user's browser.
-- **Use a new, empty project.** Do not publish over data sources that already exist on the site.
+- **Use a new, empty project for the first setup.** Do not publish over data sources that already exist on the site. Updating this dataset's own raw data sources after the CSVs were regenerated is the exception: follow "Data sources that already exist" in step 1.
 - VizQL Data Service allows about 100 requests per hour per Creator. `query-datasource` and `get-datasource-metadata` both use it. Read metadata with `scripts/check_metadata.py` (Metadata API) and keep queries to the checks below.
 - Do not edit `../csv/`. The files are checked against `../SHA256SUMS`.
 
@@ -70,16 +70,7 @@ python scripts/publish_raw.py --project "<raw project path>" --dry-run   # build
 python scripts/publish_raw.py --project "<raw project path>"
 ```
 
-For each table the script publishes a .hyper extract, writes display names and descriptions from `metadata/raw_layer.json` into the data source, overwrites it, downloads it again and checks every column. It ends with `done`, or lists tables to look at; details are in `work/raw/report.json`.
-
-To replace the data of raw data sources that already exist (after the CSVs were regenerated), use `--replace --tables <table>`: it overwrites the data and keeps each data source's id. Each rpt_ data source that uses the table needs the web editor afterwards, even when no column changed: it either loses the table (queries no longer find the calculated fields that read it) or keeps reading the old rows until it is published again, and then loses the table. Check its descriptions with `check_metadata.py --layer rpt` and run `describe_rpt.py` (step 4, item 1) only if they are missing. Then open each one in the web editor and:
-
-1. Refresh the data source (toolbar) if the table's new columns are missing. After the refresh the table stands apart from the tree.
-2. If the tables stand apart (several base tables), draw every relationship again with the keys in step 3. In our runs a computer-use agent's drag registered only from the table at the top of the canvas; a person draws the rest (see step 2).
-3. In the Scratchpad, every calculated field that reads the table shows "!". Edit each one, replace the whole formula with the one in `metadata/rpt_layer.json`, and wait for "The calculation is valid."
-4. Publish over the same data source. The descriptions written in step 4, item 1 are kept.
-
-Then run the totals query in step 3.
+For each table the script publishes a .hyper extract, writes display names and descriptions from `metadata/raw_layer.json` into the data source, overwrites it, downloads it again and checks every column. It ends with `done`, or lists tables to look at; details are in `work/raw/report.json`. It also removes the "Number of Records" field that Tableau adds to a published .hyper, so the rpt_ data sources do not inherit it.
 
 Check without spending query quota: `python scripts/check_metadata.py --project "<raw project path>" --layer raw` (Metadata API; the catalog can lag a few minutes behind a publish). Optionally query row counts for two or three data sources with Tableau MCP:
 
@@ -91,6 +82,35 @@ Check without spending query quota: `python scripts/check_metadata.py --project 
 | shipments | 32,568 | | web_sessions | 455,057 |
 | shipment_lines | 68,616 | | web_searches | 100,524 |
 | returns | 6,680 | | refunds | 6,493 |
+
+### Data sources that already exist
+
+After the CSVs were regenerated, update raw data sources that already exist in one of two ways. Both keep each data source's id. Neither writes to the rpt_ data sources, but both need each rpt_ data source that uses the table republished from the web editor afterwards: after `--replace` without changes, after `--republish` with relationships and formulas redrawn (more work). Do not republish an rpt_ data source through the REST API to pick up new rows: an overwrite through REST (as `describe_rpt.py` does in step 4) drops the composition, and every query then fails with "None connects to a real underlying datasource" until the data source is published again from the web editor (step 4, item 2).
+
+**The columns did not change: `--replace --tables <table>`.** The script empties each table and loads the new rows in one job ("Update Data in Hyper Data Source" in the REST API). The data source definition is not republished: the logical table, display names and descriptions stay.
+
+Before writing anything, the script compares every table's columns with `columns.yaml` and stops if a table differs; use `--republish` for that table. `--dry-run` only builds the .hyper files: the comparison needs a sign-in. For the Japanese edition add `--data ../../ja` to every command in this section; without it no column matches and the script says so.
+
+The rpt_ data sources keep reading the old rows until they are published again. Open each rpt_ data source that uses the table in the web editor and publish it over the same data source without changing anything. Its relationships, calculated fields and descriptions stay. The publish dialog lists the rpt_ data source's own calculated fields and descriptions as changes ("overrides"); this is expected. Then run the totals query in step 3.
+
+**The columns changed: `--republish --tables <table>`.** The script publishes the new .hyper over each data source and writes the metadata again. Each rpt_ data source that uses the table needs the web editor afterwards: it either loses the table (queries no longer find the calculated fields that read it) or keeps reading the old rows until it is published again, and then loses the table. Check its descriptions with `check_metadata.py --layer rpt` and run `describe_rpt.py` (step 4, item 1) only if they are missing. Then open each one in the web editor and:
+
+1. Refresh the data source (toolbar) if the table's new columns are missing. After the refresh the table stands apart from the tree.
+2. If the tables stand apart (several base tables), draw every relationship again with the keys in step 3. In our runs a computer-use agent's drag registered only from the table at the top of the canvas; a person draws the rest (see step 2).
+3. In the Scratchpad, every calculated field that reads the table shows "!". Edit each one, replace the whole formula with the one in `metadata/rpt_layer.json`, and wait for "The calculation is valid."
+4. Publish over the same data source. The descriptions written in step 4, item 1 are kept.
+
+Then run the totals query in step 3.
+
+**"Number of Records" left over from an earlier publish.** A raw data source published by an earlier version of the script may still have a "Number of Records" field, and the rpt_ data sources that use it show "Number of Records" or "Number of Records (<data source>)". The web editor cannot delete these fields from the rpt_ data source; it can only hide them. Remove them at the source instead: run `--update --tables <table>` for those raw data sources, then open each rpt_ data source that uses them in the web editor and publish it without changes. The fields disappear when the web editor opens the data source, and relationships, calculated fields and row counts stay.
+
+**When a run ends with `check these tables`.** Look up each listed table in `work/raw/report.json`:
+
+- `failed`: the run stopped at this table, and the tables after it were not processed. Run the same command again for these tables (replacing rows twice gives the same result). On the first publish, delete the table's data source in the web UI first if it was created.
+- `missing_caption_or_description` or `numrec_after` above 0: run `--update --tables <table>`.
+- `tds_unchanged: false` (`--replace`): compare `work/raw/<table>/before.tds` and `after.tds` before going on.
+
+Do not delete a raw data source that rpt_ data sources use: a new one gets a new id and the rpt_ data sources lose the table.
 
 ## Step 2. Decide who does the web-editor work
 
