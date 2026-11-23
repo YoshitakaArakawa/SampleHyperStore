@@ -427,7 +427,7 @@ def replace_all(server, project, tables, raw, cols, hyper, rows, name_format, ex
         plan.append((t, ds, before))
 
     report = {}
-    for t, ds, before in plan:
+    for i, (t, ds, before) in enumerate(plan):
         print(f"[replace] {ds.name} ({ds.id}): {rows[t]:,} rows")
         try:
             replace_rows(server, ds, hyper[t])
@@ -435,6 +435,9 @@ def replace_all(server, project, tables, raw, cols, hyper, rows, name_format, ex
             report[t] = {"luid": ds.id, "same_id": True, "failed": f"{type(e).__name__}: {e}",
                          "missing_caption_or_description": []}
             print(f"[replace] {t}: failed ({type(e).__name__}); the tables after it were not replaced")
+            for t2, ds2, _ in plan[i + 1:]:
+                report[t2] = {"luid": ds2.id, "same_id": True, "failed": f"not replaced: {t} failed before it",
+                              "missing_caption_or_description": []}
             break
         try:
             after = download_tds(server, ds.id, WORK / t / "after")
