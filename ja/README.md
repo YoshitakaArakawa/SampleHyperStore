@@ -82,7 +82,7 @@ erDiagram
     order_lines ||--o{ invoice_lines : "注文明細ID"
     order_lines ||--o{ returns : "注文明細ID"
     returns ||--o{ refunds : "返品ID"
-    invoices ||--o{ credit_memos : "請求書ID"
+    invoice_lines ||--o{ credit_memos : "請求明細ID"
     refunds |o--o{ credit_memos : "返金ID"
 ```
 

@@ -108,7 +108,7 @@ Build the six department data sources one at a time in the Tableau web editor. `
 
 | Data source | Root table | Relationships (→ points to the table you add; the key is in brackets) |
 |---|---|---|
-| rpt_samplehyperstore__billing | invoices | invoices →(Invoice Id) invoice_lines →(Product Id) products; invoice_lines →(Invoice Id and Product Id) credit_memos |
+| rpt_samplehyperstore__billing | invoices | invoices →(Invoice Id) invoice_lines →(Product Id) products; invoice_lines →(Invoice Line Id) credit_memos |
 | rpt_samplehyperstore__sales_orders | products | products →(Product Id) order_lines →(Order Id) orders |
 | rpt_samplehyperstore__merchandising | products | same as sales_orders |
 | rpt_samplehyperstore__shipments | products | products →(Product Id) shipment_lines →(Shipment Id) shipments |

@@ -238,9 +238,13 @@ def main():
     ap.add_argument("--dry-run", action="store_true", help="build the .hyper files only; do not sign in")
     ap.add_argument("--update", action="store_true",
                     help="the data sources exist: rewrite names, descriptions and aggregations, and overwrite them")
+    ap.add_argument("--replace", action="store_true",
+                    help="the data sources exist: replace their data with the current CSVs (ids kept), then rewrite metadata")
     ap.add_argument("--name-format", default="SampleHyperStore - {table}", help=argparse.SUPPRESS)  # test runs only
     ap.add_argument("--data", help="dataset folder (default: en; the Japanese edition: ../../ja)")
     a = ap.parse_args()
+    if a.update and a.replace:
+        raise SystemExit("use --update or --replace, not both")
 
     data = dataset_dir(a.data)
     raw, cols = load_inputs(data)
@@ -271,14 +275,20 @@ def main():
             aggs = spec.get("default_aggregation", {})
             d = WORK / t
             d.mkdir(parents=True, exist_ok=True)
-            if a.update:
+            if a.update or a.replace:
                 opts = TSC.RequestOptions()
                 opts.filter.add(TSC.Filter(TSC.RequestOptions.Field.Name, TSC.RequestOptions.Operator.Equals, ds_name))
                 hits = [x for x in TSC.Pager(server.datasources, opts) if x.project_id == project.id]
                 if len(hits) != 1:
                     raise SystemExit(f"{ds_name}: expected one data source in the project, found {len(hits)}")
                 ds = hits[0]
-                print(f"[update] {ds_name} ({ds.id})")
+                print(f"[{'replace' if a.replace else 'update'}] {ds_name} ({ds.id})")
+                if a.replace:
+                    item = TSC.DatasourceItem(project.id, name=ds_name)
+                    item.description = spec["datasource_description"]
+                    new = server.datasources.publish(item, str(hyper[t]), TSC.Server.PublishMode.Overwrite)
+                    if new.id != ds.id:
+                        raise SystemExit(f"{ds_name}: overwrite changed the id ({ds.id} -> {new.id})")
             else:
                 item = TSC.DatasourceItem(project.id, name=ds_name)
                 item.description = spec["datasource_description"]

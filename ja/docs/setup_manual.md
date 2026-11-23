@@ -109,7 +109,7 @@ python scripts/publish_raw.py --project "<raw のパス>" --data ../../ja
 
 | データソース | ルートのテーブル | 関係（→ の右がつなぐ先、括弧はキー） |
 |---|---|---|
-| rpt_samplehyperstore__billing | invoices | invoices →（請求書ID）invoice_lines →（商品ID）products。invoice_lines →（請求書ID と 商品ID）credit_memos |
+| rpt_samplehyperstore__billing | invoices | invoices →（請求書ID）invoice_lines →（商品ID）products。invoice_lines →（請求明細ID）credit_memos |
 | rpt_samplehyperstore__sales_orders | products | products →（商品ID）order_lines →（注文ID）orders |
 | rpt_samplehyperstore__merchandising | products | sales_orders と同じ |
 | rpt_samplehyperstore__shipments | products | products →（商品ID）shipment_lines →（出荷ID）shipments |
