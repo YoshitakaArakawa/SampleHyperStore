@@ -4,7 +4,8 @@ For each table in setup/metadata/raw_layer.json (12 tables):
   1. Build a .hyper extract from csv/in_use/<table>.csv (column types from columns.yaml).
   2. Publish it as "SampleHyperStore - <table>" with the data source description (REST, CreateNew).
   3. Download the published .tdsx, write the column display names and descriptions into its .tds,
-     and publish it again over the same data source (Overwrite). The data source keeps its id.
+     drop the "Number of Records" field Tableau adds to a published .hyper, and publish it again over
+     the same data source (Overwrite). The data source keeps its id.
   4. Download it once more and check that every column has its display name, description and
      default aggregation (the "default_aggregation" of the table in raw_layer.json, if any).
 
@@ -12,11 +13,24 @@ With --update, the data sources already exist: each one is downloaded with its e
 display names, descriptions and default aggregations again, and overwritten (steps 3-4 only). Its id
 stays the same, so the rpt_ data sources composed from it keep working.
 
+With --replace, the data sources already exist and only their rows change: the new .hyper is sent with
+the REST call "Update Data in Hyper Data Source" and one "replace" action, which empties the table and
+inserts the new rows in one job. The data source definition (.tds) is not republished, so its logical
+table, display names and descriptions stay. The rpt_ data sources composed from it keep reading the
+old rows until each one is opened in the web editor and published again without changes; their
+relationships and calculated fields stay. The columns (names and types) must not change; the script
+checks every table first and stops before writing if one differs.
+
+With --republish, the data sources already exist and their columns changed: the new .hyper is published
+over each one (Overwrite, id kept) and the metadata is written again (steps 3-4). Each rpt_ data source
+that uses the table then needs the web editor (see SETUP_FOR_AI.md, step 1).
+
 Usage (from en/setup):
     python scripts/publish_raw.py --project "SampleHyperStore/raw" --dry-run
     python scripts/publish_raw.py --project "SampleHyperStore/raw"
     python scripts/publish_raw.py --project "SampleHyperStore/raw" --tables orders order_lines
     python scripts/publish_raw.py --project "SampleHyperStore/raw" --tables orders --update
+    python scripts/publish_raw.py --project "SampleHyperStore/raw" --tables orders --replace
 
 --project is the path of an existing project, levels separated by "/".
 Sign-in: scripts/tableau_auth.py (browser sign-in; .env holds SERVER and SITE_NAME only).
@@ -28,6 +42,7 @@ import argparse
 import json
 import re
 import sys
+import uuid
 import zipfile
 from pathlib import Path
 
@@ -151,9 +166,21 @@ def _agg_attr(cap: str, aggregations: dict) -> str:
     return f" aggregation='{AGG[aggregations[cap]]}'" if cap in aggregations else ""
 
 
+NUMREC = re.compile(r"\n?[ \t]*<column\b[^>]*user:auto-column='numrec'[^>]*?(/>|>.*?</column>)", re.S)
+
+
+def strip_numrec(txt: str) -> str:
+    return NUMREC.sub("", txt)
+
+
 def annotate_tds(txt: str, columns: list[str], descriptions: dict, aggregations: dict | None = None) -> str:
-    """Give every column its display name (caption), description and default aggregation at the data-source level."""
+    """Give every column its display name (caption), description and default aggregation at the data-source level.
+
+    Also drop the "Number of Records" column Tableau adds when a .hyper is published
+    (user:auto-column='numrec'): the rpt_ data sources would carry it as a calculated field.
+    """
     aggregations = aggregations or {}
+    txt = strip_numrec(txt)
     meta = _metadata(txt)
     for col in columns:
         cap = caption(col)
@@ -217,6 +244,58 @@ def check_tds(txt: str, columns: list[str], descriptions: dict, aggregations: di
     return missing
 
 
+LOCAL_TYPE = {"string": "string", "integer": "integer", "date": "date", "datetime": "datetime",
+              "boolean": "boolean"}
+
+
+def schema_diff(txt: str, columns: list[list[str]]) -> list[str]:
+    """Differences between the published columns (.tds) and columns.yaml; empty when they match."""
+    meta = _metadata(txt)
+    want = {c: ("real" if t.startswith("decimal") else LOCAL_TYPE.get(t, t)) for c, t in columns}
+    diff = [f"new column {c}" for c in want if c not in meta]
+    diff += [f"column {c} is gone" for c in meta if c not in want]
+    diff += [f"{c}: {meta[c][1]} -> {want[c]}" for c in want if c in meta and meta[c][1] != want[c]]
+    return diff
+
+
+def tds_fingerprint(txt: str) -> dict:
+    """What the rpt_ data sources depend on: logical table ids and captions, and each column's
+    caption, description and aggregation. The server reorders and renames other parts of the .tds
+    (column order, connection name, dbname) when it stores new rows, so those are left out."""
+    cols = {}
+    for m in re.finditer(r"<column\b([^>]*?)(/>|>(.*?)</column>)", txt, re.S):
+        attrs, body = m.group(1), m.group(3) or ""
+        name = re.search(r"name='([^']*)'", attrs)
+        if not name:
+            continue
+        cap = re.search(r"caption='([^']*)'", attrs)
+        agg = re.search(r"aggregation='([^']*)'", attrs)
+        desc = re.findall(r"<run>(.*?)</run>", body, re.S)
+        cols[name.group(1)] = (cap.group(1) if cap else None, agg.group(1) if agg else None, tuple(desc))
+    objects = sorted(set(re.findall(r"<object caption='([^']*)' id='([^']*)'", txt)))
+    return {"objects": objects, "columns": cols}
+
+
+def numrec_count(txt: str) -> int:
+    return txt.count("user:auto-column='numrec'")
+
+
+def download_tds(server, ds_id: str, out: Path) -> str:
+    f = Path(server.datasources.download(ds_id, filepath=str(out), include_extract=False))
+    z, _, txt = read_tdsx(f)
+    z.close()
+    return txt
+
+
+def replace_rows(server, ds, hyper: Path) -> None:
+    """Replace every row of the published table Extract.Extract with the rows of the local .hyper (one job)."""
+    actions = [{"action": "replace", "source-schema": "Extract", "source-table": "Extract",
+                "target-schema": "Extract", "target-table": "Extract"}]
+    job = server.datasources.update_hyper_data(ds, request_id=str(uuid.uuid4()), actions=actions,
+                                               payload=str(hyper))
+    server.jobs.wait_for_job(job)  # raises JobFailedException / JobCancelledException
+
+
 # ----------------------------------------------------------------- Tableau
 def find_project(server, path: str):
     import tableauserverclient as TSC
@@ -239,12 +318,15 @@ def main():
     ap.add_argument("--update", action="store_true",
                     help="the data sources exist: rewrite names, descriptions and aggregations, and overwrite them")
     ap.add_argument("--replace", action="store_true",
-                    help="the data sources exist: replace their data with the current CSVs (ids kept), then rewrite metadata")
+                    help="the data sources exist and the columns did not change: replace their rows only")
+    ap.add_argument("--republish", action="store_true",
+                    help="the data sources exist and the columns changed: overwrite them with the new .hyper "
+                         "(ids kept), then rewrite metadata; rpt_ data sources need the web editor afterwards")
     ap.add_argument("--name-format", default="SampleHyperStore - {table}", help=argparse.SUPPRESS)  # test runs only
     ap.add_argument("--data", help="dataset folder (default: en; the Japanese edition: ../../ja)")
     a = ap.parse_args()
-    if a.update and a.replace:
-        raise SystemExit("use --update or --replace, not both")
+    if a.update + a.replace + a.republish > 1:
+        raise SystemExit("use only one of --update, --replace and --republish")
 
     data = dataset_dir(a.data)
     raw, cols = load_inputs(data)
@@ -253,11 +335,11 @@ def main():
     if unknown:
         raise SystemExit(f"not in raw_layer.json: {unknown}")
 
-    hyper = {}
+    hyper, rows = {}, {}
     for t in ([] if a.update else tables):
         hyper[t] = WORK / t / f"{t}.hyper"
-        n = build_hyper(t, cols[t], hyper[t], data)
-        print(f"[hyper] {t}: {n:,} rows")
+        rows[t] = build_hyper(t, cols[t], hyper[t], data)
+        print(f"[hyper] {t}: {rows[t]:,} rows")
     if a.dry_run:
         print("dry run: nothing published")
         return
@@ -265,25 +347,30 @@ def main():
     import tableauserverclient as TSC
     from tableau_auth import signed_in_server
 
+    def existing(server, project, ds_name):
+        opts = TSC.RequestOptions()
+        opts.filter.add(TSC.Filter(TSC.RequestOptions.Field.Name, TSC.RequestOptions.Operator.Equals, ds_name))
+        hits = [x for x in TSC.Pager(server.datasources, opts) if x.project_id == project.id]
+        if len(hits) != 1:
+            raise SystemExit(f"{ds_name}: expected one data source in the project, found {len(hits)}")
+        return hits[0]
+
     report = {}
     with signed_in_server() as server:
         project = find_project(server, a.project)
-        for t in tables:
+        if a.replace:
+            report = replace_all(server, project, tables, raw, cols, hyper, rows, a.name_format, existing)
+        for t in ([] if a.replace else tables):
             spec = raw[t]
             ds_name = a.name_format.format(table=t)
             colnames = [c[0] for c in cols[t]]
             aggs = spec.get("default_aggregation", {})
             d = WORK / t
             d.mkdir(parents=True, exist_ok=True)
-            if a.update or a.replace:
-                opts = TSC.RequestOptions()
-                opts.filter.add(TSC.Filter(TSC.RequestOptions.Field.Name, TSC.RequestOptions.Operator.Equals, ds_name))
-                hits = [x for x in TSC.Pager(server.datasources, opts) if x.project_id == project.id]
-                if len(hits) != 1:
-                    raise SystemExit(f"{ds_name}: expected one data source in the project, found {len(hits)}")
-                ds = hits[0]
-                print(f"[{'replace' if a.replace else 'update'}] {ds_name} ({ds.id})")
-                if a.replace:
+            if a.update or a.republish:
+                ds = existing(server, project, ds_name)
+                print(f"[{'republish' if a.republish else 'update'}] {ds_name} ({ds.id})")
+                if a.republish:
                     item = TSC.DatasourceItem(project.id, name=ds_name)
                     item.description = spec["datasource_description"]
                     new = server.datasources.publish(item, str(hyper[t]), TSC.Server.PublishMode.Overwrite)
@@ -315,9 +402,45 @@ def main():
                          "missing_caption_or_description": missing}
             print(f"[verify] {t}: id kept={ds2.id == ds.id}, columns={len(colnames)}, missing={missing}")
     (WORK / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
-    bad = [t for t, r in report.items() if r["missing_caption_or_description"] or not r["same_id"]]
+    bad = [t for t, r in report.items()
+           if r["missing_caption_or_description"] or not r["same_id"] or not r.get("tds_unchanged", True)]
     print("done" if not bad else f"check these tables: {bad}")
     sys.exit(1 if bad else 0)
+
+
+def replace_all(server, project, tables, raw, cols, hyper, rows, name_format, existing) -> dict:
+    """--replace: check every table's columns first, then replace the rows table by table."""
+    plan = []
+    for t in tables:
+        ds = existing(server, project, name_format.format(table=t))
+        d = WORK / t
+        d.mkdir(parents=True, exist_ok=True)
+        before = download_tds(server, ds.id, d / "before")
+        (d / "before.tds").write_text(before, encoding="utf-8")
+        diff = schema_diff(before, cols[t])
+        if diff:
+            raise SystemExit(f"{ds.name}: the columns changed ({'; '.join(diff)}). Nothing was replaced. "
+                             "Use --republish for this table (see SETUP_FOR_AI.md, step 1).")
+        plan.append((t, ds, before))
+
+    report = {}
+    for t, ds, before in plan:
+        print(f"[replace] {ds.name} ({ds.id}): {rows[t]:,} rows")
+        replace_rows(server, ds, hyper[t])
+        after = download_tds(server, ds.id, WORK / t / "after")
+        (WORK / t / "after.tds").write_text(after, encoding="utf-8")
+        spec = raw[t]
+        missing = check_tds(after, [c[0] for c in cols[t]], spec["columns"], spec.get("default_aggregation", {}))
+        unchanged = tds_fingerprint(after) == tds_fingerprint(before)
+        report[t] = {"luid": ds.id, "same_id": True, "rows": rows[t], "columns": len(cols[t]),
+                     "tds_unchanged": unchanged, "numrec_before": numrec_count(before),
+                     "numrec_after": numrec_count(after), "missing_caption_or_description": missing}
+        print(f"[verify] {t}: logical table and columns unchanged={unchanged}, missing={missing}, "
+              f"Number of Records columns {numrec_count(before)} -> {numrec_count(after)}")
+        if missing:
+            print(f"  {t}: names or descriptions differ from raw_layer.json (--replace does not write them; "
+                  "run --update for this table)")
+    return report
 
 
 if __name__ == "__main__":

@@ -70,9 +70,17 @@ python scripts/publish_raw.py --project "<raw project path>" --dry-run   # build
 python scripts/publish_raw.py --project "<raw project path>"
 ```
 
-For each table the script publishes a .hyper extract, writes display names and descriptions from `metadata/raw_layer.json` into the data source, overwrites it, downloads it again and checks every column. It ends with `done`, or lists tables to look at; details are in `work/raw/report.json`.
+For each table the script publishes a .hyper extract, writes display names and descriptions from `metadata/raw_layer.json` into the data source, overwrites it, downloads it again and checks every column. It ends with `done`, or lists tables to look at; details are in `work/raw/report.json`. It also removes the "Number of Records" field that Tableau adds to a published .hyper, so the rpt_ data sources do not inherit it.
 
-To replace the data of raw data sources that already exist (after the CSVs were regenerated), use `--replace --tables <table>`: it overwrites the data and keeps each data source's id. Each rpt_ data source that uses the table needs the web editor afterwards, even when no column changed: it either loses the table (queries no longer find the calculated fields that read it) or keeps reading the old rows until it is published again, and then loses the table. Check its descriptions with `check_metadata.py --layer rpt` and run `describe_rpt.py` (step 4, item 1) only if they are missing. Then open each one in the web editor and:
+### Data sources that already exist
+
+After the CSVs were regenerated, update raw data sources that already exist in one of two ways. Both keep each data source's id. Never republish an rpt_ data source through the REST API (a script or `publish`): it then fails every query with "None connects to a real underlying datasource" until it is published again from the web editor.
+
+**The columns did not change: `--replace --tables <table>`.** The script empties each table and loads the new rows in one job ("Update Data in Hyper Data Source" in the REST API). The data source definition is not republished: the logical table, display names and descriptions stay. The script first compares every table's columns with `columns.yaml` and stops before writing anything if a table differs; use `--republish` for that table.
+
+The rpt_ data sources keep reading the old rows until they are published again. Open each rpt_ data source that uses the table in the web editor and publish it over the same data source without changing anything. Its relationships, calculated fields and descriptions stay. The publish dialog lists the rpt_ data source's own calculated fields and descriptions as changes ("overrides"); this is expected. Then run the totals query in step 3.
+
+**The columns changed: `--republish --tables <table>`.** The script publishes the new .hyper over each data source and writes the metadata again. Each rpt_ data source that uses the table needs the web editor afterwards: it either loses the table (queries no longer find the calculated fields that read it) or keeps reading the old rows until it is published again, and then loses the table. Check its descriptions with `check_metadata.py --layer rpt` and run `describe_rpt.py` (step 4, item 1) only if they are missing. Then open each one in the web editor and:
 
 1. Refresh the data source (toolbar) if the table's new columns are missing. After the refresh the table stands apart from the tree.
 2. If the tables stand apart (several base tables), draw every relationship again with the keys in step 3. In our runs a computer-use agent's drag registered only from the table at the top of the canvas; a person draws the rest (see step 2).
@@ -80,6 +88,8 @@ To replace the data of raw data sources that already exist (after the CSVs were 
 4. Publish over the same data source. The descriptions written in step 4, item 1 are kept.
 
 Then run the totals query in step 3.
+
+**"Number of Records" left over from an earlier publish.** A raw data source published by an earlier version of the script may still have a "Number of Records" field, and the rpt_ data sources that use it show "Number of Records" or "Number of Records (<data source>)". The web editor cannot delete these fields from the rpt_ data source; it can only hide them. Remove them at the source instead: run `--update --tables <table>` for those raw data sources, then open each rpt_ data source that uses them in the web editor and publish it without changes. The fields disappear when the web editor opens the data source, and relationships, calculated fields and row counts stay.
 
 Check without spending query quota: `python scripts/check_metadata.py --project "<raw project path>" --layer raw` (Metadata API; the catalog can lag a few minutes behind a publish). Optionally query row counts for two or three data sources with Tableau MCP:
 
