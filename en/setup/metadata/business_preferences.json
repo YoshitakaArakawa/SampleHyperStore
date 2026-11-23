@@ -35,7 +35,7 @@
     },
     {
       "title": "Method: Sales region realignment on 2025-01-01",
-      "text": "To compare sales regions across years spanning 2025-01-01, use `Sales Region (Current Map)` in `rpt_samplehyperstore__billing`: it places every date on the territory map in effect from 2025-01-01. To judge results on the region in effect at posting, as against targets, use `Sales Region Id`."
+      "text": "To compare sales regions across years spanning 2025-01-01, use `Sales Region (Current Map)` in `rpt_samplehyperstore__billing`: it places every date on the territory map in effect from 2025-01-01. To judge results on the region in effect at posting, as against targets, use `Sales Region Id` for invoice amounts and `Sales Region Id (credit_memos.csv)` for credit memo amounts."
     },
     {
       "title": "Default date: rpt_samplehyperstore__billing",
