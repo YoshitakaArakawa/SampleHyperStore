@@ -32,6 +32,7 @@ Usage (from en/setup):
     python scripts/publish_raw.py --project "SampleHyperStore/raw" --tables orders --update
     python scripts/publish_raw.py --project "SampleHyperStore/raw" --tables orders --replace
     python scripts/publish_raw.py --project "SampleHyperStore/raw" --tables orders --republish
+    python scripts/publish_raw.py --project "SampleHyperStore/raw" --data ../../ja --tables orders --replace
 
 --project is the path of an existing project, levels separated by "/".
 Sign-in: scripts/tableau_auth.py (browser sign-in; .env holds SERVER and SITE_NAME only).
@@ -290,7 +291,7 @@ def replace_rows(server, ds, hyper: Path) -> None:
                 "target-schema": "Extract", "target-table": "Extract"}]
     job = server.datasources.update_hyper_data(ds, request_id=str(uuid.uuid4()), actions=actions,
                                                payload=str(hyper))
-    server.jobs.wait_for_job(job)  # raises JobFailedException / JobCancelledException
+    server.jobs.wait_for_job(job, timeout=3600)  # raises JobFailedException / JobCancelledException / TimeoutError
 
 
 # ----------------------------------------------------------------- Tableau
@@ -359,47 +360,57 @@ def main():
         project = find_project(server, a.project)
         if a.replace:
             report = replace_all(server, project, tables, raw, cols, hyper, rows, a.name_format, existing, data.name)
-        for t in ([] if a.replace else tables):
-            spec = raw[t]
-            ds_name = a.name_format.format(table=t)
-            colnames = [c[0] for c in cols[t]]
-            aggs = spec.get("default_aggregation", {})
-            d = WORK / t
-            d.mkdir(parents=True, exist_ok=True)
-            if a.update or a.republish:
-                ds = existing(server, project, ds_name)
-                print(f"[{'republish' if a.republish else 'update'}] {ds_name} ({ds.id})")
-                if a.republish:
+        todo = [] if a.replace else list(tables)
+        for i, t in enumerate(todo):
+            try:
+                spec = raw[t]
+                ds_name = a.name_format.format(table=t)
+                colnames = [c[0] for c in cols[t]]
+                aggs = spec.get("default_aggregation", {})
+                d = WORK / t
+                d.mkdir(parents=True, exist_ok=True)
+                if a.update or a.republish:
+                    ds = existing(server, project, ds_name)
+                    print(f"[{'republish' if a.republish else 'update'}] {ds_name} ({ds.id})")
+                    if a.republish:
+                        item = TSC.DatasourceItem(project.id, name=ds_name)
+                        item.description = spec["datasource_description"]
+                        new = server.datasources.publish(item, str(hyper[t]), TSC.Server.PublishMode.Overwrite)
+                        if new.id != ds.id:
+                            raise SystemExit(f"{ds_name}: overwrite changed the id ({ds.id} -> {new.id})")
+                else:
                     item = TSC.DatasourceItem(project.id, name=ds_name)
                     item.description = spec["datasource_description"]
-                    new = server.datasources.publish(item, str(hyper[t]), TSC.Server.PublishMode.Overwrite)
-                    if new.id != ds.id:
-                        raise SystemExit(f"{ds_name}: overwrite changed the id ({ds.id} -> {new.id})")
-            else:
-                item = TSC.DatasourceItem(project.id, name=ds_name)
-                item.description = spec["datasource_description"]
-                ds = server.datasources.publish(item, str(hyper[t]), TSC.Server.PublishMode.CreateNew)
-                print(f"[publish] {ds_name} -> {ds.id}")
+                    ds = server.datasources.publish(item, str(hyper[t]), TSC.Server.PublishMode.CreateNew)
+                    print(f"[publish] {ds_name} -> {ds.id}")
 
-            first = Path(server.datasources.download(ds.id, filepath=str(d / "published")))
-            z, tds_name, txt = read_tdsx(first)
-            (d / "published.tds").write_text(txt, encoding="utf-8")
-            edited = annotate_tds(name_logical_table(txt, t), colnames, spec["columns"], aggs)
-            (d / "edited.tds").write_text(edited, encoding="utf-8")
-            write_tdsx(z, tds_name, edited, d / "edited.tdsx")
-            z.close()
+                first = Path(server.datasources.download(ds.id, filepath=str(d / "published")))
+                z, tds_name, txt = read_tdsx(first)
+                (d / "published.tds").write_text(txt, encoding="utf-8")
+                edited = annotate_tds(name_logical_table(txt, t), colnames, spec["columns"], aggs)
+                (d / "edited.tds").write_text(edited, encoding="utf-8")
+                write_tdsx(z, tds_name, edited, d / "edited.tdsx")
+                z.close()
 
-            item2 = TSC.DatasourceItem(project.id, name=ds_name)
-            item2.description = spec["datasource_description"]
-            ds2 = server.datasources.publish(item2, str(d / "edited.tdsx"), TSC.Server.PublishMode.Overwrite)
+                item2 = TSC.DatasourceItem(project.id, name=ds_name)
+                item2.description = spec["datasource_description"]
+                ds2 = server.datasources.publish(item2, str(d / "edited.tdsx"), TSC.Server.PublishMode.Overwrite)
 
-            back = Path(server.datasources.download(ds2.id, filepath=str(d / "verified"), include_extract=False))
-            z3, _, txt3 = read_tdsx(back)
-            z3.close()
-            missing = check_tds(txt3, colnames, spec["columns"], aggs)
-            report[t] = {"luid": ds2.id, "same_id": ds2.id == ds.id, "columns": len(colnames),
-                         "numrec_after": numrec_count(txt3), "missing_caption_or_description": missing}
-            print(f"[verify] {t}: id kept={ds2.id == ds.id}, columns={len(colnames)}, missing={missing}")
+                back = Path(server.datasources.download(ds2.id, filepath=str(d / "verified"), include_extract=False))
+                z3, _, txt3 = read_tdsx(back)
+                z3.close()
+                missing = check_tds(txt3, colnames, spec["columns"], aggs)
+                report[t] = {"luid": ds2.id, "same_id": ds2.id == ds.id, "columns": len(colnames),
+                             "numrec_after": numrec_count(txt3), "missing_caption_or_description": missing}
+                print(f"[verify] {t}: id kept={ds2.id == ds.id}, columns={len(colnames)}, missing={missing}")
+            except (Exception, SystemExit) as e:  # keep a record of what was written before the stop
+                report[t] = {"same_id": True, "failed": f"{type(e).__name__}: {e}",
+                             "missing_caption_or_description": []}
+                print(f"[{t}] failed ({type(e).__name__}: {e}); the tables after it were not processed")
+                for t2 in todo[i + 1:]:
+                    report[t2] = {"same_id": True, "failed": f"not processed: {t} failed before it",
+                                  "missing_caption_or_description": []}
+                break
     (WORK / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     bad = [t for t, r in report.items()
            if r.get("failed") or r.get("unchecked") or r["missing_caption_or_description"] or not r["same_id"]

@@ -19,7 +19,7 @@ The 12 tables are: products, orders, order_lines, shipments, shipment_lines, ret
 
 - **Ask the user before every step that writes to Tableau** (publish, overwrite, Knowledge writes). Say which project and which data sources.
 - **Never ask for, or accept, a password or token in chat.** Sign-in happens in the user's browser.
-- **Use a new, empty project.** Do not publish over data sources that already exist on the site.
+- **Use a new, empty project for the first setup.** Do not publish over data sources that already exist on the site. Updating this dataset's own raw data sources after the CSVs were regenerated is the exception: follow "Data sources that already exist" in step 1.
 - VizQL Data Service allows about 100 requests per hour per Creator. `query-datasource` and `get-datasource-metadata` both use it. Read metadata with `scripts/check_metadata.py` (Metadata API) and keep queries to the checks below.
 - Do not edit `../csv/`. The files are checked against `../SHA256SUMS`.
 
@@ -85,9 +85,11 @@ Check without spending query quota: `python scripts/check_metadata.py --project 
 
 ### Data sources that already exist
 
-After the CSVs were regenerated, update raw data sources that already exist in one of two ways. Both keep each data source's id, and neither touches the rpt_ data sources; republish those from the web editor as described below. Do not republish an rpt_ data source through the REST API to pick up new rows: an overwrite through REST (as `describe_rpt.py` does in step 4) drops the composition, and every query then fails with "None connects to a real underlying datasource" until the data source is published again from the web editor (step 4, item 2).
+After the CSVs were regenerated, update raw data sources that already exist in one of two ways. Both keep each data source's id. Neither writes to the rpt_ data sources, but both need each rpt_ data source that uses the table republished from the web editor afterwards: after `--replace` without changes, after `--republish` with relationships and formulas redrawn (more work). Do not republish an rpt_ data source through the REST API to pick up new rows: an overwrite through REST (as `describe_rpt.py` does in step 4) drops the composition, and every query then fails with "None connects to a real underlying datasource" until the data source is published again from the web editor (step 4, item 2).
 
-**The columns did not change: `--replace --tables <table>`.** The script empties each table and loads the new rows in one job ("Update Data in Hyper Data Source" in the REST API). The data source definition is not republished: the logical table, display names and descriptions stay. The script first compares every table's columns with `columns.yaml` and stops before writing anything if a table differs; use `--republish` for that table. (`--dry-run` only builds the .hyper files; the comparison needs a sign-in.) For the Japanese edition add `--data ../../ja` to every command here; without it no column matches and the script says so. If it ends with `check these tables`, look at that table in `work/raw/report.json`: `failed` (the job failed; the rows did not change) or `unchecked` (the rows changed but the check could not run): run `--replace` for that table again; `missing_caption_or_description`: run `--update --tables <table>`; `tds_unchanged: false` or more `numrec_after` than `numrec_before`: compare `work/raw/<table>/before.tds` and `after.tds` before going on. Do not delete the data source: a new one gets a new id and the rpt_ data sources lose the table.
+**The columns did not change: `--replace --tables <table>`.** The script empties each table and loads the new rows in one job ("Update Data in Hyper Data Source" in the REST API). The data source definition is not republished: the logical table, display names and descriptions stay.
+
+Before writing anything, the script compares every table's columns with `columns.yaml` and stops if a table differs; use `--republish` for that table. `--dry-run` only builds the .hyper files: the comparison needs a sign-in. For the Japanese edition add `--data ../../ja` to every command in this section; without it no column matches and the script says so.
 
 The rpt_ data sources keep reading the old rows until they are published again. Open each rpt_ data source that uses the table in the web editor and publish it over the same data source without changing anything. Its relationships, calculated fields and descriptions stay. The publish dialog lists the rpt_ data source's own calculated fields and descriptions as changes ("overrides"); this is expected. Then run the totals query in step 3.
 
@@ -101,6 +103,16 @@ The rpt_ data sources keep reading the old rows until they are published again. 
 Then run the totals query in step 3.
 
 **"Number of Records" left over from an earlier publish.** A raw data source published by an earlier version of the script may still have a "Number of Records" field, and the rpt_ data sources that use it show "Number of Records" or "Number of Records (<data source>)". The web editor cannot delete these fields from the rpt_ data source; it can only hide them. Remove them at the source instead: run `--update --tables <table>` for those raw data sources, then open each rpt_ data source that uses them in the web editor and publish it without changes. The fields disappear when the web editor opens the data source, and relationships, calculated fields and row counts stay.
+
+**When a run ends with `check these tables`.** Look up each listed table in `work/raw/report.json` (any mode):
+
+- `failed`: the run stopped at this table; the tables after it say "not processed" or "not replaced". With `--replace` the rows may or may not have changed; run the same command again for these tables (replacing twice gives the same result). With `--update` or `--republish`, run the same command again for them. On the first publish (no rpt_ data sources yet), delete the table's data source in the web UI if it was created, then run the first-publish command again for these tables.
+- `unchecked` (`--replace`): the rows were replaced but the check could not run. Run `--replace` again for the table.
+- `missing_caption_or_description`: run `--update --tables <table>`.
+- `tds_unchanged: false` (`--replace`): compare `work/raw/<table>/before.tds` and `after.tds` before going on.
+- `numrec_after` above `numrec_before` (or above 0 where there is no `numrec_before`): the "Number of Records" field is there. Run `--update --tables <table>`.
+
+Do not delete a raw data source that rpt_ data sources use: a new one gets a new id and the rpt_ data sources lose the table.
 
 ## Step 2. Decide who does the web-editor work
 
