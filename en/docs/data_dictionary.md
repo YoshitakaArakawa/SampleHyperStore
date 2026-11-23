@@ -18,7 +18,7 @@ Tables marked **Tableau** are the 12 tables that `setup/` publishes to Tableau C
 | [`order_lines`](#order_lines) | sales | One row per order x product (one line per SKU in an order) | 71,007 | yes |
 | [`orders`](#orders) | sales | One row per order (checkout confirmation, marketplace order import, or B2B order entry) | 31,281 | yes |
 | [`products`](#products) | product | One row per SKU | 202 | yes |
-| [`shipment_lines`](#shipment_lines) | fulfillment | One row per shipment x order line | 68,621 | yes |
+| [`shipment_lines`](#shipment_lines) | fulfillment | One row per shipment x order line | 68,616 | yes |
 | [`shipments`](#shipments) | fulfillment | One row per shipment (one parcel group leaving one warehouse with one carrier) | 32,568 | yes |
 | [`refunds`](#refunds) | support | One row per refund payment issued to a customer | 6,493 | yes |
 | [`returns`](#returns) | support | One row per return authorization line (one order line returned once; a line may be returned in more than one authorization) | 6,680 | yes |
@@ -29,7 +29,7 @@ Tables marked **Tableau** are the 12 tables that `setup/` publishes to Tableau C
 | [`receipts`](#receipts) | procurement | One row per receipt (one delivery of one PO line) | 13,766 |  |
 | [`suppliers`](#suppliers) | procurement | One row per supplier | 20 |  |
 | [`credit_memos`](#credit_memos) | finance | One row per credit memo line (revenue reversal posted by Finance) | 6,717 | yes |
-| [`invoice_lines`](#invoice_lines) | finance | One row per invoice x order line | 68,621 | yes |
+| [`invoice_lines`](#invoice_lines) | finance | One row per invoice x order line | 68,616 | yes |
 | [`invoices`](#invoices) | finance | One row per invoice (one invoice per shipment; revenue recognition event) | 32,568 | yes |
 | [`sales_targets`](#sales_targets) | finance | One row per sales region x channel x fiscal month | 584 |  |
 
@@ -300,7 +300,7 @@ Product master. One SKU per sellable variant (apparel and footwear sizes are sep
 
 Units of an order line shipped in a shipment. Denormalises warehouse_id and shipped_date so inventory outflow can be aggregated per warehouse x product x day without joining.
 
-- File: `csv/in_use/shipment_lines.csv` (68,621 rows)
+- File: `csv/in_use/shipment_lines.csv` (68,616 rows)
 - Grain: One row per shipment x order line
 - Primary key: `shipment_line_id`
 - Owner (fictional department): Logistics
@@ -576,7 +576,7 @@ Accounting reversals of revenue for refunds and price adjustments, posted in bat
 
 Invoiced units and amounts per order line, with order-level discount allocated, and standard unit cost at invoice date.
 
-- File: `csv/in_use/invoice_lines.csv` (68,621 rows)
+- File: `csv/in_use/invoice_lines.csv` (68,616 rows)
 - Grain: One row per invoice x order line
 - Primary key: `invoice_line_id`
 - Owner (fictional department): Finance & Sales Ops
