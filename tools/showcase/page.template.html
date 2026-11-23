@@ -377,7 +377,7 @@ const FMT = {
 const X = (() => {
   const so = D.S.stockout, bc = so.by_channel, g = so.groups_web, w = so.webapp, q = so.search, ch = k => bc.channels.indexOf(k);
   return {
-    returns: { cy: D.S.returns.asof.slice(0, 4), ly: String(+D.S.returns.asof.slice(0, 4) - 1) },
+    returns: { cy: D.S.returns.asof.slice(0, 4) },
     stockout: { conv: so.dash.conversion.cur[11], conv_ly: so.dash.conversion.ly[11], mk: bc.orders_cur[ch("marketplace")], mk_ly: bc.orders_ly[ch("marketplace")],
       nh: g.heavy.length, hfOos: q.oos25[q.subs.indexOf("hiking_footwear")],
       heavyPct: g.heavy_cur / g.heavy_ly - 1, heavyShare: g.heavy_ly / g.total_ly, restPct: g.rest_cur / g.rest_ly - 1,
@@ -481,18 +481,19 @@ const L = {
       title: "サポートが{asof:d}の返品率を聞いた",
       who: "カスタマーサポート責任者", ask: "{asof:d}の返品率は？",
       mind: "だいたいの感覚（いつもの月次報告から）", mindBig: "{support_lo:pn}〜{support_hi:p0}", mindSm: ["毎月この範囲で上下する。12 月は高め"],
-      band: "感覚の範囲（{support_lo:pn}〜{support_hi:p0}）", lyLbl: "{X.ly}年", curLbl: "{X.cy}年（1〜11 月）",
+      band: "感覚の範囲（{support_lo:pn}〜{support_hi:p0}）", curLbl: "{X.cy}年（1〜11 月）",
       src: [["請求", "返品率"], ["返品・返金", "返品申請数量"], ["受注", "数量"]],
-      kn: [["使い分け: 返品率", "「返品率」は部門ごとに 4 つの指標を指す。返品の申し出を申し出の月で数える（サポート）、注文の月で数える（商品部）、倉庫に戻った個数（物流）、月次決算の数字（経理）で使い分ける"],
-        ["使い方", "名前が一致するだけで指標を選ばない。1 つに決まらなければ、候補と用途を示して選んでもらう。答えには使った指標の名前を書く"]],
+      kn: [["使い分け: 返品率", "「返品率」は部門ごとに 4 つの指標を指す。返品の申し出を申し出の月で数える（サポート）、注文の月で数える（マーチャンダイジング）、倉庫に戻った個数（物流）、月次決算の数字（経理）で使い分ける"],
+        ["使い方（2・3 番）", "名前が一致するだけで指標を選ばない。1 つに決まらなければ、候補と用途を示して選んでもらう。答えには、使った指標の名前とデータソースを示す"],
+        ["複数ソースの指標: 申請ベースの返品率", "返品・返金の返品申請数量（申請日の月）÷ 受注の数量（注文日の月）"]],
       bare: { big: "{billing:p1}", how: [{ lead: "経理の返品率を、断りなしに返す。サポートが見たい数字ではない" },
-        "ナレッジなしの AI に見えるのは、フィールド名だけ。「返品率」という名前のフィールドは経理のものしかない。ほかの 3 つの返品率は、ナレッジにしか書かれていない",
-        "12 月だけ低い（1〜11 月は {billing_lo:pn}〜{billing_hi:p0}）。経理は返品を、請求の取り消し（クレジットメモ）が済んでから、元の請求の月に数える。12 月に請求した分の返品は、まだ取り消しが済んでいない"] },
-      set: { chat: { ai: "返品率は 4 通りあります。何を見たいですか？", opts: ["返品の申し出を、申し出があった月で数える → サポートの返品率", "返品の申し出を、元の注文の月で数える → 商品部の返品率",
-          "倉庫に戻ってきた返品の個数 → 物流の返品率", "月次決算の数字 → 経理の返品率"], me: "返品の申し出を、申し出があった月で見たい", ai2: "AI", me2: "担当者" },
-        big: "{support:p1}", how: ["サポートの返品率を、2 つのデータソースから計算する",
+        "「返品率」という名前のフィールドは経理のものしかなく、フィールドやデータソースの説明にも、ほかの返品率は出てこない。ほかの 3 つの返品率は、ナレッジにしか書かれていない",
+        "12 月だけ低い（1〜11 月は {billing_lo:pn}〜{billing_hi:p0}）。経理は返品を、請求の取り消し（クレジットメモ）が済んでから、元の請求の月に数える。12 月に請求した分の返品は、多くはまだ取り消しが済んでいない"] },
+      set: { chat: { ai: "返品率は 4 通りあります。何を見たいですか？", opts: ["返品の申し出を、申し出があった月で数える → 申請ベースの返品率（サポート）", "返品の申し出を、元の注文の月で数える → 注文コホートの返品率（マーチャンダイジング）",
+          "倉庫に戻ってきた返品の個数 → 受領ベースの返品率（物流）", "月次決算の数字 → 経理の返品率（billing の <code>返品率</code>）"], me: "返品の申し出を、申し出があった月で見たい", ai2: "AI", me2: "責任者" },
+        big: "{support:p1}", how: ["申請ベースの返品率を、2 つのデータソースから計算する",
           ["分子: {asof:d}にお客さまから返品の申し出があった {req_units:int} 個（返品・返金）", "分母: {asof:d}に注文された {ord_units:int} 個（受注。キャンセルを除く）"],
-          { end: "「サポートの返品率で {support:p1}」と、使った指標の名前を添えて答える" }] } },
+          { end: "「申請ベースの返品率で {support:p1}」と、使った指標の名前とデータソースを添えて答える" }] } },
     sales: {
       title: "経理が 11 月度の売上を聞いた",
       who: "経理", ask: "11 月度の純売上はいくら？",
@@ -589,18 +590,19 @@ const L = {
       title: "Support asks for the {asof:d} return rate",
       who: "Customer Support lead", ask: "What was the return rate in {asof:d}?",
       mind: "The rough figure they expect (from their monthly report)", mindBig: "{support_lo:pn}–{support_hi:p0}", mindSm: ["Moves within this range month to month; December runs high"],
-      band: "Expected range ({support_lo:pn}–{support_hi:p0})", lyLbl: "{X.ly}", curLbl: "{X.cy} (Jan–Nov)",
+      band: "Expected range ({support_lo:pn}–{support_hi:p0})", curLbl: "{X.cy} (Jan–Nov)",
       src: [["Billing", "Return Rate"], ["Returns & refunds", "Requested Units"], ["Orders", "Units"]],
       kn: [["Which to use: Return rate", "“Return rate” refers to four metrics, one per department: return requests counted by the month of the request (Support) or by the month of the order (Merchandising), units back at the warehouse (Logistics), and the month-end close figure (Finance)"],
-        ["Usage", "Do not pick a metric only because its name matches. If one metric is not settled, show the candidates and what each is for, and let the user choose. Name the metric used in the answer"]],
+        ["Usage (rules 2 and 3)", "Do not pick a metric only because its name matches. If one metric is not settled, show the candidates and what each is for, and let the user choose. In the answer, say which metric and data sources you used"],
+        ["Cross-source metric: Requested return rate", "Requested Units in returns & refunds (by request month) ÷ Units in orders (by order month)"]],
       bare: { big: "{billing:p1}", how: [{ lead: "Returns Finance's return rate without saying so. Not the number Support wants" },
-        "Without Knowledge, the AI sees only field names. The only field named “return rate” is Finance's; the other three return rates are written only in the Knowledge",
-        "December alone is low (January to November: {billing_lo:pn}–{billing_hi:p0}). Finance counts a return once its invoice is reversed on a credit memo, in the month of the original invoice. Returns of December invoices are not reversed yet"] },
-      set: { chat: { ai: "There are four return rates. What do you want to see?", opts: ["Return requests, counted in the month of the request → Support's return rate", "Return requests, counted in the month of the order → Merchandising's return rate",
-          "Units back at the warehouse → Logistics' return rate", "The month-end close figure → Finance's return rate"], me: "Return requests, by the month of the request", ai2: "AI", me2: "Support lead" },
-        big: "{support:p1}", how: ["Support's return rate, from two data sources",
+        "The only field named “return rate” is Finance's, and no field or data source description mentions the other return rates. The other three are written only in the Knowledge",
+        "December alone is low (January to November: {billing_lo:pn}–{billing_hi:p0}). Finance counts a return once its invoice is reversed on a credit memo, in the month of the original invoice. Most returns of December invoices are not reversed yet"] },
+      set: { chat: { ai: "There are four return rates. What do you want to see?", opts: ["Return requests, counted in the month of the request → requested return rate (Customer Support)", "Return requests, counted in the month of the order → order-cohort return rate (Merchandising)",
+          "Units back at the warehouse → received return rate (Logistics)", "The month-end close figure → Finance's <code>Return Rate</code> (billing)"], me: "Return requests, by the month of the request", ai2: "AI", me2: "Support lead" },
+        big: "{support:p1}", how: ["The requested return rate, from two data sources",
           ["Numerator: {req_units:int} units customers asked to return in {asof:d} (returns & refunds)", "Denominator: {ord_units:int} units ordered in {asof:d}, net of cancellations (orders)"],
-          { end: "Answers “{support:p1}, Support's return rate”, naming the metric it used" }] } },
+          { end: "Answers “{support:p1}, the requested return rate”, naming the metric and data sources it used" }] } },
     sales: {
       title: "Finance asks for November sales",
       who: "Finance", ask: "What was net revenue for fiscal November?",
@@ -735,8 +737,8 @@ function renderText() {
   // explanation: a string is a paragraph, an array a bullet list, { end } the closing line
   const how = (h, id) => `<div class="how">${(Array.isArray(h) ? h : [h]).map(x => Array.isArray(x) ? `<ul>${x.map(li => `<li>${fill(li, id)}</li>`).join("")}</ul>`
     : typeof x === "object" ? (x.lead ? `<p class="lead">${fill(x.lead, id)}</p>` : `<p class="end">${fill(x.end, id)}</p>`) : `<p>${fill(x, id)}</p>`).join("")}</div>`;
-  // legend under a mini chart: the expected range, and (for the asker) the two years
-  const mlegend = (c, id, years) => c.band ? `<div class="legend">${years ? `<span><i style="background:var(--hot)"></i>${fill(c.curLbl, id, true)}</span><span><i class="dash"></i>${fill(c.lyLbl, id, true)}</span>` : ""}<span><i class="band"></i>${fill(c.band, id, true)}</span></div>` : "";
+  // legend under a mini chart: the expected range, and (for the asker) the months the line covers
+  const mlegend = (c, id, years) => c.band ? `<div class="legend">${years ? `<span><i style="background:var(--hot)"></i>${fill(c.curLbl, id, true)}</span>` : ""}<span><i class="band"></i>${fill(c.band, id, true)}</span></div>` : "";
   const chat = (ch, id) => ch ? `<div class="chat"><div class="b ai"><span class="who">${ch.ai2}</span>${ch.ai}<ul>${ch.opts.map(o => `<li>${o}</li>`).join("")}</ul></div>
     <div class="b me"><span class="who">${ch.me2}</span>${ch.me}</div></div>` : "";
   const flow = (id, i, n) => {
@@ -898,10 +900,10 @@ function miniBars(host, months, vals, color, noLabel) {
   tx(s, 2 + bw / 2, H - 2, FMT.d(months[0]), { "text-anchor": "start" }); tx(s, W - 2, H - 2, FMT.d(months[n - 1]), { "text-anchor": "end" });
 }
 // the three return-rate charts share one scale, and all shade the asker's expected range, so a value outside it shows
-const RET_SCALE = () => { const r = D.S.returns, m = r.monthly; return { hi: Math.max(...m.support_cur, ...m.support_ly, ...m.billing_cur) * 1.12, band: [r.support_lo, r.support_hi] }; };
+const RET_SCALE = () => { const r = D.S.returns, m = r.monthly; return { hi: Math.max(...m.support_cur, ...m.billing_cur) * 1.12, band: [r.support_lo, r.support_hi] }; };
 const MINI = {
-  // what the asker has seen so far: 2025 up to November and 2024 in full (a rough sense, so the line ends carry the year, not a value)
-  "returns:mind": h => { const r = D.S.returns, m = r.monthly; miniRates(h, [{ v: m.support_ly, c: css("--edge"), dash: true }, { v: [...m.support_cur.slice(0, 11), null], c: css("--hot") }], RET_SCALE()); },
+  // what the asker has seen so far: this year up to November (a rough sense, so no value at the line end)
+  "returns:mind": h => { const r = D.S.returns, m = r.monthly; miniRates(h, [{ v: [...m.support_cur.slice(0, 11), null], c: css("--hot") }], RET_SCALE()); },
   "returns:bare": h => { const r = D.S.returns; miniRates(h, [{ v: r.monthly.billing_cur, c: css("--muted"), lb: FMT.p1(r.billing) }], RET_SCALE()); },
   "returns:set": h => { const r = D.S.returns; miniRates(h, [{ v: r.monthly.support_cur, c: css("--know"), lb: FMT.p1(r.support) }], RET_SCALE()); },
   "sales:mind": h => miniBars(h, D.S.sales.billing_fm.months, D.S.sales.billing_fm.revenue, css("--hot"), true),   // a rough sense, so no exact label

@@ -120,12 +120,11 @@ crd = cm[cm.qty_credited > 0].merge(inv[["invoice_id", "invoice_date"]], on="inv
 bill_r = crd.groupby(mo(crd.invoice_date)).qty_credited.sum() / il.groupby(mo(il.invoice_date)).qty_invoiced.sum()
 req_r = req / units
 y25 = [f"2025-{i:02d}" for i in range(1, 13)]
-y24 = [f"2024-{i:02d}" for i in range(1, 13)]
 RM = "2025-12"
 S["returns"] = {"asof": RM, "req_units": int(req[RM]), "ord_units": int(units[RM]), "support": r4(req_r[RM]), "billing": r4(bill_r[RM]),
                 "support_lo": r4(req_r[y25[:11]].min()), "support_hi": r4(req_r[y25[:11]].max()),
                 "billing_lo": r4(bill_r[y25[:11]].min()), "billing_hi": r4(bill_r[y25[:11]].max()),
-                "monthly": {"support_cur": [r4(req_r[m]) for m in y25], "support_ly": [r4(req_r[m]) for m in y24], "billing_cur": [r4(bill_r[m]) for m in y25]}}
+                "monthly": {"support_cur": [r4(req_r[m]) for m in y25], "billing_cur": [r4(bill_r[m]) for m in y25]}}
 
 # ---- what the repository ships besides the tables: metadata and business rules (counts for the top of the page)
 MD = C.parents[1] / "setup" / "metadata"

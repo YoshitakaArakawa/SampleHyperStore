@@ -47,7 +47,7 @@ note: Kinds are A (tables in the setup), B (the data itself), C (metadata only),
 
 | Where | Holds | Kind | Script |
 |---|---|---|---|
-| `L.*.stockout`, `L.*.west`, `L.*.sales`, `L.*.uses`, `L.*.cat` | The analysis example (steps, answer), the two AI behaviour examples, what the analysis uses, the example questions; sentences with `{path:format}` placeholders and Business Preference names | B, C | — |
+| `L.*.stockout`, `L.*.returns`, `L.*.sales`, `L.*.uses`, `L.*.cat` | The analysis example (steps, answer), the two AI behaviour examples, what the analysis uses, the example questions; sentences with `{path:format}` placeholders and Business Preference names | B, C | — |
 | `STEPS_A`, `MINI` (chart code) | The charts of the analysis steps and of the AI behaviour examples: axis ranges, the months shown | B | — |
 | `const X` | Numbers derived from `S` in the browser (ranges, shares, which subcategories to name) | B | — |
 | `analyze.py` section "case stories" (`S`) | The as-of month of the analysis example, the comparison months, the subcategory grouping rules | B | — |
