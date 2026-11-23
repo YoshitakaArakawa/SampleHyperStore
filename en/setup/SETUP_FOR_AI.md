@@ -104,13 +104,11 @@ Then run the totals query in step 3.
 
 **"Number of Records" left over from an earlier publish.** A raw data source published by an earlier version of the script may still have a "Number of Records" field, and the rpt_ data sources that use it show "Number of Records" or "Number of Records (<data source>)". The web editor cannot delete these fields from the rpt_ data source; it can only hide them. Remove them at the source instead: run `--update --tables <table>` for those raw data sources, then open each rpt_ data source that uses them in the web editor and publish it without changes. The fields disappear when the web editor opens the data source, and relationships, calculated fields and row counts stay.
 
-**When a run ends with `check these tables`.** Look up each listed table in `work/raw/report.json` (any mode):
+**When a run ends with `check these tables`.** Look up each listed table in `work/raw/report.json`:
 
-- `failed`: the run stopped at this table; the tables after it say "not processed" or "not replaced". With `--replace` the rows may or may not have changed; run the same command again for these tables (replacing twice gives the same result). With `--update` or `--republish`, run the same command again for them. On the first publish (no rpt_ data sources yet), delete the table's data source in the web UI if it was created, then run the first-publish command again for these tables.
-- `unchecked` (`--replace`): the rows were replaced but the check could not run. Run `--replace` again for the table.
-- `missing_caption_or_description`: run `--update --tables <table>`.
+- `failed`: the run stopped at this table, and the tables after it were not processed. Run the same command again for these tables (replacing rows twice gives the same result). On the first publish, delete the table's data source in the web UI first if it was created.
+- `missing_caption_or_description` or `numrec_after` above 0: run `--update --tables <table>`.
 - `tds_unchanged: false` (`--replace`): compare `work/raw/<table>/before.tds` and `after.tds` before going on.
-- `numrec_after` above `numrec_before` (or above 0 where there is no `numrec_before`): the "Number of Records" field is there. Run `--update --tables <table>`.
 
 Do not delete a raw data source that rpt_ data sources use: a new one gets a new id and the rpt_ data sources lose the table.
 

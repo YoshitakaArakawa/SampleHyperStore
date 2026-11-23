@@ -355,121 +355,102 @@ def main():
             raise SystemExit(f"{ds_name}: expected one data source in the project, found {len(hits)}")
         return hits[0]
 
-    report = {}
-    with signed_in_server() as server:
-        project = find_project(server, a.project)
-        if a.replace:
-            report = replace_all(server, project, tables, raw, cols, hyper, rows, a.name_format, existing, data.name)
-        todo = [] if a.replace else list(tables)
-        for i, t in enumerate(todo):
-            try:
-                spec = raw[t]
-                ds_name = a.name_format.format(table=t)
-                colnames = [c[0] for c in cols[t]]
-                aggs = spec.get("default_aggregation", {})
-                d = WORK / t
-                d.mkdir(parents=True, exist_ok=True)
-                if a.update or a.republish:
-                    ds = existing(server, project, ds_name)
-                    print(f"[{'republish' if a.republish else 'update'}] {ds_name} ({ds.id})")
-                    if a.republish:
-                        item = TSC.DatasourceItem(project.id, name=ds_name)
-                        item.description = spec["datasource_description"]
-                        new = server.datasources.publish(item, str(hyper[t]), TSC.Server.PublishMode.Overwrite)
-                        if new.id != ds.id:
-                            raise SystemExit(f"{ds_name}: overwrite changed the id ({ds.id} -> {new.id})")
-                else:
-                    item = TSC.DatasourceItem(project.id, name=ds_name)
-                    item.description = spec["datasource_description"]
-                    ds = server.datasources.publish(item, str(hyper[t]), TSC.Server.PublishMode.CreateNew)
-                    print(f"[publish] {ds_name} -> {ds.id}")
-
-                first = Path(server.datasources.download(ds.id, filepath=str(d / "published")))
-                z, tds_name, txt = read_tdsx(first)
-                (d / "published.tds").write_text(txt, encoding="utf-8")
-                edited = annotate_tds(name_logical_table(txt, t), colnames, spec["columns"], aggs)
-                (d / "edited.tds").write_text(edited, encoding="utf-8")
-                write_tdsx(z, tds_name, edited, d / "edited.tdsx")
-                z.close()
-
-                item2 = TSC.DatasourceItem(project.id, name=ds_name)
-                item2.description = spec["datasource_description"]
-                ds2 = server.datasources.publish(item2, str(d / "edited.tdsx"), TSC.Server.PublishMode.Overwrite)
-
-                back = Path(server.datasources.download(ds2.id, filepath=str(d / "verified"), include_extract=False))
-                z3, _, txt3 = read_tdsx(back)
-                z3.close()
-                missing = check_tds(txt3, colnames, spec["columns"], aggs)
-                report[t] = {"luid": ds2.id, "same_id": ds2.id == ds.id, "columns": len(colnames),
-                             "numrec_after": numrec_count(txt3), "missing_caption_or_description": missing}
-                print(f"[verify] {t}: id kept={ds2.id == ds.id}, columns={len(colnames)}, missing={missing}")
-            except (Exception, SystemExit) as e:  # keep a record of what was written before the stop
-                report[t] = {"same_id": True, "failed": f"{type(e).__name__}: {e}",
-                             "missing_caption_or_description": []}
-                print(f"[{t}] failed ({type(e).__name__}: {e}); the tables after it were not processed")
-                for t2 in todo[i + 1:]:
-                    report[t2] = {"same_id": True, "failed": f"not processed: {t} failed before it",
-                                  "missing_caption_or_description": []}
-                break
-    (WORK / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
-    bad = [t for t, r in report.items()
-           if r.get("failed") or r.get("unchecked") or r["missing_caption_or_description"] or not r["same_id"]
-           or not r.get("tds_unchanged", True) or r.get("numrec_after", 0) > r.get("numrec_before", 0)]
-    print("done" if not bad else f"check these tables: {bad}")
-    sys.exit(1 if bad else 0)
-
-
-def replace_all(server, project, tables, raw, cols, hyper, rows, name_format, existing, data_label) -> dict:
-    """--replace: check every table's columns first, then replace the rows table by table."""
-    plan = []
-    for t in tables:
-        ds = existing(server, project, name_format.format(table=t))
+    def publish(server, project, t, ds):
+        """New publish (ds is None), --update or --republish of one table, then steps 3-4."""
+        spec = raw[t]
+        ds_name = a.name_format.format(table=t)
+        colnames = [c[0] for c in cols[t]]
+        aggs = spec.get("default_aggregation", {})
         d = WORK / t
         d.mkdir(parents=True, exist_ok=True)
-        before = download_tds(server, ds.id, d / "before")
-        (d / "before.tds").write_text(before, encoding="utf-8")
-        diff = schema_diff(before, cols[t])
-        if diff and not set(_metadata(before)) & {c for c, _ in cols[t]}:
-            raise SystemExit(f"{ds.name}: none of its columns is in columns.yaml of {data_label}. Nothing was replaced. "
-                             "Check --data (the Japanese edition needs --data ../../ja).")
-        if diff:
-            raise SystemExit(f"{ds.name}: the columns changed ({'; '.join(diff)}). Nothing was replaced. "
-                             "Use --republish for this table (see SETUP_FOR_AI.md, step 1).")
-        plan.append((t, ds, before))
+        item = TSC.DatasourceItem(project.id, name=ds_name)
+        item.description = spec["datasource_description"]
+        if ds is None:
+            ds = server.datasources.publish(item, str(hyper[t]), TSC.Server.PublishMode.CreateNew)
+            print(f"[publish] {ds_name} -> {ds.id}")
+        else:
+            print(f"[{'republish' if a.republish else 'update'}] {ds_name} ({ds.id})")
+            if a.republish:
+                new = server.datasources.publish(item, str(hyper[t]), TSC.Server.PublishMode.Overwrite)
+                if new.id != ds.id:
+                    raise RuntimeError(f"overwrite changed the id ({ds.id} -> {new.id})")
 
-    report = {}
-    for i, (t, ds, before) in enumerate(plan):
+        first = Path(server.datasources.download(ds.id, filepath=str(d / "published")))
+        z, tds_name, txt = read_tdsx(first)
+        (d / "published.tds").write_text(txt, encoding="utf-8")
+        edited = annotate_tds(name_logical_table(txt, t), colnames, spec["columns"], aggs)
+        (d / "edited.tds").write_text(edited, encoding="utf-8")
+        write_tdsx(z, tds_name, edited, d / "edited.tdsx")
+        z.close()
+
+        ds2 = server.datasources.publish(item, str(d / "edited.tdsx"), TSC.Server.PublishMode.Overwrite)
+        txt3 = download_tds(server, ds2.id, d / "verified")
+        missing = check_tds(txt3, colnames, spec["columns"], aggs)
+        print(f"[verify] {t}: id kept={ds2.id == ds.id}, columns={len(colnames)}, missing={missing}")
+        return {"luid": ds2.id, "same_id": ds2.id == ds.id, "columns": len(colnames),
+                "numrec_after": numrec_count(txt3), "missing_caption_or_description": missing}
+
+    def replace(server, t, ds, before):
+        """--replace of one table: new rows in, .tds untouched."""
         print(f"[replace] {ds.name} ({ds.id}): {rows[t]:,} rows")
-        try:
-            replace_rows(server, ds, hyper[t])
-        except Exception as e:  # job failed or cancelled: keep what was done so far in report.json
-            report[t] = {"luid": ds.id, "same_id": True, "failed": f"{type(e).__name__}: {e}",
-                         "missing_caption_or_description": []}
-            print(f"[replace] {t}: failed ({type(e).__name__}); the tables after it were not replaced")
-            for t2, ds2, _ in plan[i + 1:]:
-                report[t2] = {"luid": ds2.id, "same_id": True, "failed": f"not replaced: {t} failed before it",
-                              "missing_caption_or_description": []}
-            break
-        try:
-            after = download_tds(server, ds.id, WORK / t / "after")
-        except Exception as e:  # rows already replaced; only the check could not run
-            report[t] = {"luid": ds.id, "same_id": True, "rows": rows[t], "unchecked": f"{type(e).__name__}: {e}",
-                         "missing_caption_or_description": []}
-            print(f"[verify] {t}: rows replaced, but the check failed ({type(e).__name__}); run --replace again for it")
-            continue
+        replace_rows(server, ds, hyper[t])
+        after = download_tds(server, ds.id, WORK / t / "after")
         (WORK / t / "after.tds").write_text(after, encoding="utf-8")
         spec = raw[t]
         missing = check_tds(after, [c[0] for c in cols[t]], spec["columns"], spec.get("default_aggregation", {}))
         unchanged = tds_fingerprint(after) == tds_fingerprint(before)
-        report[t] = {"luid": ds.id, "same_id": True, "rows": rows[t], "columns": len(cols[t]),
-                     "tds_unchanged": unchanged, "numrec_before": numrec_count(before),
-                     "numrec_after": numrec_count(after), "missing_caption_or_description": missing}
-        print(f"[verify] {t}: logical table and columns unchanged={unchanged}, missing={missing}, "
-              f"Number of Records columns {numrec_count(before)} -> {numrec_count(after)}")
-        if missing:
-            print(f"  {t}: names or descriptions differ from raw_layer.json (--replace does not write them; "
-                  "run --update for this table)")
+        print(f"[verify] {t}: logical table and columns unchanged={unchanged}, missing={missing}")
+        return {"luid": ds.id, "same_id": True, "rows": rows[t], "tds_unchanged": unchanged,
+                "missing_caption_or_description": missing}
+
+    with signed_in_server() as server:
+        project = find_project(server, a.project)
+        # find every data source (and, for --replace, check its columns) before writing anything
+        targets = {t: None for t in tables}
+        if a.update or a.replace or a.republish:
+            targets = {t: existing(server, project, a.name_format.format(table=t)) for t in tables}
+        if a.replace:
+            befores = {t: check_columns(server, targets[t], t, cols[t], data.name) for t in tables}
+            report = run_tables(tables, lambda t: replace(server, t, targets[t], befores[t]))
+        else:
+            report = run_tables(tables, lambda t: publish(server, project, t, targets[t]))
+    (WORK / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    bad = [t for t, r in report.items()
+           if r.get("failed") or r.get("missing_caption_or_description") or not r.get("same_id", True)
+           or not r.get("tds_unchanged", True) or r.get("numrec_after", 0)]
+    print("done" if not bad else f"check these tables: {bad}")
+    sys.exit(1 if bad else 0)
+
+
+def run_tables(tables, work) -> dict:
+    """Run work(table) for each table. On the first error, record it and mark the rest as not processed."""
+    report = {}
+    for i, t in enumerate(tables):
+        try:
+            report[t] = work(t)
+        except Exception as e:
+            report[t] = {"failed": f"{type(e).__name__}: {e}"}
+            print(f"[{t}] failed ({type(e).__name__}: {e}); the tables after it were not processed")
+            for t2 in tables[i + 1:]:
+                report[t2] = {"failed": f"not processed: {t} failed before it"}
+            break
     return report
+
+
+def check_columns(server, ds, t, columns, data_label) -> str:
+    """--replace: stop before any write if the published columns differ from columns.yaml. Returns the .tds."""
+    d = WORK / t
+    d.mkdir(parents=True, exist_ok=True)
+    before = download_tds(server, ds.id, d / "before")
+    (d / "before.tds").write_text(before, encoding="utf-8")
+    diff = schema_diff(before, columns)
+    if diff and not set(_metadata(before)) & {c for c, _ in columns}:
+        raise SystemExit(f"{ds.name}: none of its columns is in columns.yaml of {data_label}. Nothing was replaced. "
+                         "Check --data (the Japanese edition needs --data ../../ja).")
+    if diff:
+        raise SystemExit(f"{ds.name}: the columns changed ({'; '.join(diff)}). Nothing was replaced. "
+                         "Use --republish for this table (see SETUP_FOR_AI.md, step 1).")
+    return before
 
 
 if __name__ == "__main__":
