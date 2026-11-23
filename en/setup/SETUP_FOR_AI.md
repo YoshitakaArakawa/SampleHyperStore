@@ -86,10 +86,10 @@ Check without spending query quota: `python scripts/check_metadata.py --project 
 | Data source | Rows | | Data source | Rows |
 |---|---:|---|---|---:|
 | products | 202 | | invoices | 32,568 |
-| orders | 31,281 | | invoice_lines | 68,621 |
+| orders | 31,281 | | invoice_lines | 68,616 |
 | order_lines | 71,007 | | credit_memos | 6,717 |
 | shipments | 32,568 | | web_sessions | 455,057 |
-| shipment_lines | 68,621 | | web_searches | 100,524 |
+| shipment_lines | 68,616 | | web_searches | 100,524 |
 | returns | 6,680 | | refunds | 6,493 |
 
 ## Step 2. Decide who does the web-editor work

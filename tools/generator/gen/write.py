@@ -212,7 +212,23 @@ def build_tables(w):
         delivery_status=s['status'], package_count=s['packages'], billed_weight_lbs=s['billed'],
         freight_cost_amount=s['freight'], customer_id=cid[s['cust']], state_code=s['state'], order_date=s['order_date'],
         promised_delivery_date=s['promised']) for s in shs]
-    sl_sorted = sorted(w.R['shipment_lines'], key=lambda r: (shid[r['shipment']], r['k']))
+    def merge_lines(rows, doc, sums):
+        """One row per (document, order line): an order line allocated twice (stock, then a backorder fill)
+        that ships on the same day from the same warehouse is one line of that shipment and of its invoice."""
+        out, seen = [], {}
+        for r in sorted(rows, key=lambda r: r['k']):
+            key = (r[doc], r['line'])
+            if key in seen:
+                m = seen[key]
+                for f in sums:
+                    m[f] = round(m[f] + r[f], 2) if isinstance(m[f], float) else m[f] + r[f]
+            else:
+                seen[key] = dict(r)
+                out.append(seen[key])
+        return out
+
+    sl_sorted = sorted(merge_lines(w.R['shipment_lines'], 'shipment', ['qty']),
+                       key=lambda r: (shid[r['shipment']], r['k']))
     slid = {r['k']: f"SL-{i + 1:08d}" for i, r in enumerate(sl_sorted)}
     T['shipment_lines'] = [dict(
         shipment_line_id=slid[r['k']], shipment_id=shid[r['shipment']], order_line_id=lid[r['line']],
@@ -226,7 +242,8 @@ def build_tables(w):
         shipping_billed_amount=r['ship_billed'], shipping_tax_amount=r['ship_tax'], marketplace_fee_amount=r['fee'],
         campaign_id=camp_id.get(r['camp']) if r['camp'] is not None else None, sales_region_id=r['region'],
         fiscal_month=r['fm']) for r in invs]
-    ils = sorted(w.R['invoice_lines'], key=lambda r: (iid[r['invoice']], r['k']))
+    ils = sorted(merge_lines(w.R['invoice_lines'], 'invoice', ['qty', 'disc', 'tax']),
+                 key=lambda r: (iid[r['invoice']], r['k']))
     ilid = {r['k']: f"IL-{i + 1:08d}" for i, r in enumerate(ils)}
     T['invoice_lines'] = [dict(
         invoice_line_id=ilid[r['k']], invoice_id=iid[r['invoice']], order_line_id=lid[r['line']], product_id=pid[r['p']],
