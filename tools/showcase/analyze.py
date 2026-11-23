@@ -32,8 +32,7 @@ cm = rd("credit_memos")
 ws = rd("web_sessions", usecols=["session_id", "session_start_date", "product_views", "order_id", "oos_product_views"], parse_dates=["session_start_date"])
 
 il["rev"] = il.qty_invoiced * il.unit_price - il.discount_amount
-il = il.merge(inv[["invoice_id", "invoice_date", "fiscal_month", "sales_region_id", "state_code"]], on="invoice_id")
-il["year"] = il.invoice_date.dt.year
+il = il.merge(inv[["invoice_id", "invoice_date", "fiscal_month"]], on="invoice_id")
 
 S = {}
 
@@ -108,22 +107,24 @@ fm12 = ["FY2024-P11", "FY2024-P12"] + [f"FY2025-P{i:02d}" for i in range(1, 11)]
 bv = (il.groupby("fiscal_month").rev.sum().reindex(fm12, fill_value=0) - cmo.groupby("ofm").merchandise_credit_amount.sum().reindex(fm12, fill_value=0)
       - inv.groupby("fiscal_month").marketplace_fee_amount.sum().reindex(fm12, fill_value=0)
       + cmo.groupby("ofm").marketplace_fee_reversal_amount.sum().reindex(fm12, fill_value=0))
-S["sales"] = {"sales_orders": round(sales_m["2025-11"]), "billing": {k: round(bill[k]) for k in ["credits", "fees", "revenue"]},
+S["sales"] = {"fm": FMO, "sales_orders": round(sales_m["2025-11"]), "billing": {k: round(bill[k]) for k in ["credits", "fees", "revenue"]},
               "order_monthly": {"months": om12, "revenue": rl(sales_m.reindex(om12).fillna(0))}, "billing_fm": {"months": om12, "revenue": rl(bv)}}
 
-# ---- west (2025): the R-WEST region as stamped at posting vs the West on the current map (the states R-WEST holds in 2025), both years
-west_old = ["WA", "OR", "CA", "AK", "HI", "ID", "MT", "WY", "UT", "CO", "NV"]
-rw = il[il.sales_region_id == "R-WEST"]
-rby = rw.groupby("year").rev.sum().round()
-rws = set(inv[(inv.invoice_date.dt.year == 2025) & (inv.sales_region_id == "R-WEST")].state_code)
-cw = il[il.state_code.isin(rws)]
-cby = cw.groupby("year").rev.sum().round()
-m12 = [f"{i:02d}" for i in range(1, 13)]
-rwm, cwm = (g.groupby(["year", g.invoice_date.dt.strftime("%m")]).rev.sum() for g in (rw, cw))
-pick = lambda s, y: rl(s.get(y, pd.Series(dtype=float)).reindex(m12, fill_value=0))
-S["west"] = {"region_yoy": r4(rby[2025] / rby[2024] - 1), "current_yoy": r4(cby[2025] / cby[2024] - 1),
-             "moved": sorted(set(west_old) - rws), "kept": sorted(set(west_old) & rws),
-             "monthly": {"region_cur": pick(rwm, 2025), "region_ly": pick(rwm, 2024), "current_cur": pick(cwm, 2025), "current_ly": pick(cwm, 2024)}}
+# ---- returns (Dec 2025): "the return rate" for Customer Support (requested units by request date / net units ordered by order date)
+# vs the only field named so, Billing's Return Rate (units credited on return memos / units invoiced, credits in the original invoice's month)
+rt = rd("returns", usecols=["requested_date", "qty_requested"], parse_dates=["requested_date"])
+ol_ = rd("order_lines", usecols=["order_id", "qty_ordered", "qty_cancelled"]).merge(orders[["order_id", "order_date"]], on="order_id")
+units = (ol_.qty_ordered - ol_.qty_cancelled).groupby(mo(ol_.order_date)).sum()
+req = rt.groupby(mo(rt.requested_date)).qty_requested.sum()
+crd = cm[cm.qty_credited > 0].merge(inv[["invoice_id", "invoice_date"]], on="invoice_id")
+bill_r = crd.groupby(mo(crd.invoice_date)).qty_credited.sum() / il.groupby(mo(il.invoice_date)).qty_invoiced.sum()
+req_r = req / units
+y25 = [f"2025-{i:02d}" for i in range(1, 13)]
+RM = "2025-12"
+S["returns"] = {"asof": RM, "req_units": int(req[RM]), "ord_units": int(units[RM]), "support": r4(req_r[RM]), "billing": r4(bill_r[RM]),
+                "support_lo": r4(req_r[y25[:11]].min()), "support_hi": r4(req_r[y25[:11]].max()),
+                "billing_lo": r4(bill_r[y25[:11]].min()), "billing_hi": r4(bill_r[y25[:11]].max()),
+                "monthly": {"support_cur": [r4(req_r[m]) for m in y25], "billing_cur": [r4(bill_r[m]) for m in y25]}}
 
 # ---- what the repository ships besides the tables: metadata and business rules (counts for the top of the page)
 MD = C.parents[1] / "setup" / "metadata"
