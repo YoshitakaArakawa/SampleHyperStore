@@ -7,11 +7,11 @@
     },
     {
       "title": "Usage: Say which metric and data source you used",
-      "text": "Several data sources have metrics with the same name; always say which metric you used and which data source it came from."
+      "text": "Several data sources have metrics with the same name; always say which metric you used and the data sources it came from."
     },
     {
       "title": "Usage: Terms departments use for different metrics",
-      "text": "Departments sometimes call different metrics by the same or a similar term. Do not pick a calculated field only because its name matches. When the question and the Business Preferences do not settle on one metric, show the user the candidate metrics and what each one is for, and let them choose."
+      "text": "Departments sometimes call different metrics by the same or a similar term. Do not pick a calculated field only because its name matches. When the question, the Business Preferences and the field and data source descriptions do not settle on one metric, show the user the candidate metrics and what each one is for, and let them choose."
     },
     {
       "title": "Term: Default meaning of sales and revenue",
@@ -63,7 +63,7 @@
     },
     {
       "title": "Which to use: Return rate",
-      "text": "\"Return rate\" refers to four metrics, one per department: for the volume of returns customers request, the requested return rate (Customer Support); for how likely each product is to be returned, the order-cohort return rate (Merchandising); for the volume that comes back to the warehouse, the received return rate (Logistics); for month-end close figures, `Return Rate` in `rpt_samplehyperstore__billing` (Finance)."
+      "text": "\"Return rate\" refers to four metrics, one per department: for the volume of returns customers request, the requested return rate (Customer Support); for the share of each month's orders that end up returned, the order-cohort return rate (Merchandising; unaffected by when returns arrive); for the volume that comes back to the warehouse, the received return rate (Logistics); for month-end close figures, `Return Rate` in `rpt_samplehyperstore__billing` (Finance; counts returns credited on credit memos in the month of their original invoice)."
     },
     {
       "title": "Cross-source metric: Requested return rate",

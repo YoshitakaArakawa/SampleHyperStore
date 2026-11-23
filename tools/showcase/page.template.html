@@ -481,7 +481,7 @@ const L = {
       bH: "エージェントの振る舞いの問い", bCols: ["問い", "頼る業務ルール", "ナレッジがないと起きやすいこと", "ナレッジがあると"],
       b: [
         ["今年は配達の遅れが増えているか", ["用語", "配達遅れは約束日より後"], "配送業者の見込み日と比べてしまう", "顧客に約束した日と比べる"],
-        ["先月の返品率は？", ["指標", "申請ベース・注文コホート・受領ベースの返品率"], "分子と分母で違う日付を使う", "どの返品率かを選び、名前を添えて答える"],
+        ["先月の返品率は？", ["使い方・使い分け", "部門ごとに違う指標を指す言葉／返品率"], "分子と分母で違う日付を使う", "4 つの返品率を用途つきで示し、どれを見たいか聞く"],
         ["在庫がなくて見せられなかった検索語は？", ["用語", "検索の結果なしと在庫なし"], "結果 0 件の検索と混ぜる", "結果はあるが在庫がない検索だけを数える"],
         ["先月の売上は？", ["用語", "相対的な日付はデータの終わりを基準にする"], "今日の日付から見た先月を探す", "データの終わり（2025年12月31日）から数え、2025年11月として答える"],
         ["モール手数料は売上をどれだけ削っているか", ["指標", "受注売上に対するマーケットプレイス手数料率"], "分母に請求額や手数料込みの額を使う", "受注売上を分母にした定義で答える"],
@@ -580,7 +580,7 @@ const L = {
       bH: "Agent behaviour questions", bCols: ["Question", "Business rule it relies on", "Easy mistake without Knowledge", "With Knowledge"],
       b: [
         ["Are deliveries late more often this year?", ["Term", "Late delivery means after the promised date"], "Compares with the carrier's estimated date", "Compares with the date promised to the customer"],
-        ["What was last month's return rate?", ["Metric", "Requested, order-cohort and received return rates"], "Uses different dates for the numerator and denominator", "Picks one return rate and names it in the answer"],
+        ["What was last month's return rate?", ["Usage · Which to use", "Terms departments use for different metrics / Return rate"], "Uses different dates for the numerator and denominator", "Shows the four return rates with what each is for, and asks which one to use"],
         ["Which searches could we not show in stock?", ["Term", "No results vs nothing in stock in search"], "Mixes in searches with zero results", "Counts only searches with results but none in stock"],
         ["What were sales last month?", ["Term", "Relative dates mean relative to the end of the data"], "Looks for the month before today", "Counts from the end of the data (2025-12-31) and answers for November 2025"],
         ["How much do marketplace fees eat into sales?", ["Metric", "Marketplace fee rate on booked sales"], "Divides by invoiced amounts or totals with fees", "Answers with booked sales as the denominator"],
