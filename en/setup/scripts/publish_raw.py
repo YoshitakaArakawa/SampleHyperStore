@@ -419,6 +419,10 @@ def main():
            if r.get("failed") or r.get("missing_caption_or_description") or not r.get("same_id", True)
            or not r.get("tds_unchanged", True) or r.get("numrec_after", 0)]
     print("done" if not bad else f"check these tables: {bad}")
+    if a.replace and not bad:
+        # the job's success does not prove the rows arrived; the totals query does
+        print("next: republish each rpt_ data source that uses these tables from the web editor, "
+              "then run the totals query (SETUP_FOR_AI.md, step 1)")
     sys.exit(1 if bad else 0)
 
 
