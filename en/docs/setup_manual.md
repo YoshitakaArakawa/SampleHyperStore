@@ -10,7 +10,7 @@ This guide puts SampleHyperStore on Tableau Cloud without an AI agent or Tableau
 | 1 | Publish the raw layer | Script | 12 data sources `SampleHyperStore - <table>` |
 | 2 | Compose the department layer | You (web editor) | 6 data sources `rpt_samplehyperstore__<department>` |
 | 3 | Describe the calculated fields | Script, you | Descriptions on the department layer's calculated fields |
-| 4 | Set up Tableau Knowledge (optional) | You (web UI) | A knowledge graph and 23 Business Preferences |
+| 4 | Set up Tableau Knowledge (optional) | You (web UI) | A knowledge graph and 24 Business Preferences |
 | 5 | Try it | You | — |
 
 Go through steps 2 and 3 with billing first, then do the other five.
@@ -189,7 +189,7 @@ Tableau Knowledge tells AI agents what to use when. It requires Tableau+.
 1. In Tableau Cloud, open "Tableau Knowledge" from the left menu and choose "Manage Graphs".
 2. Create a graph with "New knowledge graph". Select all 18 data sources of the raw and department layers (search for `samplehyperstore`).
 3. Open the graph, then choose "Actions" (top right) → "Add Business Preferences" → "Add Preference".
-4. Enter the 23 items in the [appendix](#appendix-business-preferences) one at a time, and click "Save" for each:
+4. Enter the 24 items in the [appendix](#appendix-business-preferences) one at a time, and click "Save" for each:
    - Name: the "Name" column
    - Scope: leave it as "Global (all entities)"
    - Preference Rules: the "Text" column (the limit is 1,000 characters; every text fits)
@@ -197,7 +197,7 @@ Tableau Knowledge tells AI agents what to use when. It requires Tableau+.
 
 ### How to check
 
-- The graph has 23 Business Preferences.
+- The graph has 24 Business Preferences.
 - Wait about 15 minutes after your last publish before you rely on it. Knowledge reads field descriptions when a data source is published.
 
 ---
@@ -237,30 +237,31 @@ python scripts/tableau_auth.py logout
 
 ## Appendix: Business Preferences
 
-The 23 items for step 4. They match `setup/metadata/business_preferences.json`.
+The 24 items for step 4. They match `setup/metadata/business_preferences.json`.
 
 | # | Name | Text |
 |---|---|---|
 | 1 | Usage: Which data sources to use | Use the `rpt_samplehyperstore__` data sources in {{RPT_PROJECT_PATH}} for analysis; the `SampleHyperStore - <table>` data sources are raw tables for lineage only. |
-| 2 | Usage: Say which data source's metric you used | Several data sources have metrics with the same name; always say which data source's metric you used. |
-| 3 | Term: Default meaning of sales and revenue | "Sales" or "revenue" without a qualifier means `Revenue` in `rpt_samplehyperstore__sales_orders`; use `Revenue` in `rpt_samplehyperstore__billing` when the question mentions fiscal periods, net revenue, returns or marketplace fees. |
-| 4 | Term: Fiscal periods for Finance questions | For Finance questions, "this year", "last year" and "monthly" mean fiscal periods: group by `Fiscal Month`. |
-| 5 | Term: Late delivery means after the promised date | A delivery is late when `Delivered Date` is after `Promised Delivery Date`; use `Carrier Estimated Delivery Date` only for carrier performance. |
-| 6 | Term: No results vs nothing in stock in search | In search questions, "no results" means `No-results Rate` (no matching product) and "nothing in stock" means `Out-of-stock Results Rate`. |
-| 7 | Term: Relative dates mean relative to the end of the data | This sample's data covers 2023-01-01 to 2025-12-31 (fiscal months FY2022-P12 to FY2025-P11) and does not grow; read "this year", "last month" and "recent" relative to 2025-12-31, not today's date. Statuses such as `Delivery Status` and `Return Status` are as of 2025-12-31. |
-| 8 | Method: Sales region realignment on 2025-01-01 | To compare sales regions across years spanning 2025-01-01, use `Sales Region (Current Map)` in `rpt_samplehyperstore__billing`: it places every date on the territory map in effect from 2025-01-01. To judge results on the region in effect at posting, as against targets, use `Sales Region Id`. |
-| 9 | Default date: rpt_samplehyperstore__billing | In `rpt_samplehyperstore__billing`, trend metrics by `Invoice Date` (or `Fiscal Month`); exceptions: `Credits` and `Net Refund Cost` by `Credit Memo Date` (or `Fiscal Month (credit_memos.csv)`), and in Finance's posting view, all credit memo amounts by `Fiscal Month (credit_memos.csv)`, not by the original invoice's month. |
-| 10 | Default date: rpt_samplehyperstore__sales_orders | In `rpt_samplehyperstore__sales_orders`, trend all metrics by `Order Date`, in calendar months. |
-| 11 | Default date: rpt_samplehyperstore__merchandising | In `rpt_samplehyperstore__merchandising`, trend all metrics by `Order Date`, in calendar months. |
-| 12 | Default date: rpt_samplehyperstore__shipments | In `rpt_samplehyperstore__shipments`, trend metrics by `Shipped Date` in calendar months; exception: `Perfect Order Rate` by `Order Date`. |
-| 13 | Default date: rpt_samplehyperstore__returns_refunds | In `rpt_samplehyperstore__returns_refunds`, trend metrics by `Requested Date` in calendar months; exceptions: `Refunds` and `Cash Refunds` by `Refunded Date`, `Received Units` by `Received Date`, `Days from Order to Return Request` and `Returned Order Lines` by `Order Date` (order cohort). |
-| 14 | Default date: rpt_samplehyperstore__web_analytics | In `rpt_samplehyperstore__web_analytics`, trend metrics by `Session Start Date` in calendar months; exceptions: `No-results Rate`, `Out-of-stock Results Rate` and `No-click Rate` by `Searched Date`, `Units Added to Cart` by `Cart Added Date`. |
-| 15 | Which to use: Return rate | "Return rate" has four definitions: for the volume of returns customers request, use the requested return rate (Customer Support); for how likely each product is to be returned, the order-cohort return rate (Merchandising); for the volume that comes back to the warehouse, the received return rate (Logistics); for month-end close figures, `Return Rate` in `rpt_samplehyperstore__billing` (Finance; counts returns credited on credit memos in the month of their original invoice). When the question does not settle which definition, ask what the user wants to see and let them choose; name the definition used in the answer. |
-| 16 | Cross-source metric: Requested return rate | Requested return rate (Customer Support) = `Requested Units` in `rpt_samplehyperstore__returns_refunds` by month of `Requested Date` ÷ `Units` in `rpt_samplehyperstore__sales_orders` by month of `Order Date`. |
-| 17 | Cross-source metric: Order-cohort return rate | Order-cohort return rate (Merchandising) = `Requested Units` in `rpt_samplehyperstore__returns_refunds` ÷ `Net Ordered Units` in `rpt_samplehyperstore__merchandising`, both by month of `Order Date`, with the same filters on both. |
-| 18 | Cross-source metric: Received return rate | Received return rate (Logistics) = `Received Units` in `rpt_samplehyperstore__returns_refunds` by month of `Received Date` ÷ `Units` in `rpt_samplehyperstore__shipments` by month of `Shipped Date`. |
-| 19 | Cross-source metric: Return line incidence | Return line incidence (Merchandising) = `Returned Order Lines` in `rpt_samplehyperstore__returns_refunds` ÷ `Order Lines` in `rpt_samplehyperstore__merchandising`, by product and month of `Order Date`. |
-| 20 | Cross-source metric: Net shipping cost | Net shipping cost (Finance) = `Freight Cost` in `rpt_samplehyperstore__shipments` by month of `Shipped Date` − `Shipping Billed` in `rpt_samplehyperstore__billing` by month of `Invoice Date`. |
-| 21 | Cross-source metric: Orders per session | Orders per session (Sales) = `Orders` in `rpt_samplehyperstore__sales_orders` for the web and app channels by `Order Date` ÷ `Sessions` in `rpt_samplehyperstore__web_analytics` by `Session Start Date`. |
-| 22 | Cross-source metric: Unit cart abandonment | Unit cart abandonment (Merchandising) = 1 − `Units` in `rpt_samplehyperstore__merchandising` for web and app orders ÷ `Units Added to Cart` in `rpt_samplehyperstore__web_analytics`, both by week (`Order Date` and `Cart Added Date`). |
-| 23 | Cross-source metric: Marketplace fee rate on booked sales | Marketplace fee rate on booked sales (Sales) = `Marketplace Fees` in `rpt_samplehyperstore__billing` by month of `Invoice Date` ÷ `Revenue` in `rpt_samplehyperstore__sales_orders` for the marketplace channel by month of `Order Date`. |
+| 2 | Usage: Say which metric and data source you used | Several data sources have metrics with the same name; always say which metric you used and which data source it came from. |
+| 3 | Usage: Terms departments use for different metrics | Departments sometimes call different metrics by the same or a similar term. Do not pick a calculated field only because its name matches. When the question and the Business Preferences do not settle on one metric, show the user the candidate metrics and what each one is for, and let them choose. |
+| 4 | Term: Default meaning of sales and revenue | "Sales" or "revenue" without a qualifier means `Revenue` in `rpt_samplehyperstore__sales_orders`; use `Revenue` in `rpt_samplehyperstore__billing` when the question mentions fiscal periods, net revenue, returns or marketplace fees. |
+| 5 | Term: Fiscal periods for Finance questions | For Finance questions, "this year", "last year" and "monthly" mean fiscal periods: group by `Fiscal Month`. |
+| 6 | Term: Late delivery means after the promised date | A delivery is late when `Delivered Date` is after `Promised Delivery Date`; use `Carrier Estimated Delivery Date` only for carrier performance. |
+| 7 | Term: No results vs nothing in stock in search | In search questions, "no results" means `No-results Rate` (no matching product) and "nothing in stock" means `Out-of-stock Results Rate`. |
+| 8 | Term: Relative dates mean relative to the end of the data | This sample's data covers 2023-01-01 to 2025-12-31 (fiscal months FY2022-P12 to FY2025-P11) and does not grow; read "this year", "last month" and "recent" relative to 2025-12-31, not today's date. Statuses such as `Delivery Status` and `Return Status` are as of 2025-12-31. |
+| 9 | Method: Sales region realignment on 2025-01-01 | To compare sales regions across years spanning 2025-01-01, use `Sales Region (Current Map)` in `rpt_samplehyperstore__billing`: it places every date on the territory map in effect from 2025-01-01. To judge results on the region in effect at posting, as against targets, use `Sales Region Id`. |
+| 10 | Default date: rpt_samplehyperstore__billing | In `rpt_samplehyperstore__billing`, trend metrics by `Invoice Date` (or `Fiscal Month`); exceptions: `Credits` and `Net Refund Cost` by `Credit Memo Date` (or `Fiscal Month (credit_memos.csv)`), and in Finance's posting view, all credit memo amounts by `Fiscal Month (credit_memos.csv)`, not by the original invoice's month. |
+| 11 | Default date: rpt_samplehyperstore__sales_orders | In `rpt_samplehyperstore__sales_orders`, trend all metrics by `Order Date`, in calendar months. |
+| 12 | Default date: rpt_samplehyperstore__merchandising | In `rpt_samplehyperstore__merchandising`, trend all metrics by `Order Date`, in calendar months. |
+| 13 | Default date: rpt_samplehyperstore__shipments | In `rpt_samplehyperstore__shipments`, trend metrics by `Shipped Date` in calendar months; exception: `Perfect Order Rate` by `Order Date`. |
+| 14 | Default date: rpt_samplehyperstore__returns_refunds | In `rpt_samplehyperstore__returns_refunds`, trend metrics by `Requested Date` in calendar months; exceptions: `Refunds` and `Cash Refunds` by `Refunded Date`, `Received Units` by `Received Date`, `Days from Order to Return Request` and `Returned Order Lines` by `Order Date` (order cohort). |
+| 15 | Default date: rpt_samplehyperstore__web_analytics | In `rpt_samplehyperstore__web_analytics`, trend metrics by `Session Start Date` in calendar months; exceptions: `No-results Rate`, `Out-of-stock Results Rate` and `No-click Rate` by `Searched Date`, `Units Added to Cart` by `Cart Added Date`. |
+| 16 | Which to use: Return rate | "Return rate" refers to four metrics, one per department: for the volume of returns customers request, the requested return rate (Customer Support); for how likely each product is to be returned, the order-cohort return rate (Merchandising); for the volume that comes back to the warehouse, the received return rate (Logistics); for month-end close figures, `Return Rate` in `rpt_samplehyperstore__billing` (Finance). |
+| 17 | Cross-source metric: Requested return rate | Requested return rate (Customer Support) = `Requested Units` in `rpt_samplehyperstore__returns_refunds` by month of `Requested Date` ÷ `Units` in `rpt_samplehyperstore__sales_orders` by month of `Order Date`. |
+| 18 | Cross-source metric: Order-cohort return rate | Order-cohort return rate (Merchandising) = `Requested Units` in `rpt_samplehyperstore__returns_refunds` ÷ `Net Ordered Units` in `rpt_samplehyperstore__merchandising`, both by month of `Order Date`, with the same filters on both. |
+| 19 | Cross-source metric: Received return rate | Received return rate (Logistics) = `Received Units` in `rpt_samplehyperstore__returns_refunds` by month of `Received Date` ÷ `Units` in `rpt_samplehyperstore__shipments` by month of `Shipped Date`. |
+| 20 | Cross-source metric: Return line incidence | Return line incidence (Merchandising) = `Returned Order Lines` in `rpt_samplehyperstore__returns_refunds` ÷ `Order Lines` in `rpt_samplehyperstore__merchandising`, by product and month of `Order Date`. |
+| 21 | Cross-source metric: Net shipping cost | Net shipping cost (Finance) = `Freight Cost` in `rpt_samplehyperstore__shipments` by month of `Shipped Date` − `Shipping Billed` in `rpt_samplehyperstore__billing` by month of `Invoice Date`. |
+| 22 | Cross-source metric: Orders per session | Orders per session (Sales) = `Orders` in `rpt_samplehyperstore__sales_orders` for the web and app channels by `Order Date` ÷ `Sessions` in `rpt_samplehyperstore__web_analytics` by `Session Start Date`. |
+| 23 | Cross-source metric: Unit cart abandonment | Unit cart abandonment (Merchandising) = 1 − `Units` in `rpt_samplehyperstore__merchandising` for web and app orders ÷ `Units Added to Cart` in `rpt_samplehyperstore__web_analytics`, both by week (`Order Date` and `Cart Added Date`). |
+| 24 | Cross-source metric: Marketplace fee rate on booked sales | Marketplace fee rate on booked sales (Sales) = `Marketplace Fees` in `rpt_samplehyperstore__billing` by month of `Invoice Date` ÷ `Revenue` in `rpt_samplehyperstore__sales_orders` for the marketplace channel by month of `Order Date`. |
