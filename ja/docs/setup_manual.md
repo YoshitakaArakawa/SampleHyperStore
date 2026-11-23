@@ -92,7 +92,7 @@ python scripts/publish_raw.py --project "<raw のパス>" --data ../../ja
 
 12 テーブルそれぞれが、列の表示名と説明付きでパブリッシュされます。
 
-作り直した CSV を、すでにある raw データソースに入れるときは、パブリッシュし直しません。[`en/setup/SETUP_FOR_AI.md`](../../en/setup/SETUP_FOR_AI.md) の Step 1「Data sources that already exist」に従います。
+作り直した CSV を、すでにある raw データソースに入れるときは、パブリッシュし直しません。[`en/setup/SETUP_FOR_AI.md`](../../en/setup/SETUP_FOR_AI.md) の Step 1「Data sources that already exist」に従います（英語）。そこにあるコマンドには、どれも `--data ../../ja` を付けます。
 
 ### 確かめ方
 
@@ -224,7 +224,7 @@ python scripts/tableau_auth.py logout
 
 | 症状 | 対処 |
 |---|---|
-| `publish_raw.py` が `done` ではなく `check these tables: [...]` で終わる | 初回のパブリッシュなら、そのテーブルを `--tables` で指定して実行し直します（例: `--tables orders`）。raw にそのデータソースがすでにできていたら、先に Web の画面で削除します。rpt_ データソースをすでに組んだ後なら、削除しません（作り直すと ID が変わり、rpt_ データソースからそのテーブルが外れます）。`work/raw/report.json` を見て、`--update --tables <テーブル>` で直します。 |
+| `publish_raw.py` が `done` ではなく `check these tables: [...]` で終わる | 初回のパブリッシュなら、そのテーブルを `--tables` で指定して実行し直します（例: `--tables orders`）。raw にそのデータソースがすでにできていたら、先に Web の画面で削除します。rpt_ データソースをすでに組んだ後なら、削除しません（作り直すと ID が変わり、rpt_ データソースからそのテーブルが外れます）。`work/raw/report.json` でそのテーブルを見て、[`en/setup/SETUP_FOR_AI.md`](../../en/setup/SETUP_FOR_AI.md) の Step 1「Data sources that already exist」に従います。コマンドには `--data ../../ja` を付けます。 |
 | `check_metadata.py` で `[missing]` が出る | パブリッシュの直後なら、数分おいて実行し直します。プロジェクトのパスの最後の階層（raw や marts）が合っているかも確かめます。 |
 | 合計が期待する値と合わない | 2-1 の2（線の向き）と3（列名の ` (<テーブル名>.csv)`）を見直します。 |
 | 手順3で「パブリッシュ済みデータソースにしか接続されていない」という趣旨のエラーが出る | 手順3の2（上書きでの再パブリッシュ）がまだ済んでいません。 |

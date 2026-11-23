@@ -52,7 +52,7 @@ One request can be several kinds. Do them in the order B → A → C: A moves th
 5. If the first or last date of the data changed, update the Business Preference "Term: Relative dates mean relative to the end of the data" in both languages (descriptions do not state the period).
 6. Rebuild the showcase page (`analyze.py`, then `build.py`). Read its texts again: the figures update by themselves, but a sentence can stop being true ([the showcase page](references/touchpoints.md#the-showcase-page)).
 7. Run the [final check](#final-check). Row counts are checked by the script; the expected totals are not.
-8. On Tableau, after the user agrees: load the new rows into the existing raw data sources ("Data sources that already exist" in `SETUP_FOR_AI.md` step 1: `--replace` when the columns did not change, `--republish` when step 2 added or changed a column), republish each affected rpt_ data source from the web editor as described there, and query the totals (step 3). Write the new totals into `SETUP_FOR_AI.md` and both `setup_manual.md`.
+8. On Tableau, after the user agrees: load the new rows into the existing raw data sources ("Data sources that already exist" in `SETUP_FOR_AI.md` step 1: `--replace` when the columns did not change, `--republish` when B-2 added or changed a column; a new categorical value alone keeps the columns, so `--replace`), republish each affected rpt_ data source from the web editor as described there, and query the totals (step 3). Write the new totals into `SETUP_FOR_AI.md` and both `setup_manual.md`.
 
 ## C. Change metadata only
 
@@ -64,7 +64,7 @@ One request can be several kinds. Do them in the order B → A → C: A moves th
    - the Business Preference names in the READMEs and on the showcase page.
 3. Run the [final check](#final-check).
 4. On Tableau, after the user agrees:
-   - Raw column or data source descriptions, or default aggregations: `publish_raw.py --tables <table> --update` (rewrites the existing data sources in place; their ids stay, so the rpt_ data sources keep working).
+   - Raw column or data source descriptions, or default aggregations: `publish_raw.py --tables <table> --update` (rewrites the existing data sources in place; their ids stay, so the rpt_ data sources keep working). It also drops a leftover "Number of Records" field; then republish each rpt_ data source that uses the table from the web editor without changes, and the field disappears there too.
    - rpt_ data source descriptions and calculated-field descriptions: `describe_rpt.py`, then the republish (`SETUP_FOR_AI.md` step 4).
    - Relationships or calculated fields: rebuild or edit the data source in the web editor (step 3), then step 4.
    - Business Preferences: change or delete the item in the knowledge graph's web UI; new items as in step 6. Wait about 15 minutes after the last publish.

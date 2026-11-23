@@ -344,6 +344,8 @@ def main():
     import tableauserverclient as TSC
     from tableau_auth import signed_in_server
 
+    (WORK / "report.json").unlink(missing_ok=True)  # never leave the previous run's report behind
+
     def existing(server, project, ds_name):
         opts = TSC.RequestOptions()
         opts.filter.add(TSC.Filter(TSC.RequestOptions.Field.Name, TSC.RequestOptions.Operator.Equals, ds_name))
@@ -356,7 +358,7 @@ def main():
     with signed_in_server() as server:
         project = find_project(server, a.project)
         if a.replace:
-            report = replace_all(server, project, tables, raw, cols, hyper, rows, a.name_format, existing)
+            report = replace_all(server, project, tables, raw, cols, hyper, rows, a.name_format, existing, data.name)
         for t in ([] if a.replace else tables):
             spec = raw[t]
             ds_name = a.name_format.format(table=t)
@@ -400,13 +402,13 @@ def main():
             print(f"[verify] {t}: id kept={ds2.id == ds.id}, columns={len(colnames)}, missing={missing}")
     (WORK / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     bad = [t for t, r in report.items()
-           if r.get("failed") or r["missing_caption_or_description"] or not r["same_id"]
+           if r.get("failed") or r.get("unchecked") or r["missing_caption_or_description"] or not r["same_id"]
            or not r.get("tds_unchanged", True) or r.get("numrec_after", 0) > r.get("numrec_before", 0)]
     print("done" if not bad else f"check these tables: {bad}")
     sys.exit(1 if bad else 0)
 
 
-def replace_all(server, project, tables, raw, cols, hyper, rows, name_format, existing) -> dict:
+def replace_all(server, project, tables, raw, cols, hyper, rows, name_format, existing, data_label) -> dict:
     """--replace: check every table's columns first, then replace the rows table by table."""
     plan = []
     for t in tables:
@@ -416,6 +418,9 @@ def replace_all(server, project, tables, raw, cols, hyper, rows, name_format, ex
         before = download_tds(server, ds.id, d / "before")
         (d / "before.tds").write_text(before, encoding="utf-8")
         diff = schema_diff(before, cols[t])
+        if diff and not set(_metadata(before)) & {c for c, _ in cols[t]}:
+            raise SystemExit(f"{ds.name}: none of its columns is in columns.yaml of {data_label}. Nothing was replaced. "
+                             "Check --data (the Japanese edition needs --data ../../ja).")
         if diff:
             raise SystemExit(f"{ds.name}: the columns changed ({'; '.join(diff)}). Nothing was replaced. "
                              "Use --republish for this table (see SETUP_FOR_AI.md, step 1).")
@@ -431,7 +436,13 @@ def replace_all(server, project, tables, raw, cols, hyper, rows, name_format, ex
                          "missing_caption_or_description": []}
             print(f"[replace] {t}: failed ({type(e).__name__}); the tables after it were not replaced")
             break
-        after = download_tds(server, ds.id, WORK / t / "after")
+        try:
+            after = download_tds(server, ds.id, WORK / t / "after")
+        except Exception as e:  # rows already replaced; only the check could not run
+            report[t] = {"luid": ds.id, "same_id": True, "rows": rows[t], "unchecked": f"{type(e).__name__}: {e}",
+                         "missing_caption_or_description": []}
+            print(f"[verify] {t}: rows replaced, but the check failed ({type(e).__name__}); run --replace again for it")
+            continue
         (WORK / t / "after.tds").write_text(after, encoding="utf-8")
         spec = raw[t]
         missing = check_tds(after, [c[0] for c in cols[t]], spec["columns"], spec.get("default_aggregation", {}))
