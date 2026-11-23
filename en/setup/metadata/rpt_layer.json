@@ -110,6 +110,11 @@
         "name": "Marketplace Fees",
         "formula": "SUM([Marketplace Fee Amount])",
         "description": "Marketplace fees withheld in USD on marketplace-channel invoices, gross of reversals on refunds. Invoices in other channels carry no fee."
+      },
+      {
+        "name": "Sales Region (Current Map)",
+        "formula": "CASE [State Code] WHEN 'AK' THEN 'R-WEST' WHEN 'CA' THEN 'R-WEST' WHEN 'HI' THEN 'R-WEST' WHEN 'OR' THEN 'R-WEST' WHEN 'WA' THEN 'R-WEST' WHEN 'AZ' THEN 'R-MOUNTAIN' WHEN 'CO' THEN 'R-MOUNTAIN' WHEN 'ID' THEN 'R-MOUNTAIN' WHEN 'MT' THEN 'R-MOUNTAIN' WHEN 'NM' THEN 'R-MOUNTAIN' WHEN 'NV' THEN 'R-MOUNTAIN' WHEN 'UT' THEN 'R-MOUNTAIN' WHEN 'WY' THEN 'R-MOUNTAIN' WHEN 'IA' THEN 'R-CENTRAL' WHEN 'IL' THEN 'R-CENTRAL' WHEN 'IN' THEN 'R-CENTRAL' WHEN 'KS' THEN 'R-CENTRAL' WHEN 'MN' THEN 'R-CENTRAL' WHEN 'MO' THEN 'R-CENTRAL' WHEN 'ND' THEN 'R-CENTRAL' WHEN 'NE' THEN 'R-CENTRAL' WHEN 'SD' THEN 'R-CENTRAL' WHEN 'WI' THEN 'R-CENTRAL' WHEN 'AL' THEN 'R-SOUTH' WHEN 'AR' THEN 'R-SOUTH' WHEN 'FL' THEN 'R-SOUTH' WHEN 'GA' THEN 'R-SOUTH' WHEN 'KY' THEN 'R-SOUTH' WHEN 'LA' THEN 'R-SOUTH' WHEN 'MS' THEN 'R-SOUTH' WHEN 'NC' THEN 'R-SOUTH' WHEN 'OK' THEN 'R-SOUTH' WHEN 'SC' THEN 'R-SOUTH' WHEN 'TN' THEN 'R-SOUTH' WHEN 'TX' THEN 'R-SOUTH' WHEN 'CT' THEN 'R-EAST' WHEN 'DC' THEN 'R-EAST' WHEN 'DE' THEN 'R-EAST' WHEN 'MA' THEN 'R-EAST' WHEN 'MD' THEN 'R-EAST' WHEN 'ME' THEN 'R-EAST' WHEN 'MI' THEN 'R-EAST' WHEN 'NH' THEN 'R-EAST' WHEN 'NJ' THEN 'R-EAST' WHEN 'NY' THEN 'R-EAST' WHEN 'OH' THEN 'R-EAST' WHEN 'PA' THEN 'R-EAST' WHEN 'RI' THEN 'R-EAST' WHEN 'VA' THEN 'R-EAST' WHEN 'VT' THEN 'R-EAST' WHEN 'WV' THEN 'R-EAST' END",
+        "description": "Sales region looked up from State Code on the territory map in effect from 2025-01-01, the same map for every date. Use it to compare regions across years; Sales Region Id is the region stamped at posting. Credit memo amounts take the state of their original invoice."
       }
     ]
   },

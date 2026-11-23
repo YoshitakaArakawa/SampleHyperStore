@@ -8,7 +8,7 @@ You are helping a user put SampleHyperStore on their own Tableau Cloud site, so 
 Project A (raw layer)      12 published data sources "SampleHyperStore - <table>", one per CSV,
                            with column display names and column descriptions          <- script
 Project B (rpt_ layer)     6 published data sources "rpt_samplehyperstore__<dept>", each composed
-                           from raw-layer data sources, with 53 calculated fields      <- user, in the web editor
+                           from raw-layer data sources, with 54 calculated fields      <- user, in the web editor
                            and their descriptions                                     <- script + web editor
 Tableau Knowledge (opt.)   a graph over the 18 data sources + 22 Business Preferences <- web UI + Tableau MCP
 ```
