@@ -109,6 +109,7 @@ p { margin: 0; }
 .chead { display: grid; gap: 2px; }
 .chead .clbl { font-size: 12.5px; color: var(--muted); letter-spacing: .04em; }
 .chead h3 { font-size: 21px; font-weight: 700; }
+.ctag { justify-self: start; margin-top: 6px; font-size: 13.5px; font-weight: 700; color: var(--know); background: var(--know-soft); border-radius: 999px; padding: 2px 12px; }
 .toc { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .toc a { display: grid; gap: 2px; height: 100%; box-sizing: border-box; border: 1.5px solid var(--line); border-left: 5px solid var(--c); border-radius: 12px; padding: 12px 16px; color: var(--ink); text-decoration: none; }
 .toc a:hover, .toc a:focus-visible { border-color: var(--c); }
@@ -462,7 +463,7 @@ const L = {
       "サイト内検索の結果のうち、在庫なしと表示された割合（在庫なし表示の多い小分類と、その他）", "Web・アプリの売上（{asof:d}と前年同月）。登山靴は注文がすべてキャンセルされ、売上はほぼ $0"],
     yoyLbl: "前年同月比", cur: "今年", ly: "前年同月", stepOf: n => `${n} / 5`,
     partA: { kind: "分析の例", h: "テーブルをまたいで原因を掘る", p: "経営ダッシュボードの変化から問いを立て、テーブルを足しながら 5 段で絞り込む。答えは最後に出す。" },
-    partB: { kind: "AI の振る舞いの例", h: "業務ルールが AI の答えを決める", p: "同じデータでも、どの指標を使うかで答えが変わる。その決まりはデータには書いていない。AI エージェントは Tableau Knowledge に登録した業務ルールを読んで、使う指標を決める。1 つに決まらなければ、何を見たいかを聞き返す。",
+    partB: { kind: "AI の振る舞いの例", h: "業務ルールが AI の答えを決める", p: "同じデータでも、どの指標を使うかで答えが変わる。その決まりはデータには書いていない。AI エージェントは Tableau Knowledge に登録した業務ルールを読んで、使う指標を決める。ルールで 1 つに決まれば、そのまま答える。決まらなければ、何を見たいかを聞き返す。",
       actors: ["質問する人", "データソース", "AI エージェント", "ナレッジ（業務ルール）"], bare: "ナレッジなし", set: "ナレッジあり", fkey: ["データソース", "フィールド"] },
     stockout: {
       title: "{asof:d}、人は来ているのに売上が落ちた",
@@ -478,7 +479,7 @@ const L = {
       ],
       answer: "欠品が原因。在庫のあった商品は前年より売れていたが、売上の半分以上を占める主力商品が品切れだった。" },
     returns: {
-      title: "サポートが{asof:d}の返品率を聞いた",
+      title: "サポートが{asof:d}の返品率を聞いた", tag: "指標が 1 つに決まらない → 聞き返す",
       who: "カスタマーサポート責任者", ask: "{asof:d}の返品率は？",
       mind: "だいたいの感覚（いつもの月次報告から）", mindBig: "{support_lo:pn}〜{support_hi:p0}", mindSm: ["毎月この範囲で上下する。12 月は高め"],
       band: "感覚の範囲（{support_lo:pn}〜{support_hi:p0}）", curLbl: "{X.cy}年（1〜11 月）",
@@ -495,12 +496,17 @@ const L = {
           ["分子: {asof:d}にお客さまから返品の申し出があった {req_units:int} 個（返品・返金）", "分母: {asof:d}に注文された {ord_units:int} 個（受注。キャンセルを除く）"],
           { end: "「申請ベースの返品率で {support:p1}」と、使った指標の名前とデータソースを添えて答える" }] } },
     sales: {
-      title: "経理が 11 月度の売上を聞いた",
+      title: "経理が 11 月度の売上を聞いた", tag: "ルールで指標が 1 つに決まる → 聞き返さずに答える",
       who: "経理", ask: "11 月度の純売上はいくら？",
       mind: "だいたいの感覚", mindBig: "{billing.revenue:approx}", mindSm: "経理の月次報告で見ている、会計月ごとの純売上（返品と手数料を引いた請求の売上）",
-      src: [["受注", "売上（注文日）"], ["請求", "売上（会計月）"]], kn: [["言葉の意味", "会計期間・純売上・返品・手数料の話なら請求の売上。経理の「月」は会計月"]],
-      bare: { big: "{sales_orders:usd}", how: [["受注の売上を使う", "暦の 11 月で集計する"], { end: "経理の数字と合わない" }] },
-      set: { big: "{billing.revenue:usd}", how: [["請求の売上を会計月で集計する", "返品 {billing.credits:usdk} を引く", "手数料 {billing.fees:usdk} を引く"]] } },
+      src: [["受注", "売上（注文日）"], ["請求", "売上（会計月）"]], kn: [["用語: 売上の既定の意味", "修飾のない「売上」は受注の売上。会計期間・純売上・返品・手数料に触れていれば請求の売上"],
+        ["用語: 経理の質問での会計期間", "経理の質問の「月次」などは会計期間を指す。会計月でまとめる"],
+        ["使い方（2・3 番）", "答えには、使った指標の名前とデータソースを示す。候補を示して聞き返すのは、指標が 1 つに決まらないときだけ"]],
+      bare: { big: "{sales_orders:usd}", how: [{ lead: "受注の売上を、暦の 11 月で返す。経理の数字ではない" },
+        "「売上」という名前のフィールドは、受注にも請求にもある。問いの「月度」が会計月を、「純」が返品と手数料を引いた請求の売上を指すことは、データからは読み取れない"] },
+      set: { big: "{billing.revenue:usd}", how: [{ lead: "聞き返さずに答える。ルールで指標が 1 つに決まるから" },
+        ["請求の売上を会計月で集計する", "返品 {billing.credits:usdk} を引く", "手数料 {billing.fees:usdk} を引く"],
+        { end: "「billing の <code>売上</code>（会計月 {fm}）で {billing.revenue:usd}」と、使った指標とデータソースを添えて答える" }] } },
     cat: {
       kind: "一覧", h: "デモに使える問いの例",
       p: "ここに挙げるのは例で、このデータは他にも多くの問いに答えられる。起点は、数字を定点観測していて気づく場合と、施策を打った結果を確かめる場合がある。",
@@ -571,7 +577,7 @@ const L = {
       "Share of site search results shown out of stock (the subcategories with the most, and the rest)", "Web and app sales ({asof:d} and a year earlier). Every hiking footwear order was cancelled, so its sales are about $0"],
     yoyLbl: "vs same month last year", cur: "This year", ly: "Same month last year", stepOf: n => `${n} / 5`,
     partA: { kind: "Analysis example", h: "Dig across tables for the cause", p: "A change on the business dashboard raises a question. Five steps narrow it down, adding tables on the way. The answer comes last." },
-    partB: { kind: "AI behaviour examples", h: "Business rules decide the AI's answer", p: "The same data gives different answers depending on which metric you use. Those rules are not written in the data. The AI agent reads the business rules in Tableau Knowledge to decide which metric to use. When that leaves more than one, it asks what you want to see.",
+    partB: { kind: "AI behaviour examples", h: "Business rules decide the AI's answer", p: "The same data gives different answers depending on which metric you use. Those rules are not written in the data. The AI agent reads the business rules in Tableau Knowledge to decide which metric to use. When the rules settle on one, it answers directly. When they leave more than one, it asks what you want to see.",
       actors: ["Person asking", "Data source", "AI agent", "Knowledge (business rules)"], bare: "Without Knowledge", set: "With Knowledge", fkey: ["Data source", "Field"] },
     stockout: {
       title: "{asof:d}: visitors came, sales fell",
@@ -587,7 +593,7 @@ const L = {
       ],
       answer: "Stock-outs. Products in stock sold more than a year earlier, but the best sellers, over half of sales, were out of stock." },
     returns: {
-      title: "Support asks for the {asof:d} return rate",
+      title: "Support asks for the {asof:d} return rate", tag: "No single metric → asks back",
       who: "Customer Support lead", ask: "What was the return rate in {asof:d}?",
       mind: "The rough figure they expect (from their monthly report)", mindBig: "{support_lo:pn}–{support_hi:p0}", mindSm: ["Moves within this range month to month; December runs high"],
       band: "Expected range ({support_lo:pn}–{support_hi:p0})", curLbl: "{X.cy} (Jan–Nov)",
@@ -604,12 +610,17 @@ const L = {
           ["Numerator: {req_units:int} units customers asked to return in {asof:d} (returns & refunds)", "Denominator: {ord_units:int} units ordered in {asof:d}, net of cancellations (orders)"],
           { end: "Answers “{support:p1}, the requested return rate”, naming the metric and data sources it used" }] } },
     sales: {
-      title: "Finance asks for November sales",
+      title: "Finance asks for November sales", tag: "The rules settle one metric → answers without asking",
       who: "Finance", ask: "What was net revenue for fiscal November?",
       mind: "The rough figure they expect", mindBig: "{billing.revenue:approx}", mindSm: "Net revenue by fiscal month, as in Finance's monthly report (billed sales after returns and fees)",
-      src: [["Orders", "Revenue (order date)"], ["Billing", "Revenue (fiscal month)"]], kn: [["What words mean", "For fiscal periods, net revenue, returns or fees, use billed revenue; Finance's “month” is the fiscal month"]],
-      bare: { big: "{sales_orders:usd}", how: [["Uses booked sales", "Sums calendar November"], { end: "Doesn't match Finance's number" }] },
-      set: { big: "{billing.revenue:usd}", how: [["Billed sales by fiscal month", "Minus {billing.credits:usdk} of returns", "Minus {billing.fees:usdk} of fees"]] } },
+      src: [["Orders", "Revenue (order date)"], ["Billing", "Revenue (fiscal month)"]], kn: [["Term: Default meaning of sales and revenue", "Unqualified “sales” or “revenue” means booked sales; when the question mentions fiscal periods, net revenue, returns or fees, use billed revenue"],
+        ["Term: Fiscal periods for Finance questions", "In Finance questions, “monthly” and the like mean fiscal periods: group by fiscal month"],
+        ["Usage (rules 2 and 3)", "In the answer, say which metric and data sources you used. Show candidates and ask back only when no single metric is settled"]],
+      bare: { big: "{sales_orders:usd}", how: [{ lead: "Returns booked sales for calendar November. Not Finance's number" },
+        "Both orders and billing have a field named “revenue”. Nothing in the data says that “fiscal November” means the fiscal month, or that “net” means billed revenue after returns and fees"] },
+      set: { big: "{billing.revenue:usd}", how: [{ lead: "Answers without asking back: the rules settle one metric" },
+        ["Billed sales by fiscal month", "Minus {billing.credits:usdk} of returns", "Minus {billing.fees:usdk} of fees"],
+        { end: "Answers “{billing.revenue:usd}, billing <code>Revenue</code> for fiscal month {fm}”, naming the metric and data source it used" }] } },
     cat: {
       kind: "List", h: "Example questions for a demo",
       p: "These are examples; the data answers many more. A question starts either from watching a number over time, or from checking the result of something the business did.",
@@ -743,7 +754,7 @@ function renderText() {
     <div class="b me"><span class="who">${ch.me2}</span>${ch.me}</div></div>` : "";
   const flow = (id, i, n) => {
     const c = t[id];
-    return `<article class="case" id="${id}"><div class="chead"><span class="clbl">${t.caseLbl} ${i + 1} / ${n}</span><h3>${fill(c.title, id, true)}</h3></div>
+    return `<article class="case" id="${id}"><div class="chead"><span class="clbl">${t.caseLbl} ${i + 1} / ${n}</span><h3>${fill(c.title, id, true)}</h3><p class="ctag">${c.tag}</p></div>
       <div class="flow">
         <div class="actor person">${icon("person")}<span class="nm">${c.who}</span><p class="bubble">${fill(c.ask, id, true)}</p>
           <div class="mind"><span class="lb">${c.mind}</span><span class="big">${fill(c.mindBig, id, true)}</span><div class="mini" data-mini="${id}:mind"></div>${mlegend(c, id, true)}${how(c.mindSm, id)}</div></div>

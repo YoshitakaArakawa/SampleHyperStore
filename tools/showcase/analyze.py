@@ -107,7 +107,7 @@ fm12 = ["FY2024-P11", "FY2024-P12"] + [f"FY2025-P{i:02d}" for i in range(1, 11)]
 bv = (il.groupby("fiscal_month").rev.sum().reindex(fm12, fill_value=0) - cmo.groupby("ofm").merchandise_credit_amount.sum().reindex(fm12, fill_value=0)
       - inv.groupby("fiscal_month").marketplace_fee_amount.sum().reindex(fm12, fill_value=0)
       + cmo.groupby("ofm").marketplace_fee_reversal_amount.sum().reindex(fm12, fill_value=0))
-S["sales"] = {"sales_orders": round(sales_m["2025-11"]), "billing": {k: round(bill[k]) for k in ["credits", "fees", "revenue"]},
+S["sales"] = {"fm": FMO, "sales_orders": round(sales_m["2025-11"]), "billing": {k: round(bill[k]) for k in ["credits", "fees", "revenue"]},
               "order_monthly": {"months": om12, "revenue": rl(sales_m.reindex(om12).fillna(0))}, "billing_fm": {"months": om12, "revenue": rl(bv)}}
 
 # ---- returns (Dec 2025): "the return rate" for Customer Support (requested units by request date / net units ordered by order date)
