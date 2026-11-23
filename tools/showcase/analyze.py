@@ -111,18 +111,19 @@ bv = (il.groupby("fiscal_month").rev.sum().reindex(fm12, fill_value=0) - cmo.gro
 S["sales"] = {"sales_orders": round(sales_m["2025-11"]), "billing": {k: round(bill[k]) for k in ["credits", "fees", "revenue"]},
               "order_monthly": {"months": om12, "revenue": rl(sales_m.reindex(om12).fillna(0))}, "billing_fm": {"months": om12, "revenue": rl(bv)}}
 
-# ---- west (2025): the R-WEST region vs the 11 states that made up the West before the reorg
+# ---- west (2025): the R-WEST region as stamped at posting vs the West on the current map (the states R-WEST holds in 2025), both years
 west_old = ["WA", "OR", "CA", "AK", "HI", "ID", "MT", "WY", "UT", "CO", "NV"]
 rw = il[il.sales_region_id == "R-WEST"]
-ow = il[il.state_code.isin(west_old)]
-rby, oby = rw.groupby("year").rev.sum().round(), ow.groupby("year").rev.sum().round()
+rby = rw.groupby("year").rev.sum().round()
 rws = set(inv[(inv.invoice_date.dt.year == 2025) & (inv.sales_region_id == "R-WEST")].state_code)
+cw = il[il.state_code.isin(rws)]
+cby = cw.groupby("year").rev.sum().round()
 m12 = [f"{i:02d}" for i in range(1, 13)]
-rwm, owm = (g.groupby(["year", g.invoice_date.dt.strftime("%m")]).rev.sum() for g in (rw, ow))
+rwm, cwm = (g.groupby(["year", g.invoice_date.dt.strftime("%m")]).rev.sum() for g in (rw, cw))
 pick = lambda s, y: rl(s.get(y, pd.Series(dtype=float)).reindex(m12, fill_value=0))
-S["west"] = {"region_yoy": r4(rby[2025] / rby[2024] - 1), "states_yoy": r4(oby[2025] / oby[2024] - 1),
+S["west"] = {"region_yoy": r4(rby[2025] / rby[2024] - 1), "current_yoy": r4(cby[2025] / cby[2024] - 1),
              "moved": sorted(set(west_old) - rws), "kept": sorted(set(west_old) & rws),
-             "monthly": {"region_cur": pick(rwm, 2025), "region_ly": pick(rwm, 2024), "states_cur": pick(owm, 2025), "states_ly": pick(owm, 2024)}}
+             "monthly": {"region_cur": pick(rwm, 2025), "region_ly": pick(rwm, 2024), "current_cur": pick(cwm, 2025), "current_ly": pick(cwm, 2024)}}
 
 # ---- what the repository ships besides the tables: metadata and business rules (counts for the top of the page)
 MD = C.parents[1] / "setup" / "metadata"

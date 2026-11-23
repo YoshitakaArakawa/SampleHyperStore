@@ -358,7 +358,7 @@ const X = (() => {
       heavyPct: g.heavy_cur / g.heavy_ly - 1, heavyShare: g.heavy_ly / g.total_ly, restPct: g.rest_cur / g.rest_ly - 1,
       // subcategories whose web/app sales fell by 30% or more, largest fall first
       bigDrop: g.heavy.map(k => [k, w.sales25[w.subs.indexOf(k)] / w.sales24[w.subs.indexOf(k)] - 1]).filter(([, r]) => r <= -.3).sort((a, b) => a[1] - b[1]).map(([k]) => k) },
-    west: { nold: D.S.west.moved.length + D.S.west.kept.length },
+    west: { ncur: D.S.west.kept.length },
   };
 })();
 const TILE_HL = ["sales", "conversion"], TILE_POS = ["sessions"];   // the tiles that changed (an editorial choice, the values come from D)
@@ -457,9 +457,9 @@ const L = {
       title: "West 地域が前年割れしている",
       who: "営業部長", ask: "1 月から West が前年割れしている。本当に業績が悪いのか？",
       mind: "見ているグラフ", mindBig: "{region_yoy:sp0}", mindSm: "West の請求売上（営業地域 ID で集計）",
-      src: ["請求（invoices）", "sales_region_id", "state_code"], kn: ["比べ方", "2025年1月1日に営業地域を再編した。年をまたぐ比較は州で行う"],
+      src: ["請求（invoices）", "sales_region_id", "state_code"], kn: ["比べ方", "2025年1月1日に営業地域を再編した。年をまたいで地域を比べるときは、今の区割りで州から引き直した地域を使う"],
       bare: { big: "{region_yoy:sp0}", how: "営業地域 ID のまま集計。見ているグラフと同じものを返す" },
-      set: { big: "{states_yoy:sp0}", how: "再編前と同じ {X.nold} 州で集計し直す" } },
+      set: { big: "{current_yoy:sp0}", how: "今の区割りで州から地域を引き直し、両年とも同じ {X.ncur} 州の West で集計する" } },
     sales: {
       title: "経理が 11 月度の売上を聞いた",
       who: "経理", ask: "11 月度の純売上はいくら？",
@@ -556,9 +556,9 @@ const L = {
       title: "The West is below last year",
       who: "Sales director", ask: "The West has been below last year since January. Is business really worse?",
       mind: "The chart they are looking at", mindBig: "{region_yoy:sp0}", mindSm: "West invoiced sales (by sales region ID)",
-      src: ["Invoices", "sales_region_id", "state_code"], kn: ["How to compare", "Sales regions were redrawn on 2025-01-01; compare regions across years by state"],
+      src: ["Invoices", "sales_region_id", "state_code"], kn: ["How to compare", "Sales regions were redrawn on 2025-01-01; compare regions across years on the region looked up from the state on the current map"],
       bare: { big: "{region_yoy:sp0}", how: "Summed by sales region ID as it is. Returns the same chart they are looking at" },
-      set: { big: "{states_yoy:sp0}", how: "Summed again on the same {X.nold} states as before" } },
+      set: { big: "{current_yoy:sp0}", how: "Region looked up from the state on the current map, so both years cover the same {X.ncur} West states" } },
     sales: {
       title: "Finance asks for November sales",
       who: "Finance", ask: "What was net revenue for fiscal November?",
@@ -847,7 +847,7 @@ const MINI_M = ["1", "12"];   // month labels at the ends of the West mini chart
 const MINI = {
   "west:mind": h => miniLines(h, D.S.west.monthly.region_cur, D.S.west.monthly.region_ly, css("--hot")),
   "west:bare": h => miniLines(h, D.S.west.monthly.region_cur, D.S.west.monthly.region_ly, css("--muted")),
-  "west:set": h => miniLines(h, D.S.west.monthly.states_cur, D.S.west.monthly.states_ly, css("--know")),
+  "west:set": h => miniLines(h, D.S.west.monthly.current_cur, D.S.west.monthly.current_ly, css("--know")),
   "sales:mind": h => miniBars(h, D.S.sales.billing_fm.months, D.S.sales.billing_fm.revenue, css("--hot"), true),   // a rough sense, so no exact label
   "sales:bare": h => miniBars(h, D.S.sales.order_monthly.months, D.S.sales.order_monthly.revenue, css("--muted")),
   "sales:set": h => miniBars(h, D.S.sales.billing_fm.months, D.S.sales.billing_fm.revenue, css("--know")),
