@@ -72,10 +72,10 @@ python scripts/publish_raw.py --project "<raw project path>"
 
 For each table the script publishes a .hyper extract, writes display names and descriptions from `metadata/raw_layer.json` into the data source, overwrites it, downloads it again and checks every column. It ends with `done`, or lists tables to look at; details are in `work/raw/report.json`.
 
-To replace the data of raw data sources that already exist (after the CSVs were regenerated), use `--replace --tables <table>`: it overwrites the data and keeps each data source's id. Like the REST overwrite in step 4, this drops the table from the rpt_ data sources that use it: queries no longer find the calculated fields that read it. Run `describe_rpt.py` for those data sources (step 4, item 1), then open each one in the web editor and:
+To replace the data of raw data sources that already exist (after the CSVs were regenerated), use `--replace --tables <table>`: it overwrites the data and keeps each data source's id. Each rpt_ data source that uses the table needs the web editor afterwards, even when no column changed: it either loses the table (queries no longer find the calculated fields that read it) or keeps reading the old rows until it is published again, and then loses the table. Check its descriptions with `check_metadata.py --layer rpt` and run `describe_rpt.py` (step 4, item 1) only if they are missing. Then open each one in the web editor and:
 
 1. Refresh the data source (toolbar) if the table's new columns are missing. After the refresh the table stands apart from the tree.
-2. Draw its relationship again from the parent table's "+" with the keys in step 3 (a person draws it; see step 2).
+2. If the tables stand apart (several base tables), draw every relationship again with the keys in step 3. In our runs a computer-use agent's drag registered only from the table at the top of the canvas; a person draws the rest (see step 2).
 3. In the Scratchpad, every calculated field that reads the table shows "!". Edit each one, replace the whole formula with the one in `metadata/rpt_layer.json`, and wait for "The calculation is valid."
 4. Publish over the same data source. The descriptions written in step 4, item 1 are kept.
 
