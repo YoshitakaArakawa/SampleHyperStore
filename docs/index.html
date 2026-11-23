@@ -11,7 +11,7 @@
 <style>
 /* Single light theme (white background in every viewer theme). One page, two languages: every text comes from L.ja / L.en and the page re-renders on switch.
    Layout: hero → join diagrams (3 tables vs 12 tables) → business rules (Business Preferences) → then
-   type A (one case: business dashboard → question → five drill-down steps → answer), type B (two cases: who asks → agent reads data source and Knowledge → two answers),
+   type A (one case: business dashboard → question → five drill-down steps → answer), type B (two cases: who asks → agent reads data source and Knowledge → answer without Knowledge vs with Knowledge, which may ask back first),
    catalog (two tables of further questions).
    Every number in the case texts is a {path:format} placeholder filled from D.S (numbers.json), never typed in. */
 :root {
@@ -231,19 +231,26 @@ svg { width: 100%; height: auto; display: block; overflow: visible; }
 .res .big { font-family: var(--f-num); font-weight: 800; font-size: 34px; line-height: 1.1; }
 .res.bare .big { color: var(--muted); }
 .res.set .big { color: var(--know); }
-.res .how { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.res .how { font-size: 13px; color: var(--muted); line-height: 1.55; }
 .mind { display: grid; gap: 2px; width: 100%; text-align: left; background: var(--bg); border-radius: 12px; padding: 10px 12px; box-sizing: border-box; }
 .mind .lb { font-size: 12.5px; color: var(--muted); }
 .mind .big { font-family: var(--f-num); font-weight: 800; font-size: 28px; line-height: 1.1; color: var(--hot); }
 .mind .how, .res .how { font-size: 12.5px; }
+.how { display: grid; gap: 4px; margin-top: 4px; }
+.how p { margin: 0; }
+.how ul { margin: 0; padding-left: 1.2em; display: grid; gap: 1px; }
+.how .end { color: var(--ink); }
+.res.set .how .end { color: var(--know); }
+.rule + .rule { margin-top: 6px; }
+.chat { display: grid; gap: 6px; margin: 4px 0 6px; }
+.chat .b { font-size: 12.5px; line-height: 1.5; border-radius: 10px; padding: 6px 10px; max-width: 94%; box-sizing: border-box; }
+.chat .who { display: block; font-size: 11px; color: var(--muted); }
+.chat .ai { justify-self: start; background: var(--bg); border: 1.5px solid var(--know); border-bottom-left-radius: 3px; }
+.chat .ai ul { margin: 2px 0 0; padding-left: 1.1em; }
+.chat .me { justify-self: end; background: var(--surface); border-bottom-right-radius: 3px; }
 .mini { min-width: 0; }
 .mini svg text { fill: var(--muted); font-family: var(--f-num); font-size: 11px; }
 .diff { border-left: 4px solid var(--know); padding: 4px 0 4px 12px; font-size: 16px; }
-.evid { display: grid; gap: 8px; }
-.evid h5 { margin: 0; font-size: 15px; font-weight: 700; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chips span { font-family: var(--f-num); font-size: 14px; font-weight: 600; padding: 2px 10px; border-radius: 6px; background: var(--surface); }
-.chips span.moved { background: var(--hot-soft); color: var(--hot); }
 
 /* catalog tables */
 .cat { display: grid; gap: 10px; }
@@ -338,7 +345,7 @@ table.qt { width: 100%; border-collapse: collapse; font-size: 14.5px; line-heigh
 <main id="cases"></main>
 
 <script>
-const D = {"S":{"stockout":{"asof":"2025-04","dash":{"sales":{"cur":[487339,385003,352801,414086,308045,369989,471133,451062,284017,240052,394978,365339],"ly":[449930,340192,284166,309781,323206,327019,477772,304321,296647,220502,370687,428595]},"sessions":{"cur":[11940,12704,12948,11399,10725,12801,19044,17750,11507,9413,12309,13181],"ly":[11215,11734,11815,10712,9693,11721,20455,12502,10365,8664,11018,11443]},"conversion":{"cur":[0.0566,0.0524,0.0514,0.0565,0.0523,0.0526,0.0554,0.0547,0.0539,0.0535,0.0494,0.0462],"ly":[0.054,0.0512,0.0498,0.0543,0.0535,0.0551,0.0524,0.0524,0.0619,0.0538,0.0517,0.0584]},"orders":{"cur":[875,919,948,914,819,947,1456,1326,896,717,958,954],"ly":[671,648,612,615,562,675,1117,687,673,490,633,771]},"new_customers":{"cur":[324,358,364,353,297,385,575,464,290,251,313,312],"ly":[415,368,343,326,280,308,496,284,266,205,248,272]},"aov":{"cur":[557,419,372,453,376,391,324,340,317,335,412,383],"ly":[671,525,464,504,575,484,428,443,441,450,586,556]}},"by_channel":{"channels":["web","app","marketplace","b2b"],"orders_cur":[481,128,264,81],"orders_ly":[520,147,31,73],"sales_cur":[133715,36399,22711,172514],"sales_ly":[169814,51108,3214,204460]},"oos_monthly":{"months":["2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12","2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"],"rate":[0.0775,0.0532,0.0368,0.0428,0.0232,0.0155,0.0199,0.024,0.0268,0.0198,0.0489,0.0551,0.0648,0.0351,0.0172,0.0606,0.0532,0.0529,0.0719,0.0769,0.0768,0.0826,0.1334,0.1433,0.1405,0.1883,0.303,0.3933,0.2871,0.0601,0.0551,0.0385,0.0348,0.0346,0.026,0.0295]},"oos_2023":0.0368,"oos_apr25":0.3933,"search":{"subs":["hiking_footwear","garden_tools","grills","planters_irrigation","patio_furniture","base_layers","fire_pits_patio_heaters","insulated_jackets","sleeping_gear","blankets_throws","camp_kitchen","space_heaters","indoor_air","rain_shells","tents","backpacks"],"oos25":[1.0,0.7086,0.5651,0.4039,0.2186,0.1048,0.0704,0.0497,0.0404,0.0396,0.0356,0.0214,0.0185,0.0087,0.0027,0.0],"oos24":[0.0199,0.1204,0.1025,0.0164,0.0,0.0,0.0,0.0253,0.0,0.0035,0.0797,0.008,0.0,0.0,0.0081,0.0]},"webapp":{"subs":["hiking_footwear","garden_tools","grills","planters_irrigation","patio_furniture","base_layers","fire_pits_patio_heaters","insulated_jackets","sleeping_gear","blankets_throws","camp_kitchen","space_heaters","indoor_air","rain_shells","tents","backpacks"],"sales24":[37005,7055,24286,11552,42293,3130,9157,7636,9276,1188,2747,4043,3306,17513,21563,19171],"sales25":[-55,4308,22603,3924,36167,2581,8796,6818,12942,2668,3148,4326,2953,23689,23653,11593]},"groups_web":{"heavy":["hiking_footwear","garden_tools","grills","planters_irrigation","patio_furniture"],"n_rest":11,"heavy_ly":122191,"heavy_cur":66947,"rest_ly":98731,"rest_cur":103167,"total_ly":220922,"rest_oos25":0.0212,"rest_oos24":0.0168}},"sales":{"sales_orders":549387,"billing":{"credits":38010,"fees":5895,"revenue":417323},"order_monthly":{"months":["2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11"],"revenue":[451062,284017,240052,394978,365339,443611,451092,367430,461868,402273,387313,549387]},"billing_fm":{"months":["2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11"],"revenue":[441014,264451,215269,365139,333660,374983,450383,336294,414604,378418,341952,417323]}},"west":{"region_yoy":-0.1914,"current_yoy":0.1245,"moved":["CO","ID","MT","NV","UT","WY"],"kept":["AK","CA","HI","OR","WA"],"monthly":{"region_cur":[50392,37545,52568,42525,78156,71077,63904,75437,82361,69328,78377,94515],"region_ly":[75654,53838,69970,89325,92260,79957,75969,97897,73337,70152,95774,110550],"current_cur":[50392,37545,52568,42525,78156,71077,63904,75437,82361,69328,78377,94515],"current_ly":[52068,38354,43893,62813,67286,60175,64368,69750,52288,50578,70494,75989]}},"meta":{"raw_sources":12,"columns":178,"relationships":12,"calcs":54,"rules":24}}};
+const D = {"S":{"stockout":{"asof":"2025-04","dash":{"sales":{"cur":[487339,385003,352801,414086,308045,369989,471133,451062,284017,240052,394978,365339],"ly":[449930,340192,284166,309781,323206,327019,477772,304321,296647,220502,370687,428595]},"sessions":{"cur":[11940,12704,12948,11399,10725,12801,19044,17750,11507,9413,12309,13181],"ly":[11215,11734,11815,10712,9693,11721,20455,12502,10365,8664,11018,11443]},"conversion":{"cur":[0.0566,0.0524,0.0514,0.0565,0.0523,0.0526,0.0554,0.0547,0.0539,0.0535,0.0494,0.0462],"ly":[0.054,0.0512,0.0498,0.0543,0.0535,0.0551,0.0524,0.0524,0.0619,0.0538,0.0517,0.0584]},"orders":{"cur":[875,919,948,914,819,947,1456,1326,896,717,958,954],"ly":[671,648,612,615,562,675,1117,687,673,490,633,771]},"new_customers":{"cur":[324,358,364,353,297,385,575,464,290,251,313,312],"ly":[415,368,343,326,280,308,496,284,266,205,248,272]},"aov":{"cur":[557,419,372,453,376,391,324,340,317,335,412,383],"ly":[671,525,464,504,575,484,428,443,441,450,586,556]}},"by_channel":{"channels":["web","app","marketplace","b2b"],"orders_cur":[481,128,264,81],"orders_ly":[520,147,31,73],"sales_cur":[133715,36399,22711,172514],"sales_ly":[169814,51108,3214,204460]},"oos_monthly":{"months":["2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12","2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"],"rate":[0.0775,0.0532,0.0368,0.0428,0.0232,0.0155,0.0199,0.024,0.0268,0.0198,0.0489,0.0551,0.0648,0.0351,0.0172,0.0606,0.0532,0.0529,0.0719,0.0769,0.0768,0.0826,0.1334,0.1433,0.1405,0.1883,0.303,0.3933,0.2871,0.0601,0.0551,0.0385,0.0348,0.0346,0.026,0.0295]},"oos_2023":0.0368,"oos_apr25":0.3933,"search":{"subs":["hiking_footwear","garden_tools","grills","planters_irrigation","patio_furniture","base_layers","fire_pits_patio_heaters","insulated_jackets","sleeping_gear","blankets_throws","camp_kitchen","space_heaters","indoor_air","rain_shells","tents","backpacks"],"oos25":[1.0,0.7086,0.5651,0.4039,0.2186,0.1048,0.0704,0.0497,0.0404,0.0396,0.0356,0.0214,0.0185,0.0087,0.0027,0.0],"oos24":[0.0199,0.1204,0.1025,0.0164,0.0,0.0,0.0,0.0253,0.0,0.0035,0.0797,0.008,0.0,0.0,0.0081,0.0]},"webapp":{"subs":["hiking_footwear","garden_tools","grills","planters_irrigation","patio_furniture","base_layers","fire_pits_patio_heaters","insulated_jackets","sleeping_gear","blankets_throws","camp_kitchen","space_heaters","indoor_air","rain_shells","tents","backpacks"],"sales24":[37005,7055,24286,11552,42293,3130,9157,7636,9276,1188,2747,4043,3306,17513,21563,19171],"sales25":[-55,4308,22603,3924,36167,2581,8796,6818,12942,2668,3148,4326,2953,23689,23653,11593]},"groups_web":{"heavy":["hiking_footwear","garden_tools","grills","planters_irrigation","patio_furniture"],"n_rest":11,"heavy_ly":122191,"heavy_cur":66947,"rest_ly":98731,"rest_cur":103167,"total_ly":220922,"rest_oos25":0.0212,"rest_oos24":0.0168}},"sales":{"sales_orders":549387,"billing":{"credits":38010,"fees":5895,"revenue":417323},"order_monthly":{"months":["2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11"],"revenue":[451062,284017,240052,394978,365339,443611,451092,367430,461868,402273,387313,549387]},"billing_fm":{"months":["2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11"],"revenue":[441014,264451,215269,365139,333660,374983,450383,336294,414604,378418,341952,417323]}},"returns":{"asof":"2025-12","req_units":562,"ord_units":4669,"support":0.1204,"billing":0.024,"support_lo":0.0603,"support_hi":0.1301,"billing_lo":0.0471,"billing_hi":0.0782,"monthly":{"support_cur":[0.1301,0.101,0.0707,0.0696,0.0603,0.0751,0.0993,0.076,0.0867,0.0982,0.0733,0.1204],"support_ly":[0.0599,0.0673,0.0491,0.0424,0.0415,0.0605,0.0675,0.0665,0.0972,0.0833,0.0665,0.1165],"billing_cur":[0.0782,0.0756,0.0471,0.0476,0.05,0.0563,0.0582,0.0514,0.0681,0.0766,0.0697,0.024]}},"meta":{"raw_sources":12,"columns":178,"relationships":12,"calcs":54,"rules":24}}};
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const pct = v => Math.round(v * 100) + "%";
 const pct1 = v => (v * 100).toFixed(1) + "%";
@@ -353,6 +360,7 @@ const FMT = {
   usd: v => "$" + Math.round(v).toLocaleString("en-US"), usdk: v => "$" + Math.round(v / 1000).toLocaleString("en-US") + "k",
   n: v => String(v.length), reg: v => v.map(r => r.replace(/^R-/, "")).map(x => x[0] + x.slice(1).toLowerCase()).join(", "),
   d: v => { const [y, m, d] = v.split("-").map(Number); return lang === "ja" ? `${y}年${m}月` + (d ? `${d}日` : "") : (d ? `${MON[m - 1]} ${d}, ${y}` : `${MON[m - 1]} ${y}`); },
+  pn: v => String(Math.round(v * 100)), int: v => Math.round(v).toLocaleString("en-US"),
   x: v => String(v), subs: v => v.map(k => t.subs[k] || k).join(lang === "ja" ? "、" : ", "), approx: v => (lang === "ja" ? "約 " : "about ") + "$" + Math.round(v / 10000) * 10 + "k",
 };
 // numbers derived from D.S (ranges, lookups); still computed, never typed
@@ -364,7 +372,6 @@ const X = (() => {
       heavyPct: g.heavy_cur / g.heavy_ly - 1, heavyShare: g.heavy_ly / g.total_ly, restPct: g.rest_cur / g.rest_ly - 1,
       // subcategories whose web/app sales fell by 30% or more, largest fall first
       bigDrop: g.heavy.map(k => [k, w.sales25[w.subs.indexOf(k)] / w.sales24[w.subs.indexOf(k)] - 1]).filter(([, r]) => r <= -.3).sort((a, b) => a[1] - b[1]).map(([k]) => k) },
-    west: { ncur: D.S.west.kept.length },
   };
 })();
 const TILE_HL = ["sales", "conversion"], TILE_POS = ["sessions"];   // the tiles that changed (an editorial choice, the values come from D)
@@ -437,14 +444,14 @@ const L = {
       meta: [["受注の整備済みデータ", "--d-order", ["売上", "注文数", "注文数量"]], ["Web 分析の整備済みデータ", "--d-web", ["セッション数", "在庫なし表示の閲覧比率", "検索結果の在庫なし率"]]],
       rules: ["分析には整備済みのデータソースを使う", "「売上」だけなら受注の売上", "セッションあたり注文数 ＝ Web・アプリの注文 ÷ セッション", "推移は、受注は注文日、Web はセッション開始日で見る", "検索の「在庫なし」は、結果はあるが在庫がないこと"] },
     start: { h: "使い始める", p: "データは無料で使える。データと文書は CC BY 4.0、コードは MIT ライセンス。", lead: "入手方法と、Tableau への載せ方は README にまとめてある。", readme: ["ja/README.md", "README を読む"] },
-    miniM: ["1月", "12月"], lyShort: "前年", caseLbl: "ケース", tUse: "使うテーブル",
+    miniM: ["1月", "12月"], caseLbl: "ケース", tUse: "使うテーブル",
     intro: { kind: "", h: "このデータでできること", p: "テーブルをまたいで原因を掘る分析の例を 1 つ、業務ルールで AI の答えが変わる例を 2 つ見せる。最後に、デモに使える問いの例を並べる。",
       toc: [["", "分析の例", "テーブルをまたいで原因を掘る", "part-a", "--hot"], ["", "AI の振る舞いの例", "業務ルールが答えを決める", "part-b", "--know"], ["", "デモに使える問いの例", "分析の問いと、AI の振る舞いの問い", "catalog", "--accent"]] },
     cts: ["販路別の売上（{asof:d}と前年同月）", "経営ダッシュボードを Web とアプリに絞る（{asof:d}時点、前年同月比）", "商品ページの閲覧のうち「在庫なし」だった割合（月次）",
       "サイト内検索の結果のうち、在庫なしと表示された割合（在庫なし表示の多い小分類と、その他）", "Web・アプリの売上（{asof:d}と前年同月）。登山靴は注文がすべてキャンセルされ、売上はほぼ $0"],
     yoyLbl: "前年同月比", cur: "今年", ly: "前年同月", stepOf: n => `${n} / 5`,
     partA: { kind: "分析の例", h: "テーブルをまたいで原因を掘る", p: "経営ダッシュボードの変化から問いを立て、テーブルを足しながら 5 段で絞り込む。答えは最後に出す。" },
-    partB: { kind: "AI の振る舞いの例", h: "業務ルールが AI の答えを決める", p: "同じデータでも、どの指標を使い、どう比べるかで答えが変わる。その決まりはデータには書いていない。AI エージェントは Tableau Knowledge に登録した業務ルールを読み、使う指標と比べ方を決める。",
+    partB: { kind: "AI の振る舞いの例", h: "業務ルールが AI の答えを決める", p: "同じデータでも、どの指標を使うかで答えが変わる。その決まりはデータには書いていない。AI エージェントは Tableau Knowledge に登録した業務ルールを読んで、使う指標を決める。1 つに決まらなければ、何を見たいかを聞き返す。",
       actors: ["質問する人", "データソース", "AI エージェント", "ナレッジ（業務ルール）"], bare: "ナレッジなし", set: "ナレッジあり" },
     stockout: {
       title: "{asof:d}、人は来ているのに売上が落ちた",
@@ -459,20 +466,29 @@ const L = {
         { lens: "その商品の売上", head: "在庫がなかった主力商品で、売上を大きく落とした", sm: "在庫なし表示の多い {X.nh} 小分類は、前年同月に Web・アプリ売上の {X.heavyShare:p0} を占める主力だった。合計で {X.heavyPct:sp0}、特に {X.bigDrop:subs} が大きく落ちた。他の {groups_web.n_rest} 小分類は {X.restPct:sp1}" },
       ],
       answer: "欠品が原因。在庫のあった商品は前年より売れていたが、売上の半分以上を占める主力商品が品切れだった。" },
-    west: {
-      title: "West 地域が前年割れしている",
-      who: "営業部長", ask: "1 月から West が前年割れしている。本当に業績が悪いのか？",
-      mind: "見ているグラフ", mindBig: "{region_yoy:sp0}", mindSm: "West の請求売上（営業地域 ID で集計）",
-      src: ["請求（invoices）", "sales_region_id", "state_code"], kn: ["比べ方", "2025年1月1日に営業地域を再編した。年をまたいで地域を比べるときは、今の区割りで州から引き直した地域を使う"],
-      bare: { big: "{region_yoy:sp0}", how: "営業地域 ID のまま集計。見ているグラフと同じものを返す" },
-      set: { big: "{current_yoy:sp0}", how: "今の区割りで州から地域を引き直し、両年とも同じ {X.ncur} 州の West で集計する" } },
+    returns: {
+      title: "サポートが{asof:d}の返品率を聞いた",
+      who: "カスタマーサポート責任者", ask: "{asof:d}の返品率は？",
+      mind: "だいたいの感覚（いつもの月次報告から）", mindBig: "{support_lo:pn}〜{support_hi:p0}", mindSm: ["毎月この範囲で上下する。12 月は高め"],
+      src: ["請求 · 返品率", "返品・返金 · 返品申請数量", "受注 · 数量"],
+      kn: [["使い分け: 返品率", "「返品率」は部門ごとに 4 つの指標を指す。窓口に来た量、注文した月ごとに最終的に返品された割合、倉庫に戻った量、月次決算の数字で使い分ける"],
+        ["使い方", "名前が一致するだけで指標を選ばない。1 つに決まらなければ、候補と用途を示して選んでもらう。答えには使った指標の名前を書く"]],
+      bare: { big: "{billing:p1}", how: ["「返品率」という名前のフィールドは、経理のものしかない。それを断りなしに返す",
+        ["返品を、元の請求書の月に数える", "クレジットメモで取り消した返品だけを数える"],
+        "12 月に請求した商品の返品は、多くがまだクレジットメモになっていない。そのため 12 月だけ極端に低い（1〜11 月は {billing_lo:pn}〜{billing_hi:p0}）",
+        { end: "聞き返したとしても「経理の返品率でよいですか？」としか聞けない。ほかの返品率はフィールドになっていないから" }] },
+      set: { chat: { ai: "返品率は 4 通りあります。何を見たいですか？", opts: ["窓口に来た返品の量 → サポートの返品率", "注文した月ごとに、最終的に返品された割合 → 商品部の返品率",
+          "倉庫に戻ってきた量 → 物流の返品率", "月次決算の数字 → 経理の返品率"], me: "窓口に来た量を見たい", ai2: "AI", me2: "担当者" },
+        big: "{support:p1}", how: ["サポートの定義（申請ベース）で、2 つのデータソースから計算する",
+          ["分子: {asof:d}に返品の申し出があった {req_units:int} 点（返品・返金）", "分母: {asof:d}に注文された {ord_units:int} 点（受注。キャンセルを除く）"],
+          { end: "「サポートの返品率（申請ベース）で {support:p1}」と、使った指標の名前を添えて答える" }] } },
     sales: {
       title: "経理が 11 月度の売上を聞いた",
       who: "経理", ask: "11 月度の純売上はいくら？",
       mind: "だいたいの感覚", mindBig: "{billing.revenue:approx}", mindSm: "経理の月次報告で見ている、会計月ごとの純売上（返品と手数料を引いた請求の売上）",
-      src: ["受注 · Revenue（注文日）", "請求 · Revenue（会計月）"], kn: ["言葉の意味", "会計期間・純売上・返品・手数料の話なら請求の売上。経理の「月」は会計月"],
-      bare: { big: "{sales_orders:usd}", how: "受注の売上を暦の 11 月で集計。経理の数字と合わない" },
-      set: { big: "{billing.revenue:usd}", how: "請求の売上を会計月で集計し、返品 {billing.credits:usdk} と手数料 {billing.fees:usdk} を引く" } },
+      src: ["受注 · 売上（注文日）", "請求 · 売上（会計月）"], kn: [["言葉の意味", "会計期間・純売上・返品・手数料の話なら請求の売上。経理の「月」は会計月"]],
+      bare: { big: "{sales_orders:usd}", how: [["受注の売上を使う", "暦の 11 月で集計する"], { end: "経理の数字と合わない" }] },
+      set: { big: "{billing.revenue:usd}", how: [["請求の売上を会計月で集計する", "返品 {billing.credits:usdk} を引く", "手数料 {billing.fees:usdk} を引く"]] } },
     cat: {
       kind: "一覧", h: "デモに使える問いの例",
       p: "ここに挙げるのは例で、このデータは他にも多くの問いに答えられる。起点は、数字を定点観測していて気づく場合と、施策を打った結果を確かめる場合がある。",
@@ -536,14 +552,14 @@ const L = {
       meta: [["Prepared order data", "--d-order", ["Revenue", "Orders", "Units"]], ["Prepared web analytics data", "--d-web", ["Sessions", "Out-of-stock view share", "Out-of-stock results rate"]]],
       rules: ["Use the prepared data sources", "“Sales” alone means booked sales", "Orders per session = web and app orders ÷ sessions", "Trends: orders by order date, web by session start date", "In search, “nothing in stock” means results but none in stock"] },
     start: { h: "Get started", p: "The data is free to use. Data and documents are under CC BY 4.0, code under the MIT License.", lead: "How to get the data and put it on Tableau is in the README.", readme: ["en/README.md", "Read the README"] },
-    miniM: ["Jan", "Dec"], lyShort: "Last yr", caseLbl: "Case", tUse: "Tables",
+    miniM: ["Jan", "Dec"], caseLbl: "Case", tUse: "Tables",
     intro: { kind: "", h: "What this data can do", p: "One analysis that digs across tables for a cause, and two cases where business rules change the AI's answer. Then example questions for a demo.",
       toc: [["", "Analysis example", "Dig across tables for the cause", "part-a", "--hot"], ["", "AI behaviour examples", "Business rules decide the answer", "part-b", "--know"], ["", "Example questions for a demo", "Analysis and AI behaviour questions", "catalog", "--accent"]] },
     cts: ["Sales by channel ({asof:d} and a year earlier)", "The business dashboard narrowed to web and app (as of {asof:d}, vs a year earlier)", "Product page views that showed “out of stock” (monthly)",
       "Share of site search results shown out of stock (the subcategories with the most, and the rest)", "Web and app sales ({asof:d} and a year earlier). Every hiking footwear order was cancelled, so its sales are about $0"],
     yoyLbl: "vs same month last year", cur: "This year", ly: "Same month last year", stepOf: n => `${n} / 5`,
     partA: { kind: "Analysis example", h: "Dig across tables for the cause", p: "A change on the business dashboard raises a question. Five steps narrow it down, adding tables on the way. The answer comes last." },
-    partB: { kind: "AI behaviour examples", h: "Business rules decide the AI's answer", p: "The same data gives different answers depending on which metric you use and how you compare. Those rules are not written in the data. The AI agent reads the business rules in Tableau Knowledge and decides which metric to use and how to compare.",
+    partB: { kind: "AI behaviour examples", h: "Business rules decide the AI's answer", p: "The same data gives different answers depending on which metric you use. Those rules are not written in the data. The AI agent reads the business rules in Tableau Knowledge to decide which metric to use. When that leaves more than one, it asks what you want to see.",
       actors: ["Person asking", "Data source", "AI agent", "Knowledge (business rules)"], bare: "Without Knowledge", set: "With Knowledge" },
     stockout: {
       title: "{asof:d}: visitors came, sales fell",
@@ -558,20 +574,29 @@ const L = {
         { lens: "Their sales", head: "Sales fell sharply in best-selling products that were out of stock", sm: "The {X.nh} subcategories shown out of stock were best sellers, {X.heavyShare:p0} of web and app sales a year earlier. Together {X.heavyPct:sp0}, with the steepest falls in {X.bigDrop:subs}. The other {groups_web.n_rest}: {X.restPct:sp1}" },
       ],
       answer: "Stock-outs. Products in stock sold more than a year earlier, but the best sellers, over half of sales, were out of stock." },
-    west: {
-      title: "The West is below last year",
-      who: "Sales director", ask: "The West has been below last year since January. Is business really worse?",
-      mind: "The chart they are looking at", mindBig: "{region_yoy:sp0}", mindSm: "West invoiced sales (by sales region ID)",
-      src: ["Invoices", "sales_region_id", "state_code"], kn: ["How to compare", "Sales regions were redrawn on 2025-01-01; compare regions across years on the region looked up from the state on the current map"],
-      bare: { big: "{region_yoy:sp0}", how: "Summed by sales region ID as it is. Returns the same chart they are looking at" },
-      set: { big: "{current_yoy:sp0}", how: "Region looked up from the state on the current map, so both years cover the same {X.ncur} West states" } },
+    returns: {
+      title: "Support asks for the {asof:d} return rate",
+      who: "Customer Support lead", ask: "What was the return rate in {asof:d}?",
+      mind: "The rough figure they expect (from their monthly report)", mindBig: "{support_lo:pn}–{support_hi:p0}", mindSm: ["Moves within this range month to month; December runs high"],
+      src: ["Billing · Return Rate", "Returns & refunds · Requested Units", "Orders · Units"],
+      kn: [["Which to use: Return rate", "“Return rate” refers to four metrics, one per department: returns customers ask for, the share of each month's orders finally returned, returns back at the warehouse, and the month-end close figure"],
+        ["Usage", "Do not pick a metric only because its name matches. If one metric is not settled, show the candidates and what each is for, and let the user choose. Name the metric used in the answer"]],
+      bare: { big: "{billing:p1}", how: ["The only field named “return rate” is Finance's. It returns that without saying so",
+        ["Counts returns in the month of their original invoice", "Counts only returns credited on a credit memo"],
+        "Most returns of goods invoiced in December are not credited yet, so December alone is very low (January to November: {billing_lo:pn}–{billing_hi:p0})",
+        { end: "Even if it asked back, it could only ask “Finance's return rate, right?”: the other return rates are not fields" }] },
+      set: { chat: { ai: "There are four return rates. What do you want to see?", opts: ["Returns customers asked for → Support's return rate", "Share of each month's orders finally returned → Merchandising's",
+          "Returns back at the warehouse → Logistics'", "The month-end close figure → Finance's"], me: "Returns customers asked for", ai2: "AI", me2: "Support lead" },
+        big: "{support:p1}", how: ["Support's definition (requested), from two data sources",
+          ["Numerator: {req_units:int} units customers asked to return in {asof:d} (returns & refunds)", "Denominator: {ord_units:int} units ordered in {asof:d}, net of cancellations (orders)"],
+          { end: "Answers “{support:p1}, Support's requested return rate”, naming the metric it used" }] } },
     sales: {
       title: "Finance asks for November sales",
       who: "Finance", ask: "What was net revenue for fiscal November?",
       mind: "The rough figure they expect", mindBig: "{billing.revenue:approx}", mindSm: "Net revenue by fiscal month, as in Finance's monthly report (billed sales after returns and fees)",
-      src: ["Orders · Revenue (order date)", "Billing · Revenue (fiscal month)"], kn: ["What words mean", "For fiscal periods, net revenue, returns or fees, use billed revenue; Finance's “month” is the fiscal month"],
-      bare: { big: "{sales_orders:usd}", how: "Booked sales for calendar November. Doesn't match Finance's number" },
-      set: { big: "{billing.revenue:usd}", how: "Billed sales by fiscal month, after {billing.credits:usdk} of returns and {billing.fees:usdk} of fees" } },
+      src: ["Orders · Revenue (order date)", "Billing · Revenue (fiscal month)"], kn: [["What words mean", "For fiscal periods, net revenue, returns or fees, use billed revenue; Finance's “month” is the fiscal month"]],
+      bare: { big: "{sales_orders:usd}", how: [["Uses booked sales", "Sums calendar November"], { end: "Doesn't match Finance's number" }] },
+      set: { big: "{billing.revenue:usd}", how: [["Billed sales by fiscal month", "Minus {billing.credits:usdk} of returns", "Minus {billing.fees:usdk} of fees"]] } },
     cat: {
       kind: "List", h: "Example questions for a demo",
       p: "These are examples; the data answers many more. A question starts either from watching a number over time, or from checking the result of something the business did.",
@@ -695,22 +720,28 @@ function renderText() {
     </article></div></section>`);
 
   // type B: who asks -> agent reads the data source and the Knowledge -> two answers
-  const flow = id => {
+  const CASES_B = ["returns", "sales"];
+  // explanation: a string is a paragraph, an array a bullet list, { end } the closing line
+  const how = (h, id) => `<div class="how">${(Array.isArray(h) ? h : [h]).map(x => Array.isArray(x) ? `<ul>${x.map(li => `<li>${fill(li, id)}</li>`).join("")}</ul>`
+    : typeof x === "object" ? `<p class="end">${fill(x.end, id)}</p>` : `<p>${fill(x, id)}</p>`).join("")}</div>`;
+  const chat = (ch, id) => ch ? `<div class="chat"><div class="b ai"><span class="who">${ch.ai2}</span>${ch.ai}<ul>${ch.opts.map(o => `<li>${o}</li>`).join("")}</ul></div>
+    <div class="b me"><span class="who">${ch.me2}</span>${ch.me}</div></div>` : "";
+  const flow = (id, i, n) => {
     const c = t[id];
-    return `<article class="case" id="${id}"><div class="chead"><span class="clbl">${t.caseLbl} ${id === "west" ? 1 : 2} / 2</span><h3>${c.title}</h3></div>
+    return `<article class="case" id="${id}"><div class="chead"><span class="clbl">${t.caseLbl} ${i + 1} / ${n}</span><h3>${fill(c.title, id, true)}</h3></div>
       <div class="flow">
-        <div class="actor person">${icon("person")}<span class="nm">${c.who}</span><p class="bubble">${c.ask}</p>
-          <div class="mind"><span class="lb">${c.mind}</span><span class="big">${fill(c.mindBig, id, true)}</span><div class="mini" data-mini="${id}:mind"></div><span class="how">${c.mindSm}</span></div></div>
+        <div class="actor person">${icon("person")}<span class="nm">${c.who}</span><p class="bubble">${fill(c.ask, id, true)}</p>
+          <div class="mind"><span class="lb">${c.mind}</span><span class="big">${fill(c.mindBig, id, true)}</span><div class="mini" data-mini="${id}:mind"></div>${how(c.mindSm, id)}</div></div>
         <div class="arr" aria-hidden="true">→</div>
         <div class="actor agent">${icon("agent")}<span class="nm">${B.actors[2]}</span>
           <div class="inputs">
             <div class="actor src">${icon("db")}<span class="nm">${B.actors[1]}</span><div class="fields">${c.src.map(f => `<span>${f}</span>`).join("")}</div></div>
-            <div class="actor kn">${icon("book")}<span class="nm">${B.actors[3]}</span><p class="rule"><small>${c.kn[0]}</small>${c.kn[1]}</p></div>
+            <div class="actor kn">${icon("book")}<span class="nm">${B.actors[3]}</span>${c.kn.map(([g, r]) => `<p class="rule"><small>${g}</small>${r}</p>`).join("")}</div>
           </div></div>
         <div class="arr" aria-hidden="true">→</div>
         <div class="vs">
-          <div class="res bare"><span class="lb">${B.bare}</span><span class="big">${fill(c.bare.big, id, true)}</span><div class="mini" data-mini="${id}:bare"></div><span class="how">${fill(c.bare.how, id)}</span></div>
-          <div class="res set"><span class="lb">${icon("book")}${B.set}</span><span class="big">${fill(c.set.big, id, true)}</span><div class="mini" data-mini="${id}:set"></div><span class="how">${fill(c.set.how, id)}</span></div>
+          <div class="res bare"><span class="lb">${B.bare}</span><span class="big">${fill(c.bare.big, id, true)}</span><div class="mini" data-mini="${id}:bare"></div>${how(c.bare.how, id)}</div>
+          <div class="res set"><span class="lb">${icon("book")}${B.set}</span>${chat(c.set.chat, id)}<span class="big">${fill(c.set.big, id, true)}</span><div class="mini" data-mini="${id}:set"></div>${how(c.set.how, id)}</div>
         </div>
       </div>
     </article>`;
@@ -718,7 +749,7 @@ function renderText() {
   main.insertAdjacentHTML("beforeend", `<section class="part" id="part-b"><div class="in">
     <div class="phead" style="--c:var(--know)"><p class="kind">${B.kind}</p><h2>${B.h}</h2><p>${B.p}</p></div>
     <div class="actors">${["person", "db", "agent", "book"].map((k, i) => `<span>${icon(k)}${B.actors[i]}</span>`).join("")}</div>
-    ${flow("west")}${flow("sales")}</div></section>`);
+    ${CASES_B.map((id, i) => flow(id, i, CASES_B.length)).join("")}</div></section>`);
 
   // catalog: two tables
   const head = cols => `<thead><tr>${cols.map(h => `<th scope="col">${h}</th>`).join("")}</tr></thead>`;
@@ -832,15 +863,17 @@ const STEPS_A = [
     hgroups(h, [...g.heavy.map(k => t.subs[k] || k), t.rest(g.n_rest)], [{ v: cur, c: css("--bar") }, { v: ly, c: css("--dim") }], { max: nice(Math.max(...cur, ...ly)), fmt: k$, band: g.heavy.length }); },
 ];
 // mini charts of the type B cases: what the asker has in mind, and what the agent returns
-function miniLines(host, cur, ly, color) {
-  const W = Math.max(200, Math.round(host.clientWidth) || 260), H = 78, s = svg(host, W, H), n = cur.length;
-  const vs = [...cur, ...ly], lo = 0, hi = Math.max(...vs) * 1.1, x = i => 4 + i * (W - 44) / (n - 1), y = v => 6 + (1 - (v - lo) / (hi - lo)) * (H - 22);
-  const path = a => "M" + a.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" L");
-  el("path", { d: path(ly), fill: "none", stroke: css("--edge"), "stroke-width": 1.5, "stroke-dasharray": "4 3" }, s);
-  el("path", { d: path(cur), fill: "none", stroke: color, "stroke-width": 2.5, "stroke-linejoin": "round" }, s);
-  tx(s, x(n - 1) + 5, y(cur[n - 1]) + 4, t.cur, { fill: color });
-  tx(s, x(n - 1) + 5, y(ly[n - 1]) + 4, t.lyShort);
-  tx(s, 4, H - 2, t.miniM[0]); tx(s, x(n - 1), H - 2, t.miniM[1], { "text-anchor": "middle" });
+function miniRates(host, series) {   // monthly rates Jan-Dec; a series may stop early (null); the end of each series is labelled
+  const W = Math.max(200, Math.round(host.clientWidth) || 260), H = 82, R = 46, s = svg(host, W, H);
+  const hi = Math.max(...series.flatMap(se => se.v.filter(v => v != null))) * 1.12, x = i => 4 + i * (W - 4 - R) / 11, y = v => 6 + (1 - v / hi) * (H - 24);
+  el("line", { x1: 4, x2: W - R, y1: H - 18, y2: H - 18, stroke: css("--grid") }, s);
+  series.forEach(se => {
+    const pts = se.v.map((v, i) => v == null ? null : [x(i), y(v)]).filter(Boolean), lp = pts[pts.length - 1];
+    el("path", { d: "M" + pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" L"), fill: "none", stroke: se.c, "stroke-width": se.dash ? 1.5 : 2.5, "stroke-dasharray": se.dash ? "4 3" : "none", "stroke-linejoin": "round" }, s);
+    if (!se.dash) el("circle", { cx: lp[0], cy: lp[1], r: 3.5, fill: se.c }, s);
+    tx(s, lp[0] + 6, lp[1] + 4 + (se.dy || 0), se.lb, se.dash ? {} : { fill: se.c, "font-weight": 600 });
+  });
+  tx(s, 4, H - 2, t.miniM[0]); tx(s, x(11), H - 2, t.miniM[1], { "text-anchor": "middle" });
 }
 function miniBars(host, months, vals, color, noLabel) {
   const W = Math.max(200, Math.round(host.clientWidth) || 260), H = 78, s = svg(host, W, H), n = vals.length, bw = (W - 4) / n, mx = Math.max(...vals) * 1.15;
@@ -849,11 +882,11 @@ function miniBars(host, months, vals, color, noLabel) {
   if (!noLabel) tx(s, 2 + (n - .5) * bw, y(vals[n - 1]) - 4, k$(vals[n - 1]), { "text-anchor": "end", fill: color, "font-weight": 600 });
   tx(s, 2 + bw / 2, H - 2, FMT.d(months[0]), { "text-anchor": "start" }); tx(s, W - 2, H - 2, FMT.d(months[n - 1]), { "text-anchor": "end" });
 }
-const MINI_M = ["1", "12"];   // month labels at the ends of the West mini charts (replaced per language below)
 const MINI = {
-  "west:mind": h => miniLines(h, D.S.west.monthly.region_cur, D.S.west.monthly.region_ly, css("--hot")),
-  "west:bare": h => miniLines(h, D.S.west.monthly.region_cur, D.S.west.monthly.region_ly, css("--muted")),
-  "west:set": h => miniLines(h, D.S.west.monthly.current_cur, D.S.west.monthly.current_ly, css("--know")),
+  // what the asker has seen so far: 2025 up to November and 2024 in full (a rough sense, so the line ends carry the year, not a value)
+  "returns:mind": h => { const m = D.S.returns.monthly; miniRates(h, [{ v: m.support_ly, c: css("--edge"), dash: true, lb: String(+D.S.returns.asof.slice(0, 4) - 1), dy: -10 }, { v: [...m.support_cur.slice(0, 11), null], c: css("--hot"), lb: D.S.returns.asof.slice(0, 4), dy: 6 }]); },
+  "returns:bare": h => { const m = D.S.returns.monthly; miniRates(h, [{ v: m.billing_cur, c: css("--muted"), lb: FMT.p1(D.S.returns.billing) }]); },
+  "returns:set": h => { const m = D.S.returns.monthly; miniRates(h, [{ v: m.support_cur, c: css("--know"), lb: FMT.p1(D.S.returns.support) }]); },
   "sales:mind": h => miniBars(h, D.S.sales.billing_fm.months, D.S.sales.billing_fm.revenue, css("--hot"), true),   // a rough sense, so no exact label
   "sales:bare": h => miniBars(h, D.S.sales.order_monthly.months, D.S.sales.order_monthly.revenue, css("--muted")),
   "sales:set": h => miniBars(h, D.S.sales.billing_fm.months, D.S.sales.billing_fm.revenue, css("--know")),
