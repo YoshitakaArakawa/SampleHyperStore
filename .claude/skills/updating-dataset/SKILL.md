@@ -52,7 +52,7 @@ One request can be several kinds. Do them in the order B → A → C: A moves th
 5. If the first or last date of the data changed, update the Business Preference "Term: Relative dates mean relative to the end of the data" in both languages (descriptions do not state the period).
 6. Rebuild the showcase page (`analyze.py`, then `build.py`). Read its texts again: the figures update by themselves, but a sentence can stop being true ([the showcase page](references/touchpoints.md#the-showcase-page)).
 7. Run the [final check](#final-check). Row counts are checked by the script; the expected totals are not.
-8. On Tableau, after the user agrees: republish the raw layer (`SETUP_FOR_AI.md` step 1) and query the totals (step 3). Write the new totals into `SETUP_FOR_AI.md` and both `setup_manual.md`.
+8. On Tableau, after the user agrees: load the new rows into the existing raw data sources ("Data sources that already exist" in `SETUP_FOR_AI.md` step 1: `--replace` when the columns did not change, `--republish` when step 2 added or changed a column), republish each affected rpt_ data source from the web editor as described there, and query the totals (step 3). Write the new totals into `SETUP_FOR_AI.md` and both `setup_manual.md`.
 
 ## C. Change metadata only
 

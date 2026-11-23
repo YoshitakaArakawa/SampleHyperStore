@@ -31,6 +31,7 @@ Usage (from en/setup):
     python scripts/publish_raw.py --project "SampleHyperStore/raw" --tables orders order_lines
     python scripts/publish_raw.py --project "SampleHyperStore/raw" --tables orders --update
     python scripts/publish_raw.py --project "SampleHyperStore/raw" --tables orders --replace
+    python scripts/publish_raw.py --project "SampleHyperStore/raw" --tables orders --republish
 
 --project is the path of an existing project, levels separated by "/".
 Sign-in: scripts/tableau_auth.py (browser sign-in; .env holds SERVER and SITE_NAME only).
@@ -244,14 +245,10 @@ def check_tds(txt: str, columns: list[str], descriptions: dict, aggregations: di
     return missing
 
 
-LOCAL_TYPE = {"string": "string", "integer": "integer", "date": "date", "datetime": "datetime",
-              "boolean": "boolean"}
-
-
 def schema_diff(txt: str, columns: list[list[str]]) -> list[str]:
     """Differences between the published columns (.tds) and columns.yaml; empty when they match."""
     meta = _metadata(txt)
-    want = {c: ("real" if t.startswith("decimal") else LOCAL_TYPE.get(t, t)) for c, t in columns}
+    want = {c: ("real" if t.startswith("decimal") else t) for c, t in columns}
     diff = [f"new column {c}" for c in want if c not in meta]
     diff += [f"column {c} is gone" for c in meta if c not in want]
     diff += [f"{c}: {meta[c][1]} -> {want[c]}" for c in want if c in meta and meta[c][1] != want[c]]
@@ -399,11 +396,12 @@ def main():
             z3.close()
             missing = check_tds(txt3, colnames, spec["columns"], aggs)
             report[t] = {"luid": ds2.id, "same_id": ds2.id == ds.id, "columns": len(colnames),
-                         "missing_caption_or_description": missing}
+                         "numrec_after": numrec_count(txt3), "missing_caption_or_description": missing}
             print(f"[verify] {t}: id kept={ds2.id == ds.id}, columns={len(colnames)}, missing={missing}")
     (WORK / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     bad = [t for t, r in report.items()
-           if r["missing_caption_or_description"] or not r["same_id"] or not r.get("tds_unchanged", True)]
+           if r.get("failed") or r["missing_caption_or_description"] or not r["same_id"]
+           or not r.get("tds_unchanged", True) or r.get("numrec_after", 0) > r.get("numrec_before", 0)]
     print("done" if not bad else f"check these tables: {bad}")
     sys.exit(1 if bad else 0)
 
@@ -426,7 +424,13 @@ def replace_all(server, project, tables, raw, cols, hyper, rows, name_format, ex
     report = {}
     for t, ds, before in plan:
         print(f"[replace] {ds.name} ({ds.id}): {rows[t]:,} rows")
-        replace_rows(server, ds, hyper[t])
+        try:
+            replace_rows(server, ds, hyper[t])
+        except Exception as e:  # job failed or cancelled: keep what was done so far in report.json
+            report[t] = {"luid": ds.id, "same_id": True, "failed": f"{type(e).__name__}: {e}",
+                         "missing_caption_or_description": []}
+            print(f"[replace] {t}: failed ({type(e).__name__}); the tables after it were not replaced")
+            break
         after = download_tds(server, ds.id, WORK / t / "after")
         (WORK / t / "after.tds").write_text(after, encoding="utf-8")
         spec = raw[t]
