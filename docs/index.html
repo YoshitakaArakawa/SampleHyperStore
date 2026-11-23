@@ -202,8 +202,17 @@ svg { width: 100%; height: auto; display: block; overflow: visible; }
 .actors { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); }
 .actors span { display: inline-flex; align-items: center; gap: 6px; }
 .actors svg { width: 22px; height: 22px; }
-.flow { display: grid; grid-template-columns: minmax(0, 1fr) 26px minmax(0, 1fr) 26px minmax(0, 1fr); align-items: center; }
+.flow { display: grid; grid-template-columns: minmax(0, 1fr) 26px minmax(0, 1fr) 26px minmax(0, 1fr); align-items: center; gap: 10px 0; }
 .arr { text-align: center; color: var(--edge); font-size: 24px; line-height: 1; }
+.arr.to-set { color: var(--know); }
+@media (min-width: 901px) {
+  .flow > .person, .flow > .agent, .flow > .arr.in { grid-row: 1 / span 2; }
+  .flow > .arr.to-bare { grid-column: 4; grid-row: 1; }
+  .flow > .vs { display: contents; }
+  .flow > .vs > .bare { grid-column: 5; grid-row: 1; }
+  .flow > .vs > .arr.to-set { grid-column: 4; grid-row: 2; }
+  .flow > .vs > .set { grid-column: 5; grid-row: 2; }
+}
 .actor { border-radius: 14px; padding: 14px; display: grid; justify-items: center; gap: 8px; text-align: center; min-width: 0; }
 .actor > svg { width: 44px; height: 44px; }
 .actor .nm { font-size: 14px; }
@@ -217,7 +226,10 @@ svg { width: 100%; height: auto; display: block; overflow: visible; }
 .inputs .actor > svg { width: 34px; height: 34px; }
 .fields { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
 .fields span { font-family: var(--f-num); font-size: 12.5px; background: var(--bg); border-radius: 5px; padding: 0 6px; }
-.rule { font-size: 14px; line-height: 1.5; }
+.fields span b { font-weight: 400; color: var(--muted); }
+.fkey { font-size: 12px; color: var(--muted); margin-top: -4px; }
+.fkey b { font-weight: 400; color: var(--muted); }
+.rule { font-size: 14px; line-height: 1.5; text-align: left; width: 100%; }
 .rule small { display: block; font-size: 12px; color: var(--know); }
 .bubble { background: var(--bg); border-radius: 12px; padding: 10px 12px; font-family: var(--f-display); font-weight: 700; font-size: 16px; line-height: 1.5; text-align: left; }
 :lang(ja) .bubble { word-break: auto-phrase; }
@@ -240,6 +252,7 @@ svg { width: 100%; height: auto; display: block; overflow: visible; }
 .how p { margin: 0; }
 .how ul { margin: 0; padding-left: 1.2em; display: grid; gap: 1px; }
 .how .end { color: var(--ink); }
+.how .lead { color: var(--ink); font-weight: 700; font-size: 13.5px; }
 .res.set .how .end { color: var(--know); }
 .rule + .rule { margin-top: 6px; }
 .chat { display: grid; gap: 6px; margin: 4px 0 6px; }
@@ -247,9 +260,11 @@ svg { width: 100%; height: auto; display: block; overflow: visible; }
 .chat .who { display: block; font-size: 11px; color: var(--muted); }
 .chat .ai { justify-self: start; background: var(--bg); border: 1.5px solid var(--know); border-bottom-left-radius: 3px; }
 .chat .ai ul { margin: 2px 0 0; padding-left: 1.1em; }
-.chat .me { justify-self: end; background: var(--surface); border-bottom-right-radius: 3px; }
+.chat .me { justify-self: end; background: var(--bg); color: var(--ink); border: 1.5px solid var(--edge); border-bottom-right-radius: 3px; }
 .mini { min-width: 0; }
-.mini svg text { fill: var(--muted); font-family: var(--f-num); font-size: 11px; }
+.mini svg text { fill: var(--muted); font-family: var(--f-num); font-size: 12px; }
+.mini + .legend, .mini .legend { font-size: 12px; gap: 2px 12px; }
+.legend i.band { height: 10px; background: var(--hot-soft) !important; border: 1px solid #f0c9b5; box-sizing: border-box; }
 .diff { border-left: 4px solid var(--know); padding: 4px 0 4px 12px; font-size: 16px; }
 
 /* catalog tables */
@@ -273,6 +288,7 @@ table.qt { width: 100%; border-collapse: collapse; font-size: 14.5px; line-heigh
 @media (max-width: 900px) {
   .flow { grid-template-columns: minmax(0, 1fr); }
   .flow .arr { transform: rotate(90deg); padding: 6px 0; }
+  .vs > .arr.to-set { display: none; }
   .vs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tile:not(:nth-child(3n)) { border-right: 0; }
@@ -367,6 +383,7 @@ const FMT = {
 const X = (() => {
   const so = D.S.stockout, bc = so.by_channel, g = so.groups_web, w = so.webapp, q = so.search, ch = k => bc.channels.indexOf(k);
   return {
+    returns: { cy: D.S.returns.asof.slice(0, 4), ly: String(+D.S.returns.asof.slice(0, 4) - 1) },
     stockout: { conv: so.dash.conversion.cur[11], conv_ly: so.dash.conversion.ly[11], mk: bc.orders_cur[ch("marketplace")], mk_ly: bc.orders_ly[ch("marketplace")],
       nh: g.heavy.length, hfOos: q.oos25[q.subs.indexOf("hiking_footwear")],
       heavyPct: g.heavy_cur / g.heavy_ly - 1, heavyShare: g.heavy_ly / g.total_ly, restPct: g.rest_cur / g.rest_ly - 1,
@@ -452,7 +469,7 @@ const L = {
     yoyLbl: "前年同月比", cur: "今年", ly: "前年同月", stepOf: n => `${n} / 5`,
     partA: { kind: "分析の例", h: "テーブルをまたいで原因を掘る", p: "経営ダッシュボードの変化から問いを立て、テーブルを足しながら 5 段で絞り込む。答えは最後に出す。" },
     partB: { kind: "AI の振る舞いの例", h: "業務ルールが AI の答えを決める", p: "同じデータでも、どの指標を使うかで答えが変わる。その決まりはデータには書いていない。AI エージェントは Tableau Knowledge に登録した業務ルールを読んで、使う指標を決める。1 つに決まらなければ、何を見たいかを聞き返す。",
-      actors: ["質問する人", "データソース", "AI エージェント", "ナレッジ（業務ルール）"], bare: "ナレッジなし", set: "ナレッジあり" },
+      actors: ["質問する人", "データソース", "AI エージェント", "ナレッジ（業務ルール）"], bare: "ナレッジなし", set: "ナレッジあり", fkey: ["データソース", "フィールド"] },
     stockout: {
       title: "{asof:d}、人は来ているのに売上が落ちた",
       dash: "月次の経営ダッシュボード",
@@ -470,23 +487,23 @@ const L = {
       title: "サポートが{asof:d}の返品率を聞いた",
       who: "カスタマーサポート責任者", ask: "{asof:d}の返品率は？",
       mind: "だいたいの感覚（いつもの月次報告から）", mindBig: "{support_lo:pn}〜{support_hi:p0}", mindSm: ["毎月この範囲で上下する。12 月は高め"],
-      src: ["請求 · 返品率", "返品・返金 · 返品申請数量", "受注 · 数量"],
-      kn: [["使い分け: 返品率", "「返品率」は部門ごとに 4 つの指標を指す。窓口に来た量、注文した月ごとに最終的に返品された割合、倉庫に戻った量、月次決算の数字で使い分ける"],
+      band: "感覚の範囲（{support_lo:pn}〜{support_hi:p0}）", lyLbl: "{X.ly}年", curLbl: "{X.cy}年（1〜11 月）",
+      src: [["請求", "返品率"], ["返品・返金", "返品申請数量"], ["受注", "数量"]],
+      kn: [["使い分け: 返品率", "「返品率」は部門ごとに 4 つの指標を指す。返品の申し出を申し出の月で数える（サポート）、注文の月で数える（商品部）、倉庫に戻った個数（物流）、月次決算の数字（経理）で使い分ける"],
         ["使い方", "名前が一致するだけで指標を選ばない。1 つに決まらなければ、候補と用途を示して選んでもらう。答えには使った指標の名前を書く"]],
-      bare: { big: "{billing:p1}", how: ["「返品率」という名前のフィールドは、経理のものしかない。それを断りなしに返す",
-        ["返品を、元の請求書の月に数える", "クレジットメモで取り消した返品だけを数える"],
-        "12 月に請求した商品の返品は、多くがまだクレジットメモになっていない。そのため 12 月だけ極端に低い（1〜11 月は {billing_lo:pn}〜{billing_hi:p0}）",
-        { end: "聞き返したとしても「経理の返品率でよいですか？」としか聞けない。ほかの返品率はフィールドになっていないから" }] },
-      set: { chat: { ai: "返品率は 4 通りあります。何を見たいですか？", opts: ["窓口に来た返品の量 → サポートの返品率", "注文した月ごとに、最終的に返品された割合 → 商品部の返品率",
-          "倉庫に戻ってきた量 → 物流の返品率", "月次決算の数字 → 経理の返品率"], me: "窓口に来た量を見たい", ai2: "AI", me2: "担当者" },
-        big: "{support:p1}", how: ["サポートの定義（申請ベース）で、2 つのデータソースから計算する",
-          ["分子: {asof:d}に返品の申し出があった {req_units:int} 点（返品・返金）", "分母: {asof:d}に注文された {ord_units:int} 点（受注。キャンセルを除く）"],
-          { end: "「サポートの返品率（申請ベース）で {support:p1}」と、使った指標の名前を添えて答える" }] } },
+      bare: { big: "{billing:p1}", how: [{ lead: "経理の返品率を、断りなしに返す。サポートが見たい数字ではない" },
+        "ナレッジなしの AI に見えるのは、フィールド名だけ。「返品率」という名前のフィールドは経理のものしかない。ほかの 3 つの返品率は、ナレッジにしか書かれていない",
+        "12 月だけ低い（1〜11 月は {billing_lo:pn}〜{billing_hi:p0}）。経理は返品を、請求の取り消し（クレジットメモ）が済んでから、元の請求の月に数える。12 月に請求した分の返品は、まだ取り消しが済んでいない"] },
+      set: { chat: { ai: "返品率は 4 通りあります。何を見たいですか？", opts: ["返品の申し出を、申し出があった月で数える → サポートの返品率", "返品の申し出を、元の注文の月で数える → 商品部の返品率",
+          "倉庫に戻ってきた返品の個数 → 物流の返品率", "月次決算の数字 → 経理の返品率"], me: "返品の申し出を、申し出があった月で見たい", ai2: "AI", me2: "担当者" },
+        big: "{support:p1}", how: ["サポートの返品率を、2 つのデータソースから計算する",
+          ["分子: {asof:d}にお客さまから返品の申し出があった {req_units:int} 個（返品・返金）", "分母: {asof:d}に注文された {ord_units:int} 個（受注。キャンセルを除く）"],
+          { end: "「サポートの返品率で {support:p1}」と、使った指標の名前を添えて答える" }] } },
     sales: {
       title: "経理が 11 月度の売上を聞いた",
       who: "経理", ask: "11 月度の純売上はいくら？",
       mind: "だいたいの感覚", mindBig: "{billing.revenue:approx}", mindSm: "経理の月次報告で見ている、会計月ごとの純売上（返品と手数料を引いた請求の売上）",
-      src: ["受注 · 売上（注文日）", "請求 · 売上（会計月）"], kn: [["言葉の意味", "会計期間・純売上・返品・手数料の話なら請求の売上。経理の「月」は会計月"]],
+      src: [["受注", "売上（注文日）"], ["請求", "売上（会計月）"]], kn: [["言葉の意味", "会計期間・純売上・返品・手数料の話なら請求の売上。経理の「月」は会計月"]],
       bare: { big: "{sales_orders:usd}", how: [["受注の売上を使う", "暦の 11 月で集計する"], { end: "経理の数字と合わない" }] },
       set: { big: "{billing.revenue:usd}", how: [["請求の売上を会計月で集計する", "返品 {billing.credits:usdk} を引く", "手数料 {billing.fees:usdk} を引く"]] } },
     cat: {
@@ -560,7 +577,7 @@ const L = {
     yoyLbl: "vs same month last year", cur: "This year", ly: "Same month last year", stepOf: n => `${n} / 5`,
     partA: { kind: "Analysis example", h: "Dig across tables for the cause", p: "A change on the business dashboard raises a question. Five steps narrow it down, adding tables on the way. The answer comes last." },
     partB: { kind: "AI behaviour examples", h: "Business rules decide the AI's answer", p: "The same data gives different answers depending on which metric you use. Those rules are not written in the data. The AI agent reads the business rules in Tableau Knowledge to decide which metric to use. When that leaves more than one, it asks what you want to see.",
-      actors: ["Person asking", "Data source", "AI agent", "Knowledge (business rules)"], bare: "Without Knowledge", set: "With Knowledge" },
+      actors: ["Person asking", "Data source", "AI agent", "Knowledge (business rules)"], bare: "Without Knowledge", set: "With Knowledge", fkey: ["Data source", "Field"] },
     stockout: {
       title: "{asof:d}: visitors came, sales fell",
       dash: "Monthly business dashboard",
@@ -578,23 +595,23 @@ const L = {
       title: "Support asks for the {asof:d} return rate",
       who: "Customer Support lead", ask: "What was the return rate in {asof:d}?",
       mind: "The rough figure they expect (from their monthly report)", mindBig: "{support_lo:pn}–{support_hi:p0}", mindSm: ["Moves within this range month to month; December runs high"],
-      src: ["Billing · Return Rate", "Returns & refunds · Requested Units", "Orders · Units"],
-      kn: [["Which to use: Return rate", "“Return rate” refers to four metrics, one per department: returns customers ask for, the share of each month's orders finally returned, returns back at the warehouse, and the month-end close figure"],
+      band: "Expected range ({support_lo:pn}–{support_hi:p0})", lyLbl: "{X.ly}", curLbl: "{X.cy} (Jan–Nov)",
+      src: [["Billing", "Return Rate"], ["Returns & refunds", "Requested Units"], ["Orders", "Units"]],
+      kn: [["Which to use: Return rate", "“Return rate” refers to four metrics, one per department: return requests counted by the month of the request (Support) or by the month of the order (Merchandising), units back at the warehouse (Logistics), and the month-end close figure (Finance)"],
         ["Usage", "Do not pick a metric only because its name matches. If one metric is not settled, show the candidates and what each is for, and let the user choose. Name the metric used in the answer"]],
-      bare: { big: "{billing:p1}", how: ["The only field named “return rate” is Finance's. It returns that without saying so",
-        ["Counts returns in the month of their original invoice", "Counts only returns credited on a credit memo"],
-        "Most returns of goods invoiced in December are not credited yet, so December alone is very low (January to November: {billing_lo:pn}–{billing_hi:p0})",
-        { end: "Even if it asked back, it could only ask “Finance's return rate, right?”: the other return rates are not fields" }] },
-      set: { chat: { ai: "There are four return rates. What do you want to see?", opts: ["Returns customers asked for → Support's return rate", "Share of each month's orders finally returned → Merchandising's",
-          "Returns back at the warehouse → Logistics'", "The month-end close figure → Finance's"], me: "Returns customers asked for", ai2: "AI", me2: "Support lead" },
-        big: "{support:p1}", how: ["Support's definition (requested), from two data sources",
+      bare: { big: "{billing:p1}", how: [{ lead: "Returns Finance's return rate without saying so. Not the number Support wants" },
+        "Without Knowledge, the AI sees only field names. The only field named “return rate” is Finance's; the other three return rates are written only in the Knowledge",
+        "December alone is low (January to November: {billing_lo:pn}–{billing_hi:p0}). Finance counts a return once its invoice is reversed on a credit memo, in the month of the original invoice. Returns of December invoices are not reversed yet"] },
+      set: { chat: { ai: "There are four return rates. What do you want to see?", opts: ["Return requests, counted in the month of the request → Support's return rate", "Return requests, counted in the month of the order → Merchandising's return rate",
+          "Units back at the warehouse → Logistics' return rate", "The month-end close figure → Finance's return rate"], me: "Return requests, by the month of the request", ai2: "AI", me2: "Support lead" },
+        big: "{support:p1}", how: ["Support's return rate, from two data sources",
           ["Numerator: {req_units:int} units customers asked to return in {asof:d} (returns & refunds)", "Denominator: {ord_units:int} units ordered in {asof:d}, net of cancellations (orders)"],
-          { end: "Answers “{support:p1}, Support's requested return rate”, naming the metric it used" }] } },
+          { end: "Answers “{support:p1}, Support's return rate”, naming the metric it used" }] } },
     sales: {
       title: "Finance asks for November sales",
       who: "Finance", ask: "What was net revenue for fiscal November?",
       mind: "The rough figure they expect", mindBig: "{billing.revenue:approx}", mindSm: "Net revenue by fiscal month, as in Finance's monthly report (billed sales after returns and fees)",
-      src: ["Orders · Revenue (order date)", "Billing · Revenue (fiscal month)"], kn: [["What words mean", "For fiscal periods, net revenue, returns or fees, use billed revenue; Finance's “month” is the fiscal month"]],
+      src: [["Orders", "Revenue (order date)"], ["Billing", "Revenue (fiscal month)"]], kn: [["What words mean", "For fiscal periods, net revenue, returns or fees, use billed revenue; Finance's “month” is the fiscal month"]],
       bare: { big: "{sales_orders:usd}", how: [["Uses booked sales", "Sums calendar November"], { end: "Doesn't match Finance's number" }] },
       set: { big: "{billing.revenue:usd}", how: [["Billed sales by fiscal month", "Minus {billing.credits:usdk} of returns", "Minus {billing.fees:usdk} of fees"]] } },
     cat: {
@@ -723,7 +740,9 @@ function renderText() {
   const CASES_B = ["returns", "sales"];
   // explanation: a string is a paragraph, an array a bullet list, { end } the closing line
   const how = (h, id) => `<div class="how">${(Array.isArray(h) ? h : [h]).map(x => Array.isArray(x) ? `<ul>${x.map(li => `<li>${fill(li, id)}</li>`).join("")}</ul>`
-    : typeof x === "object" ? `<p class="end">${fill(x.end, id)}</p>` : `<p>${fill(x, id)}</p>`).join("")}</div>`;
+    : typeof x === "object" ? (x.lead ? `<p class="lead">${fill(x.lead, id)}</p>` : `<p class="end">${fill(x.end, id)}</p>`) : `<p>${fill(x, id)}</p>`).join("")}</div>`;
+  // legend under a mini chart: the expected range, and (for the asker) the two years
+  const mlegend = (c, id, years) => c.band ? `<div class="legend">${years ? `<span><i style="background:var(--hot)"></i>${fill(c.curLbl, id, true)}</span><span><i class="dash"></i>${fill(c.lyLbl, id, true)}</span>` : ""}<span><i class="band"></i>${fill(c.band, id, true)}</span></div>` : "";
   const chat = (ch, id) => ch ? `<div class="chat"><div class="b ai"><span class="who">${ch.ai2}</span>${ch.ai}<ul>${ch.opts.map(o => `<li>${o}</li>`).join("")}</ul></div>
     <div class="b me"><span class="who">${ch.me2}</span>${ch.me}</div></div>` : "";
   const flow = (id, i, n) => {
@@ -731,17 +750,18 @@ function renderText() {
     return `<article class="case" id="${id}"><div class="chead"><span class="clbl">${t.caseLbl} ${i + 1} / ${n}</span><h3>${fill(c.title, id, true)}</h3></div>
       <div class="flow">
         <div class="actor person">${icon("person")}<span class="nm">${c.who}</span><p class="bubble">${fill(c.ask, id, true)}</p>
-          <div class="mind"><span class="lb">${c.mind}</span><span class="big">${fill(c.mindBig, id, true)}</span><div class="mini" data-mini="${id}:mind"></div>${how(c.mindSm, id)}</div></div>
-        <div class="arr" aria-hidden="true">→</div>
+          <div class="mind"><span class="lb">${c.mind}</span><span class="big">${fill(c.mindBig, id, true)}</span><div class="mini" data-mini="${id}:mind"></div>${mlegend(c, id, true)}${how(c.mindSm, id)}</div></div>
+        <div class="arr in" aria-hidden="true">→</div>
         <div class="actor agent">${icon("agent")}<span class="nm">${B.actors[2]}</span>
           <div class="inputs">
-            <div class="actor src">${icon("db")}<span class="nm">${B.actors[1]}</span><div class="fields">${c.src.map(f => `<span>${f}</span>`).join("")}</div></div>
+            <div class="actor src">${icon("db")}<span class="nm">${B.actors[1]}</span><p class="fkey">${B.fkey[0]} <b>·</b> ${B.fkey[1]}</p><div class="fields">${c.src.map(([d, f]) => `<span><b>${d} ·</b> ${f}</span>`).join("")}</div></div>
             <div class="actor kn">${icon("book")}<span class="nm">${B.actors[3]}</span>${c.kn.map(([g, r]) => `<p class="rule"><small>${g}</small>${r}</p>`).join("")}</div>
           </div></div>
-        <div class="arr" aria-hidden="true">→</div>
+        <div class="arr to-bare" aria-hidden="true">→</div>
         <div class="vs">
-          <div class="res bare"><span class="lb">${B.bare}</span><span class="big">${fill(c.bare.big, id, true)}</span><div class="mini" data-mini="${id}:bare"></div>${how(c.bare.how, id)}</div>
-          <div class="res set"><span class="lb">${icon("book")}${B.set}</span>${chat(c.set.chat, id)}<span class="big">${fill(c.set.big, id, true)}</span><div class="mini" data-mini="${id}:set"></div>${how(c.set.how, id)}</div>
+          <div class="res bare"><span class="lb">${B.bare}</span><span class="big">${fill(c.bare.big, id, true)}</span><div class="mini" data-mini="${id}:bare"></div>${mlegend(c, id)}${how(c.bare.how, id)}</div>
+          <div class="arr to-set" aria-hidden="true">→</div>
+          <div class="res set"><span class="lb">${icon("book")}${B.set}</span>${chat(c.set.chat, id)}<span class="big">${fill(c.set.big, id, true)}</span><div class="mini" data-mini="${id}:set"></div>${mlegend(c, id)}${how(c.set.how, id)}</div>
         </div>
       </div>
     </article>`;
@@ -863,15 +883,16 @@ const STEPS_A = [
     hgroups(h, [...g.heavy.map(k => t.subs[k] || k), t.rest(g.n_rest)], [{ v: cur, c: css("--bar") }, { v: ly, c: css("--dim") }], { max: nice(Math.max(...cur, ...ly)), fmt: k$, band: g.heavy.length }); },
 ];
 // mini charts of the type B cases: what the asker has in mind, and what the agent returns
-function miniRates(host, series) {   // monthly rates Jan-Dec; a series may stop early (null); the end of each series is labelled
-  const W = Math.max(200, Math.round(host.clientWidth) || 260), H = 82, R = 46, s = svg(host, W, H);
-  const hi = Math.max(...series.flatMap(se => se.v.filter(v => v != null))) * 1.12, x = i => 4 + i * (W - 4 - R) / 11, y = v => 6 + (1 - v / hi) * (H - 24);
-  el("line", { x1: 4, x2: W - R, y1: H - 18, y2: H - 18, stroke: css("--grid") }, s);
+function miniRates(host, series, o) {   // monthly rates Jan-Dec on a shared scale (o.hi); o.band = [lo, hi] shaded; a series may stop early (null)
+  const W = Math.max(200, Math.round(host.clientWidth) || 260), H = 86, R = 48, s = svg(host, W, H);
+  const x = i => 4 + i * (W - 4 - R) / 11, y = v => 6 + (1 - v / o.hi) * (H - 26);
+  if (o.band) el("rect", { x: 4, width: W - 4 - R, y: y(o.band[1]), height: y(o.band[0]) - y(o.band[1]), fill: css("--hot-soft") }, s);
+  el("line", { x1: 4, x2: W - R, y1: H - 20, y2: H - 20, stroke: css("--grid") }, s);
   series.forEach(se => {
     const pts = se.v.map((v, i) => v == null ? null : [x(i), y(v)]).filter(Boolean), lp = pts[pts.length - 1];
     el("path", { d: "M" + pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" L"), fill: "none", stroke: se.c, "stroke-width": se.dash ? 1.5 : 2.5, "stroke-dasharray": se.dash ? "4 3" : "none", "stroke-linejoin": "round" }, s);
     if (!se.dash) el("circle", { cx: lp[0], cy: lp[1], r: 3.5, fill: se.c }, s);
-    tx(s, lp[0] + 6, lp[1] + 4 + (se.dy || 0), se.lb, se.dash ? {} : { fill: se.c, "font-weight": 600 });
+    if (se.lb) tx(s, lp[0] + 6, lp[1] + 4, se.lb, { fill: se.c, "font-weight": 600 });
   });
   tx(s, 4, H - 2, t.miniM[0]); tx(s, x(11), H - 2, t.miniM[1], { "text-anchor": "middle" });
 }
@@ -882,11 +903,13 @@ function miniBars(host, months, vals, color, noLabel) {
   if (!noLabel) tx(s, 2 + (n - .5) * bw, y(vals[n - 1]) - 4, k$(vals[n - 1]), { "text-anchor": "end", fill: color, "font-weight": 600 });
   tx(s, 2 + bw / 2, H - 2, FMT.d(months[0]), { "text-anchor": "start" }); tx(s, W - 2, H - 2, FMT.d(months[n - 1]), { "text-anchor": "end" });
 }
+// the three return-rate charts share one scale, and all shade the asker's expected range, so a value outside it shows
+const RET_SCALE = () => { const r = D.S.returns, m = r.monthly; return { hi: Math.max(...m.support_cur, ...m.support_ly, ...m.billing_cur) * 1.12, band: [r.support_lo, r.support_hi] }; };
 const MINI = {
   // what the asker has seen so far: 2025 up to November and 2024 in full (a rough sense, so the line ends carry the year, not a value)
-  "returns:mind": h => { const m = D.S.returns.monthly; miniRates(h, [{ v: m.support_ly, c: css("--edge"), dash: true, lb: String(+D.S.returns.asof.slice(0, 4) - 1), dy: -10 }, { v: [...m.support_cur.slice(0, 11), null], c: css("--hot"), lb: D.S.returns.asof.slice(0, 4), dy: 6 }]); },
-  "returns:bare": h => { const m = D.S.returns.monthly; miniRates(h, [{ v: m.billing_cur, c: css("--muted"), lb: FMT.p1(D.S.returns.billing) }]); },
-  "returns:set": h => { const m = D.S.returns.monthly; miniRates(h, [{ v: m.support_cur, c: css("--know"), lb: FMT.p1(D.S.returns.support) }]); },
+  "returns:mind": h => { const r = D.S.returns, m = r.monthly; miniRates(h, [{ v: m.support_ly, c: css("--edge"), dash: true }, { v: [...m.support_cur.slice(0, 11), null], c: css("--hot") }], RET_SCALE()); },
+  "returns:bare": h => { const r = D.S.returns; miniRates(h, [{ v: r.monthly.billing_cur, c: css("--muted"), lb: FMT.p1(r.billing) }], RET_SCALE()); },
+  "returns:set": h => { const r = D.S.returns; miniRates(h, [{ v: r.monthly.support_cur, c: css("--know"), lb: FMT.p1(r.support) }], RET_SCALE()); },
   "sales:mind": h => miniBars(h, D.S.sales.billing_fm.months, D.S.sales.billing_fm.revenue, css("--hot"), true),   // a rough sense, so no exact label
   "sales:bare": h => miniBars(h, D.S.sales.order_monthly.months, D.S.sales.order_monthly.revenue, css("--muted")),
   "sales:set": h => miniBars(h, D.S.sales.billing_fm.months, D.S.sales.billing_fm.revenue, css("--know")),
