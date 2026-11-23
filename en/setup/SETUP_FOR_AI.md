@@ -10,7 +10,7 @@ Project A (raw layer)      12 published data sources "SampleHyperStore - <table>
 Project B (rpt_ layer)     6 published data sources "rpt_samplehyperstore__<dept>", each composed
                            from raw-layer data sources, with 53 calculated fields      <- user, in the web editor
                            and their descriptions                                     <- script + web editor
-Tableau Knowledge (opt.)   a graph over the 18 data sources + 22 Business Preferences <- web UI + Tableau MCP
+Tableau Knowledge (opt.)   a graph over the 18 data sources + 23 Business Preferences <- web UI + Tableau MCP
 ```
 
 The 12 tables are: products, orders, order_lines, shipments, shipment_lines, returns, refunds, invoices, invoice_lines, credit_memos, web_sessions, web_searches. Their CSVs are in `../csv/in_use/`. The other 12 CSVs, in `../csv/planned/`, are not part of this setup.
@@ -159,9 +159,9 @@ The setup is usable now. Give the user `../docs/questions.md`: all 19 questions 
 
 1. The user creates a knowledge graph in the web UI (a site holds up to 5 graphs): Manage Graphs → New knowledge graph → Published Data Sources → search `samplehyperstore` → select all 18 → create. It does not need to be the primary graph.
 2. Find the graph id with `inspect-knowledge-context` (action `status`).
-3. For each item in `metadata/business_preferences.json`, call `manage-knowledge-context` with `action: create`, `isGlobal: true`, the graph id, `name` = title, `statements` = [text]. Replace `{{RPT_PROJECT_PATH}}` with the rpt_ project path written as `A > B`. Show the user the 22 items before writing.
-   If Tableau MCP cannot write them, the user can add each item in the web UI instead: open the graph → Actions → Add Business Preferences → Add Preference (Name = title, Scope = Global, Preference Rules = text). The appendix of `../docs/setup_manual.md` lists all 22.
-4. Check with `inspect-knowledge-context` (action `list`, `isGlobal: true`): 22 items.
+3. For each item in `metadata/business_preferences.json`, call `manage-knowledge-context` with `action: create`, `isGlobal: true`, the graph id, `name` = title, `statements` = [text]. Replace `{{RPT_PROJECT_PATH}}` with the rpt_ project path written as `A > B`. Show the user the 23 items before writing.
+   If Tableau MCP cannot write them, the user can add each item in the web UI instead: open the graph → Actions → Add Business Preferences → Add Preference (Name = title, Scope = Global, Preference Rules = text). The appendix of `../docs/setup_manual.md` lists all 23.
+4. Check with `inspect-knowledge-context` (action `list`, `isGlobal: true`): 23 items.
 5. Knowledge reads field descriptions when a data source is published. Allow about 15 minutes after the last publish before relying on it.
 
 Knowledge is English only. Business Preferences can only be global on this setup (attaching to a field node was refused).

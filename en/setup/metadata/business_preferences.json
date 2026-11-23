@@ -58,6 +58,10 @@
       "text": "In `rpt_samplehyperstore__web_analytics`, trend metrics by `Session Start Date` in calendar months; exceptions: `No-results Rate`, `Out-of-stock Results Rate` and `No-click Rate` by `Searched Date`, `Units Added to Cart` by `Cart Added Date`."
     },
     {
+      "title": "Which to use: Return rate",
+      "text": "\"Return rate\" has four definitions: for the volume of returns customers request, use the requested return rate (Customer Support); for how likely each product is to be returned, the order-cohort return rate (Merchandising); for the volume that comes back to the warehouse, the received return rate (Logistics); for month-end close figures, `Return Rate` in `rpt_samplehyperstore__billing` (Finance; counts returns credited on credit memos in the month of their original invoice). When the question does not settle which definition, ask what the user wants to see and let them choose; name the definition used in the answer."
+    },
+    {
       "title": "Cross-source metric: Requested return rate",
       "text": "Requested return rate (Customer Support) = `Requested Units` in `rpt_samplehyperstore__returns_refunds` by month of `Requested Date` ÷ `Units` in `rpt_samplehyperstore__sales_orders` by month of `Order Date`."
     },

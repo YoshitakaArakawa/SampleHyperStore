@@ -45,7 +45,7 @@ The data contains situations that AI agents tend to get wrong, on purpose. Each 
 | Where agents trip up | What is in the data | What solves it |
 |---|---|---|
 | Mixing up metrics with the same name | "Revenue" exists in three versions, one per department | Each department's `Revenue` calculated field, and the Business Preference "Default meaning of sales and revenue" |
-| Not choosing among several definitions | Return rate has several definitions by department: requested, received, order cohort | Business Preferences with the formula of each definition |
+| Not choosing among several definitions | Return rate has several definitions by department: requested, received, order cohort | Business Preferences with the formula of each definition, and the Business Preference "Which to use: Return rate" |
 | Confusing calendar and fiscal years | The fiscal year starts in February | The description of `Fiscal Month`, and the Business Preference "Fiscal periods for Finance questions" |
 | Missing a change over time | Sales regions were realigned in January 2025 | The Business Preference "Sales region realignment on 2025-01-01" (compare by state) |
 | Failing to build a metric across data sources | Return rate and net shipping cost take their numerator and denominator from different data sources | Business Preferences that name where each part comes from |
@@ -97,7 +97,7 @@ flowchart LR
         subgraph marts["Project marts (per department)"]
             M["6 data sources<br/>rpt_samplehyperstore__department<br/>with calculated fields and descriptions"]
         end
-        K["Tableau Knowledge (optional)<br/>a graph of the 18 data sources,<br/>22 Business Preferences"]
+        K["Tableau Knowledge (optional)<br/>a graph of the 18 data sources,<br/>23 Business Preferences"]
     end
     R -- "composed with relationships" --> M
     AI["AI agent"] -- "queries through Tableau MCP" --> M

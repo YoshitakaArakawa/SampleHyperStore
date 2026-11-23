@@ -12,7 +12,7 @@ AI エージェントや Tableau MCP を使わずに、SampleHyperStore の日�
 | 1 | 生の層をパブリッシュする | スクリプト | 12 データソース `SampleHyperStore - <テーブル名>` |
 | 2 | 部門の層を組む | あなた（Web エディター） | 6 データソース `rpt_samplehyperstore__<部門名>` |
 | 3 | 計算フィールドに説明を付ける | スクリプト・あなた | 部門の層の計算フィールドの説明 |
-| 4 | Tableau Knowledge を設定する（任意） | あなた（Web の画面） | ナレッジグラフとビジネス設定 22 件 |
+| 4 | Tableau Knowledge を設定する（任意） | あなた（Web の画面） | ナレッジグラフとビジネス設定 23 件 |
 | 5 | 試す | あなた | — |
 
 手順2と3は、最初は billing の1本で通し、うまくいったら残りの5本に進むと安全です。
@@ -190,7 +190,7 @@ Tableau Knowledge は、AI エージェントに「何をいつ使うべきか�
 1. Tableau Cloud の左のメニューから「Tableau Knowledge」を開き、「Manage Graphs」を選びます。
 2. 「New knowledge graph」でグラフを作ります。データソースには、生の層と部門の層の 18 本（`samplehyperstore` で検索して出るもの）をすべて選びます。
 3. 作ったグラフを開き、右上の「Actions」→「Add Business Preferences」→「Add Preference」を選びます。
-4. [付録](#付録-ビジネス設定の一覧)の22件を1件ずつ、次のように入力して「Save」を押します。
+4. [付録](#付録-ビジネス設定の一覧)の23件を1件ずつ、次のように入力して「Save」を押します。
    - Name: 付録の「名前」
    - Scope: 「Global (all entities)」のまま
    - Preference Rules: 付録の「本文」（上限は 1,000 文字。どの本文も収まります）
@@ -198,7 +198,7 @@ Tableau Knowledge は、AI エージェントに「何をいつ使うべきか�
 
 ### 確かめ方
 
-- グラフにビジネス設定が 22 件あることを確かめます。
+- グラフにビジネス設定が 23 件あることを確かめます。
 - 最後にデータソースをパブリッシュしてから 15 分ほど待ってから使います。Knowledge は、パブリッシュの時に列の説明を読み込みます。
 
 ---
@@ -238,7 +238,7 @@ python scripts/tableau_auth.py logout
 
 ## 付録: ビジネス設定の一覧
 
-手順4で入力する22件です。内容は `ja/setup/metadata/business_preferences.json` と同じです。
+手順4で入力する23件です。内容は `ja/setup/metadata/business_preferences.json` と同じです。
 
 | # | 名前 | 本文 |
 |---|---|---|
@@ -256,11 +256,12 @@ python scripts/tableau_auth.py logout
 | 12 | 既定の日付: rpt_samplehyperstore__shipments | `rpt_samplehyperstore__shipments` の指標は `出荷日` の暦月で推移を見る。例外: `パーフェクトオーダー率` は `注文日`。 |
 | 13 | 既定の日付: rpt_samplehyperstore__returns_refunds | `rpt_samplehyperstore__returns_refunds` の指標は `申請日` の暦月で推移を見る。例外: `返金額` と `現金返金額` は `返金日`、`返品受領数量` は `受領日`、`注文から返品申請までの日数` と `返品注文明細数` は `注文日`（注文コホート）。 |
 | 14 | 既定の日付: rpt_samplehyperstore__web_analytics | `rpt_samplehyperstore__web_analytics` の指標は `セッション開始日` の暦月で推移を見る。例外: `検索結果ゼロ率`、`在庫あり結果ゼロ率`、`ノークリック率` は `検索日`、`カート投入数量` は `カート追加日`。 |
-| 15 | 複数ソースの指標: 申請ベースの返品率 | 申請ベースの返品率（カスタマーサポート）= `rpt_samplehyperstore__returns_refunds` の `返品申請数量`（`申請日` の月別） ÷ `rpt_samplehyperstore__sales_orders` の `数量`（`注文日` の月別）。 |
-| 16 | 複数ソースの指標: 注文コホートの返品率 | 注文コホートの返品率（マーチャンダイジング）= `rpt_samplehyperstore__returns_refunds` の `返品申請数量` ÷ `rpt_samplehyperstore__merchandising` の `純注文数量`。どちらも `注文日` の月別で、両方に同じフィルターをかける。 |
-| 17 | 複数ソースの指標: 受領ベースの返品率 | 受領ベースの返品率（物流）= `rpt_samplehyperstore__returns_refunds` の `返品受領数量`（`受領日` の月別） ÷ `rpt_samplehyperstore__shipments` の `数量`（`出荷日` の月別）。 |
-| 18 | 複数ソースの指標: 返品明細の発生率 | 返品明細の発生率（マーチャンダイジング）= `rpt_samplehyperstore__returns_refunds` の `返品注文明細数` ÷ `rpt_samplehyperstore__merchandising` の `注文明細数`。商品別、`注文日` の月別。 |
-| 19 | 複数ソースの指標: 純送料コスト | 純送料コスト（経理）= `rpt_samplehyperstore__shipments` の `運賃`（`出荷日` の月別） − `rpt_samplehyperstore__billing` の `請求送料`（`請求日` の月別）。 |
-| 20 | 複数ソースの指標: セッションあたり注文数 | セッションあたり注文数（営業）= `rpt_samplehyperstore__sales_orders` の `注文数`（Webとアプリのチャネル、`注文日` 基準） ÷ `rpt_samplehyperstore__web_analytics` の `セッション数`（`セッション開始日` 基準）。 |
-| 21 | 複数ソースの指標: 数量ベースのカート放棄率 | 数量ベースのカート放棄率（マーチャンダイジング）= 1 − `rpt_samplehyperstore__merchandising` の `数量`（Webとアプリの注文） ÷ `rpt_samplehyperstore__web_analytics` の `カート投入数量`。どちらも週別（`注文日` と `カート追加日`）。 |
-| 22 | 複数ソースの指標: 受注売上に対するマーケットプレイス手数料率 | 受注売上に対するマーケットプレイス手数料率（営業）= `rpt_samplehyperstore__billing` の `マーケットプレイス手数料`（`請求日` の月別） ÷ `rpt_samplehyperstore__sales_orders` の `売上`（マーケットプレイスチャネル、`注文日` の月別）。 |
+| 15 | 使い分け: 返品率 | 「返品率」には定義が 4 つある。窓口に来た返品の量を見るなら、申請ベースの返品率（カスタマーサポート）。商品ごとの返品されやすさを見るなら、注文コホートの返品率（マーチャンダイジング）。倉庫に戻ってきた量を見るなら、受領ベースの返品率（物流）。月次決算の数字を見るなら、`rpt_samplehyperstore__billing` の `返品率`（経理。クレジットメモで取り消した返品を、元の請求書の月に数える）。どの定義か問いから決まらないときは、何を見たいかを聞いて選んでもらう。答えには使った定義の名前を添える。 |
+| 16 | 複数ソースの指標: 申請ベースの返品率 | 申請ベースの返品率（カスタマーサポート）= `rpt_samplehyperstore__returns_refunds` の `返品申請数量`（`申請日` の月別） ÷ `rpt_samplehyperstore__sales_orders` の `数量`（`注文日` の月別）。 |
+| 17 | 複数ソースの指標: 注文コホートの返品率 | 注文コホートの返品率（マーチャンダイジング）= `rpt_samplehyperstore__returns_refunds` の `返品申請数量` ÷ `rpt_samplehyperstore__merchandising` の `純注文数量`。どちらも `注文日` の月別で、両方に同じフィルターをかける。 |
+| 18 | 複数ソースの指標: 受領ベースの返品率 | 受領ベースの返品率（物流）= `rpt_samplehyperstore__returns_refunds` の `返品受領数量`（`受領日` の月別） ÷ `rpt_samplehyperstore__shipments` の `数量`（`出荷日` の月別）。 |
+| 19 | 複数ソースの指標: 返品明細の発生率 | 返品明細の発生率（マーチャンダイジング）= `rpt_samplehyperstore__returns_refunds` の `返品注文明細数` ÷ `rpt_samplehyperstore__merchandising` の `注文明細数`。商品別、`注文日` の月別。 |
+| 20 | 複数ソースの指標: 純送料コスト | 純送料コスト（経理）= `rpt_samplehyperstore__shipments` の `運賃`（`出荷日` の月別） − `rpt_samplehyperstore__billing` の `請求送料`（`請求日` の月別）。 |
+| 21 | 複数ソースの指標: セッションあたり注文数 | セッションあたり注文数（営業）= `rpt_samplehyperstore__sales_orders` の `注文数`（Webとアプリのチャネル、`注文日` 基準） ÷ `rpt_samplehyperstore__web_analytics` の `セッション数`（`セッション開始日` 基準）。 |
+| 22 | 複数ソースの指標: 数量ベースのカート放棄率 | 数量ベースのカート放棄率（マーチャンダイジング）= 1 − `rpt_samplehyperstore__merchandising` の `数量`（Webとアプリの注文） ÷ `rpt_samplehyperstore__web_analytics` の `カート投入数量`。どちらも週別（`注文日` と `カート追加日`）。 |
+| 23 | 複数ソースの指標: 受注売上に対するマーケットプレイス手数料率 | 受注売上に対するマーケットプレイス手数料率（営業）= `rpt_samplehyperstore__billing` の `マーケットプレイス手数料`（`請求日` の月別） ÷ `rpt_samplehyperstore__sales_orders` の `売上`（マーケットプレイスチャネル、`注文日` の月別）。 |
