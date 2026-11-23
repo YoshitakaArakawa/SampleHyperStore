@@ -78,7 +78,7 @@ Check without spending query quota: `python scripts/check_metadata.py --project 
 |---|---:|---|---|---:|
 | products | 202 | | invoices | 32,568 |
 | orders | 31,281 | | invoice_lines | 68,621 |
-| order_lines | 71,007 | | credit_memos | 6,441 |
+| order_lines | 71,007 | | credit_memos | 6,717 |
 | shipments | 32,568 | | web_sessions | 455,057 |
 | shipment_lines | 68,621 | | web_searches | 100,524 |
 | returns | 6,680 | | refunds | 6,493 |
@@ -112,7 +112,7 @@ Read `metadata/rpt_layer.json`. For each data source:
 
 | rpt_ data source | Base table (root) | Relationships |
 |---|---|---|
-| rpt_samplehyperstore__billing | invoices | invoices →(Invoice Id) invoice_lines →(Product Id) products; invoice_lines →(Invoice Id and Product Id) credit_memos |
+| rpt_samplehyperstore__billing | invoices | invoices →(Invoice Id) invoice_lines →(Product Id) products; invoice_lines →(Invoice Line Id) credit_memos |
 | rpt_samplehyperstore__sales_orders | products | products →(Product Id) order_lines →(Order Id) orders |
 | rpt_samplehyperstore__merchandising | products | same as sales_orders |
 | rpt_samplehyperstore__shipments | products | products →(Product Id) shipment_lines →(Shipment Id) shipments |

@@ -28,7 +28,7 @@ Tables marked **Tableau** are the 12 tables that `setup/` publishes to Tableau C
 | [`purchase_orders`](#purchase_orders) | procurement | One row per purchase order (one supplier, one destination warehouse) | 5,837 |  |
 | [`receipts`](#receipts) | procurement | One row per receipt (one delivery of one PO line) | 13,766 |  |
 | [`suppliers`](#suppliers) | procurement | One row per supplier | 20 |  |
-| [`credit_memos`](#credit_memos) | finance | One row per credit memo line (revenue reversal posted by Finance) | 6,441 | yes |
+| [`credit_memos`](#credit_memos) | finance | One row per credit memo line (revenue reversal posted by Finance) | 6,717 | yes |
 | [`invoice_lines`](#invoice_lines) | finance | One row per invoice x order line | 68,621 | yes |
 | [`invoices`](#invoices) | finance | One row per invoice (one invoice per shipment; revenue recognition event) | 32,568 | yes |
 | [`sales_targets`](#sales_targets) | finance | One row per sales region x channel x fiscal month | 584 |  |
@@ -548,18 +548,20 @@ Supplier master with commercial terms. All names are fictional.
 
 Accounting reversals of revenue for refunds and price adjustments, posted in batches and possibly in a later fiscal period than the refund. Includes the marketplace's fee reversal.
 
-- File: `csv/in_use/credit_memos.csv` (6,441 rows)
-- Grain: One row per credit memo line (revenue reversal posted by Finance)
-- Primary key: `credit_memo_id`
+- File: `csv/in_use/credit_memos.csv` (6,717 rows)
+- Grain: One row per credit memo line (revenue reversal posted by Finance against one invoice line)
+- Primary key: `credit_memo_line_id`
 - Owner (fictional department): Finance & Sales Ops
 
 | Column | Type | Null | Key | Description |
 |---|---|---|---|---|
-| `credit_memo_id` | string |  | pk | Credit memo line identifier. |
+| `credit_memo_line_id` | string |  | pk | Credit memo line identifier. |
+| `credit_memo_id` | string |  |  | Credit memo the line belongs to; one memo per refund. |
 | `refund_id` | string |  | → refunds.refund_id | Refund being booked. |
-| `invoice_id` | string |  | → invoices.invoice_id | Original invoice being reversed (first invoice of the order for order-level refunds). |
-| `order_line_id` | string | yes | → order_lines.order_line_id | Order line reversed. Null for order-level reversals (shipping). |
-| `product_id` | string | yes | → products.product_id | Product reversed. Null for order-level reversals. |
+| `invoice_id` | string |  | → invoices.invoice_id | Original invoice of the line being reversed. |
+| `invoice_line_id` | string |  | → invoice_lines.invoice_line_id | Invoice line reversed. Order-level refunds (shipping refunds, goodwill, price adjustments) are spread over the lines of one invoice in proportion to their invoiced value after discounts: the late shipment's invoice for late-delivery refunds, the order's first invoice for price adjustments. Goodwill for a damaged or defective item goes to that item's line. |
+| `order_line_id` | string |  | → order_lines.order_line_id | Order line of the invoice line reversed. |
+| `product_id` | string |  | → products.product_id | Product of the invoice line reversed. |
 | `memo_type` | string |  |  | Accounting category of the reversal. Values: return, allowance, shipping, price_adjustment. |
 | `credit_memo_date` | date |  |  | Posting date of the credit memo. |
 | `qty_credited` | integer |  |  | Units reversed. 0 for allowances, shipping and returnless price adjustments. |

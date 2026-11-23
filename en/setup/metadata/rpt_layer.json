@@ -34,17 +34,13 @@
         "to": "credit_memos",
         "keys": [
           [
-            "Invoice Id",
-            "Invoice Id"
-          ],
-          [
-            "Product Id",
-            "Product Id"
+            "Invoice Line Id",
+            "Invoice Line Id"
           ]
         ]
       }
     ],
-    "datasource_description": "One row per invoice line (Invoice Line Id): one order line on one invoice, with its invoice (one per shipment), the credit memo lines posted against that invoice, and product attributes.",
+    "datasource_description": "One row per invoice line (Invoice Line Id): one order line on one invoice, with its invoice (one per shipment), the credit memo lines posted against that invoice line, and product attributes.",
     "calculated_fields": [
       {
         "name": "Revenue",
@@ -84,7 +80,7 @@
       {
         "name": "Credits",
         "formula": "SUM([Merchandise Credit Amount] + [Shipping Credit Amount])",
-        "description": "Revenue reversed by credit memos in USD: merchandise plus shipping credits of all memo types, tax excluded. Memos without a product fall under null by product attributes or Channel."
+        "description": "Revenue reversed by credit memos in USD: merchandise plus shipping credits of all memo types, tax excluded. Order-level credits are spread over the lines of one invoice."
       },
       {
         "name": "Net Refund Cost",

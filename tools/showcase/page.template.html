@@ -388,7 +388,7 @@ const EDGES = [
   ["web_searches", "web_sessions", 0], ["web_sessions", "orders", 1], ["orders", "order_lines", 1, 0, -6], ["products", "order_lines", 2],
   ["orders", "shipments", 1], ["shipments", "shipment_lines", 3, 0, -8], ["order_lines", "shipment_lines", 4, 0, 8], ["shipments", "invoices", 3],
   ["invoices", "invoice_lines", 5, 0, 65], ["order_lines", "invoice_lines", 4], ["order_lines", "returns", 4],
-  ["returns", "refunds", 6], ["invoices", "credit_memos", 5, 20, -10], ["refunds", "credit_memos", 7, 20, 10],
+  ["returns", "refunds", 6], ["invoice_lines", "credit_memos", 8, 20, -10], ["refunds", "credit_memos", 7, 20, 10],
 ];
 
 const L = {
@@ -411,7 +411,7 @@ const L = {
     ss: { returns: ["Returns", "返品フラグ"], orders: ["Orders", "売上・利益まで全部"], people: ["People", "地域の担当者"], k1: "Order ID", k2: "Region" },
     tables: { web_sessions: "Web セッション", web_searches: "サイト内検索", products: "商品", orders: "受注", order_lines: "受注明細", shipments: "出荷", shipment_lines: "出荷明細",
       invoices: "請求書", invoice_lines: "請求明細", credit_memos: "クレジットメモ", returns: "返品", refunds: "返金" },
-    keys: ["セッションID", "注文ID", "商品ID", "出荷ID", "注文明細ID", "請求書ID", "返品ID", "返金ID"],
+    keys: ["セッションID", "注文ID", "商品ID", "出荷ID", "注文明細ID", "請求書ID", "返品ID", "返金ID", "請求明細ID"],
     doms: ["Web", "商品", "受注", "出荷", "請求", "返品・返金"],
     prefs: [
       ["使い方", ["分析には整備済みのデータソースを使う", "同じ名前の指標が複数あるので、使った指標とデータソースを答えに書く",
@@ -510,7 +510,7 @@ const L = {
     ss: { returns: ["Returns", "Return flag"], orders: ["Orders", "Sales and profit, all in one"], people: ["People", "Regional manager"], k1: "Order ID", k2: "Region" },
     tables: { web_sessions: "Web sessions", web_searches: "Site searches", products: "Products", orders: "Orders", order_lines: "Order lines", shipments: "Shipments", shipment_lines: "Shipment lines",
       invoices: "Invoices", invoice_lines: "Invoice lines", credit_memos: "Credit memos", returns: "Returns", refunds: "Refunds" },
-    keys: ["session_id", "order_id", "product_id", "shipment_id", "order_line_id", "invoice_id", "return_id", "refund_id"],
+    keys: ["session_id", "order_id", "product_id", "shipment_id", "order_line_id", "invoice_id", "return_id", "refund_id", "invoice_line_id"],
     doms: ["Web", "Products", "Orders", "Shipping", "Billing", "Returns & refunds"],
     prefs: [
       ["Usage", ["Use the prepared data sources", "Several metrics share a name, so say which metric and data source you used",

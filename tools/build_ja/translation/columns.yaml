@@ -245,9 +245,11 @@ invoice_lines:
 - [tax_amount, 税額, 'decimal(12,2)']
 - [unit_standard_cost, 標準原価単価, 'decimal(12,2)']
 credit_memos:
+- [credit_memo_line_id, クレジットメモ明細ID, string]
 - [credit_memo_id, クレジットメモID, string]
 - [refund_id, 返金ID, string]
 - [invoice_id, 請求書ID, string]
+- [invoice_line_id, 請求明細ID, string]
 - [order_line_id, 注文明細ID, string]
 - [product_id, 商品ID, string]
 - [memo_type, メモ種別, string]

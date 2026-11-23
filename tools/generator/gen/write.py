@@ -264,10 +264,49 @@ def build_tables(w):
         refund_method=r['method'], refunded_at=ts(r['at']), refunded_date=r['date'],
         merchandise_refund_amount=r['merch'], tax_refund_amount=r['tax'], shipping_refund_amount=r['ship'])
         for r in rfs]
-    # credit memos: next Monday strictly after the refund
+    # credit memos: next Monday strictly after the refund. Every memo line points to one invoice line.
     first_inv_of_order = {}
     for r in invs:
         first_inv_of_order.setdefault(r['order'], r['k'])
+    inv_of_shipment = {r['shipment']: r['k'] for r in invs}
+    lines_of_inv = {}
+    for r in ils:
+        lines_of_inv.setdefault(r['invoice'], []).append(r)
+    order_invs = {}
+    for r in invs:
+        order_invs.setdefault(r['order'], []).append(r['k'])
+    tk_by_k = {t['k']: t for t in w.R['support_tickets']}
+
+    def split_cents(total, weights):
+        """Split an amount over weights in whole cents; the parts add up to the amount exactly."""
+        cents = int(round(total * 100))
+        tw = sum(weights)
+        if tw <= 0:
+            weights, tw = [1] * len(weights), len(weights)
+        raw = [cents * x / tw for x in weights]
+        parts = [int(v) for v in raw]
+        for j in sorted(range(len(raw)), key=lambda j: (-(raw[j] - parts[j]), j))[:cents - sum(parts)]:
+            parts[j] += 1
+        return [p / 100 for p in parts]
+
+    def memo_lines(r, inv_k):
+        """Invoice lines a refund is credited against, with the weight of each.
+        Line refunds: the invoice line of that order line. Order-level refunds: the product named on the
+        support ticket; else the lines of the ticket's shipment's invoice; else the order's first invoice."""
+        l, o = r['l'], r['o']
+        if l is not None:
+            return inv_k, [next(x for x in lines_of_inv[inv_k] if x['line'] == l['k'])], [1]
+        tk = tk_by_k.get(r['ticket']) if r['ticket'] is not None else None
+        if tk is not None and tk['p'] is not None:
+            for k in order_invs[o['k']]:
+                hit = [x for x in lines_of_inv[k] if x['p'] == tk['p']]
+                if hit:
+                    return k, hit[:1], [1]
+        if tk is not None and tk['sh'] is not None and tk['sh'] in inv_of_shipment:
+            inv_k = inv_of_shipment[tk['sh']]
+        xs = lines_of_inv[inv_k]
+        return inv_k, xs, [x['qty'] * x['unit_price'] - x['disc'] for x in xs]
+
     cms = []
     for r in rfs:
         dd = r['date'] + TD(days=(7 - r['date'].weekday()) % 7 or 7)
@@ -285,16 +324,21 @@ def build_tables(w):
         fee = 0.0
         if o['channel'] == 'marketplace':
             fee = round(w.ev['E2']['fee_reversal_share_on_refund'] * w.ev['E2']['marketplace_fee_rate'] * (r['merch'] + r['ship']), 2)
-        cms.append(dict(refund=r, date=dd, inv=inv_k, line=lid[l['k']] if l is not None else None,
-                        product=pid[l['p']] if l is not None else None, mt=mt, qty=qty, fee=fee,
-                        region=w.region(o['state'], dd), fm=w.fiscal_month(dd)))
+        inv_k, xs, wts = memo_lines(r, inv_k)
+        amts = {a: split_cents(v, wts) for a, v in
+                [('merch', r['merch']), ('tax', r['tax']), ('ship', r['ship']), ('fee', fee)]}
+        cms.append(dict(refund=r, date=dd, inv=inv_k, mt=mt, qty=qty, region=w.region(o['state'], dd),
+                        fm=w.fiscal_month(dd),
+                        lines=[dict(il=x, **{a: amts[a][j] for a in amts}) for j, x in enumerate(xs)]))
     cms.sort(key=lambda c: (c['date'], rfid[c['refund']['k']]))
+    cml = [(i, c, m) for i, c in enumerate(cms) for m in c['lines']]
     T['credit_memos'] = [dict(
-        credit_memo_id=f"CM-{i + 1:07d}", refund_id=rfid[c['refund']['k']], invoice_id=iid[c['inv']],
-        order_line_id=c['line'], product_id=c['product'], memo_type=c['mt'], credit_memo_date=c['date'],
-        qty_credited=c['qty'], merchandise_credit_amount=c['refund']['merch'], tax_credit_amount=c['refund']['tax'],
-        shipping_credit_amount=c['refund']['ship'], marketplace_fee_reversal_amount=c['fee'],
-        sales_region_id=c['region'], fiscal_month=c['fm']) for i, c in enumerate(cms)]
+        credit_memo_line_id=f"CML-{n + 1:08d}", credit_memo_id=f"CM-{i + 1:07d}", refund_id=rfid[c['refund']['k']],
+        invoice_id=iid[c['inv']], invoice_line_id=ilid[m['il']['k']], order_line_id=lid[m['il']['line']],
+        product_id=pid[m['il']['p']], memo_type=c['mt'], credit_memo_date=c['date'],
+        qty_credited=c['qty'], merchandise_credit_amount=m['merch'], tax_credit_amount=m['tax'],
+        shipping_credit_amount=m['ship'], marketplace_fee_reversal_amount=m['fee'],
+        sales_region_id=c['region'], fiscal_month=c['fm']) for n, (i, c, m) in enumerate(cml)]
 
     # ---------------- masters
     # v3: no warehouses / carriers tables (folded into shipments)

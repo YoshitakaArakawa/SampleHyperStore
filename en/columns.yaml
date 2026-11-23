@@ -245,9 +245,11 @@ invoice_lines:
 - [tax_amount, 'decimal(12,2)']
 - [unit_standard_cost, 'decimal(12,2)']
 credit_memos:
+- [credit_memo_line_id, 'string']
 - [credit_memo_id, 'string']
 - [refund_id, 'string']
 - [invoice_id, 'string']
+- [invoice_line_id, 'string']
 - [order_line_id, 'string']
 - [product_id, 'string']
 - [memo_type, 'string']

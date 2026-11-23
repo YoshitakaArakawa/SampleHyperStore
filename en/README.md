@@ -80,7 +80,7 @@ erDiagram
     order_lines ||--o{ invoice_lines : "Order Line Id"
     order_lines ||--o{ returns : "Order Line Id"
     returns ||--o{ refunds : "Return Id"
-    invoices ||--o{ credit_memos : "Invoice Id"
+    invoice_lines ||--o{ credit_memos : "Invoice Line Id"
     refunds |o--o{ credit_memos : "Refund Id"
 ```
 
